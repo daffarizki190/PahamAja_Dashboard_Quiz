@@ -3,6 +3,9 @@
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.9.0"
+        },
+        "api/test.php": {
+            "runtime": "vercel-php@0.9.0"
         }
     },
     "routes": [
