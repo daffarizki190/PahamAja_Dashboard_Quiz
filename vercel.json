@@ -11,6 +11,10 @@
             "dest": "public/$1$2"
         },
         {
+            "src": "/api/test",
+            "dest": "api/test.php"
+        },
+        {
             "src": "/(.*)",
             "dest": "api/index.php"
         }
