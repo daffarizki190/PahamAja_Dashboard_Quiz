@@ -8,10 +8,6 @@ class NameMatchingService
 {
     /**
      * Match a given name and NIM against the employee database.
-     * 
-     * @param string $inputName
-     * @param string $inputNim
-     * @return Employee|null
      */
     public function matchParticipant(string $inputName, string $inputNim): ?Employee
     {
@@ -31,10 +27,10 @@ class NameMatchingService
 
         foreach ($allEmployees as $employee) {
             $normalizedTarget = $this->normalize($employee->name);
-            
+
             // Calculate similarity percentage
             similar_text($normalizedInput, $normalizedTarget, $percent);
-            
+
             if ($percent > $highestSimilarity && $percent >= $threshold) {
                 $highestSimilarity = $percent;
                 $bestMatch = $employee;
@@ -51,6 +47,7 @@ class NameMatchingService
     {
         $str = strtolower($str);
         $str = preg_replace('/[^a-z0-9]/', '', $str);
+
         return trim($str);
     }
 }

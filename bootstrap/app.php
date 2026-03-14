@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Middleware\AdminAuth;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,22 +16,25 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->alias([
+            'admin.auth' => AdminAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
     ->registered(function ($app) {
         if (env('VERCEL')) {
-            if (!class_exists('Route')) {
-                class_alias(\Illuminate\Support\Facades\Route::class, 'Route');
+            if (! class_exists('Route')) {
+                class_alias(Route::class, 'Route');
             }
-            if (!class_exists('URL')) {
-                class_alias(\Illuminate\Support\Facades\URL::class, 'URL');
+            if (! class_exists('URL')) {
+                class_alias(URL::class, 'URL');
             }
-            if (!class_exists('Config')) {
-                class_alias(\Illuminate\Support\Facades\Config::class, 'Config');
+            if (! class_exists('Config')) {
+                class_alias(Config::class, 'Config');
             }
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
     })
     ->create();

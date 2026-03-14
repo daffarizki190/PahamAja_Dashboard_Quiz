@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\EmployeeGrowthExport;
+use App\Models\Employee;
+use App\Models\Participant;
+use App\Models\Question;
 use App\Models\Quiz;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
@@ -13,14 +19,67 @@ class AdminController extends Controller
      */
     public function index()
     {
-        $quizzes = Quiz::latest()->get();
+        $quizzes = Quiz::query()->latest()->get();
 
-        return view('admin.quizzes.index', compact('quizzes'));
+        $quizIds = $quizzes->pluck('id')->all();
+        $driver = $quizzes->first()?->getConnection()->getDriverName();
+
+        if (count($quizIds) > 0) {
+            if ($driver === 'mongodb') {
+                $participantCounts = collect(Participant::raw(function ($collection) use ($quizIds) {
+                    return $collection->aggregate([
+                        ['$match' => ['quiz_id' => ['$in' => $quizIds]]],
+                        ['$group' => ['_id' => '$quiz_id', 'count' => ['$sum' => 1]]],
+                    ]);
+                }))->mapWithKeys(function ($row) {
+                    return [(string) $row->_id => (int) $row->count];
+                });
+
+                $questionCounts = collect(Question::raw(function ($collection) use ($quizIds) {
+                    return $collection->aggregate([
+                        ['$match' => ['quiz_id' => ['$in' => $quizIds]]],
+                        ['$group' => ['_id' => '$quiz_id', 'count' => ['$sum' => 1]]],
+                    ]);
+                }))->mapWithKeys(function ($row) {
+                    return [(string) $row->_id => (int) $row->count];
+                });
+            } else {
+                $participantCounts = Participant::query()
+                    ->whereIn('quiz_id', $quizIds)
+                    ->select('quiz_id', DB::raw('count(*) as aggregate_count'))
+                    ->groupBy('quiz_id')
+                    ->pluck('aggregate_count', 'quiz_id')
+                    ->map(function ($c) {
+                        return (int) $c;
+                    });
+
+                $questionCounts = Question::query()
+                    ->whereIn('quiz_id', $quizIds)
+                    ->select('quiz_id', DB::raw('count(*) as aggregate_count'))
+                    ->groupBy('quiz_id')
+                    ->pluck('aggregate_count', 'quiz_id')
+                    ->map(function ($c) {
+                        return (int) $c;
+                    });
+            }
+
+            $quizzes->each(function (Quiz $quiz) use ($participantCounts, $questionCounts) {
+                $id = (string) $quiz->id;
+                $quiz->setAttribute('participants_count', (int) ($participantCounts[$id] ?? 0));
+                $quiz->setAttribute('questions_count', (int) ($questionCounts[$id] ?? 0));
+            });
+        }
+
+        $stats = [
+            'quizzes' => $quizzes->count(),
+            'questions' => Question::count(),
+            'employees' => Employee::count(),
+            'participants' => Participant::count(),
+        ];
+
+        return view('admin.quizzes.index', compact('quizzes', 'stats'));
     }
 
-    /**
-     * Store a newly created employee in storage.
-     */
     public function employeeStore(Request $request)
     {
         $request->validate([
@@ -30,7 +89,7 @@ class AdminController extends Controller
             'position' => 'required|string|max:255',
         ]);
 
-        \App\Models\Employee::create($request->all() + ['status' => 'Active']);
+        Employee::create($request->all() + ['status' => 'Active']);
 
         return back()->with('success', 'Employee registered successfully!');
     }
@@ -49,6 +108,7 @@ class AdminController extends Controller
     public function show(Quiz $quiz)
     {
         $quiz->load('questions.options');
+
         return view('admin.quizzes.show', compact('quiz'));
     }
 
@@ -58,6 +118,7 @@ class AdminController extends Controller
     public function edit(Quiz $quiz)
     {
         $quiz->load('questions.options');
+
         return view('admin.quizzes.edit', compact('quiz'));
     }
 
@@ -124,7 +185,7 @@ class AdminController extends Controller
 
         // Simple update: delete existing questions and recreate
         // In a production app, you might want to match IDs to prevent data loss for participants
-        $quiz->questions()->each(function($question) {
+        $quiz->questions()->each(function ($question) {
             $question->options()->delete();
             $question->delete();
         });
@@ -150,36 +211,91 @@ class AdminController extends Controller
      */
     public function destroy(Quiz $quiz)
     {
-        $quiz->questions()->each(function($question) {
+        $quiz->questions()->each(function ($question) {
             $question->options()->delete();
             $question->delete();
         });
-        
+
         $quiz->delete();
 
         return redirect()->route('admin.quizzes.index')->with('success', 'Quiz deleted successfully!');
     }
 
-    /**
-     * Display a listing of all registered employees.
-     */
     public function employeeIndex()
     {
-        $employees = \App\Models\Employee::latest()->get();
-        return view('admin.employees.index', compact('employees'));
+        $employees = Employee::latest()->get();
+
+        $participations = Participant::whereNotNull('score')
+            ->get(['nim', 'score', 'updated_at']);
+
+        $statsByNim = $participations
+            ->groupBy('nim')
+            ->map(function ($items) {
+                $sorted = $items->sortBy(function ($p) {
+                    return $p->updated_at?->getTimestamp() ?? 0;
+                })->values();
+
+                $scores = $sorted->pluck('score')->filter(function ($s) {
+                    return ! is_null($s);
+                })->values();
+
+                $attempts = $scores->count();
+                $avg = $attempts > 0 ? round($scores->avg(), 1) : 0.0;
+                $last = $attempts > 0 ? (float) $scores->last() : null;
+                $prev = $attempts > 1 ? (float) $scores->get($attempts - 2) : null;
+                $delta = (! is_null($last) && ! is_null($prev)) ? round($last - $prev, 1) : null;
+                $lastAt = $sorted->last()?->updated_at;
+
+                return [
+                    'attempts' => $attempts,
+                    'avg' => $avg,
+                    'last' => $last,
+                    'delta' => $delta,
+                    'last_at' => $lastAt,
+                ];
+            });
+
+        $growthRows = $employees
+            ->map(function (Employee $employee) use ($statsByNim) {
+                $stats = $statsByNim->get($employee->nim, [
+                    'attempts' => 0,
+                    'avg' => 0.0,
+                    'last' => null,
+                    'delta' => null,
+                    'last_at' => null,
+                ]);
+
+                return [
+                    'id' => (string) $employee->id,
+                    'name' => (string) $employee->name,
+                    'nim' => (string) $employee->nim,
+                    'department' => (string) $employee->department,
+                    'position' => (string) $employee->position,
+                    'attempts' => (int) $stats['attempts'],
+                    'avg' => (float) $stats['avg'],
+                    'last' => $stats['last'],
+                    'delta' => $stats['delta'],
+                    'last_at' => $stats['last_at'],
+                ];
+            })
+            ->sortByDesc('avg')
+            ->values();
+
+        return view('admin.employees.index', compact('employees', 'growthRows', 'statsByNim'));
     }
 
-    /**
-     * Display growth analysis for a specific employee.
-     */
-    public function employeeShow(\App\Models\Employee $employee)
+    public function employeeExport()
     {
-        $participations = \App\Models\Participant::where('employee_id', $employee->id)
+        return Excel::download(new EmployeeGrowthExport, 'Growth-Reports.xlsx');
+    }
+
+    public function employeeShow(Employee $employee)
+    {
+        $participations = Participant::where('employee_id', $employee->id)
             ->with('quiz')
             ->whereNotNull('score')
             ->get();
 
-        // Growth data for Chart.js
         $chartData = [
             'labels' => $participations->pluck('quiz.title')->toArray(),
             'scores' => $participations->pluck('score')->toArray(),
@@ -188,10 +304,7 @@ class AdminController extends Controller
         return view('admin.employees.show', compact('employee', 'participations', 'chartData'));
     }
 
-    /**
-     * Update the specified employee in storage.
-     */
-    public function employeeUpdate(Request $request, \App\Models\Employee $employee)
+    public function employeeUpdate(Request $request, Employee $employee)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -205,21 +318,20 @@ class AdminController extends Controller
         return back()->with('success', 'Employee updated successfully!');
     }
 
-    /**
-     * Remove the specified employee from storage.
-     */
-    public function employeeDestroy(\App\Models\Employee $employee)
+    public function employeeDestroy(Employee $employee)
     {
         $employee->delete();
+
         return redirect()->route('admin.employees.index')->with('success', 'Employee removed from master list.');
     }
 
     /**
      * Remove a specific participant from a quiz result.
      */
-    public function participantDestroy(Quiz $quiz, \App\Models\Participant $participant)
+    public function participantDestroy(Quiz $quiz, Participant $participant)
     {
         $participant->delete();
+
         return back()->with('success', 'Participant record deleted.');
     }
 }

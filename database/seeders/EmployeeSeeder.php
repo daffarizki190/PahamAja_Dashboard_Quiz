@@ -13,7 +13,7 @@ class EmployeeSeeder extends Seeder
     public function run(): void
     {
         // Clear existing employees
-        foreach(\App\Models\Employee::all() as $e) {
+        foreach (Employee::all() as $e) {
             $e->delete();
         }
 
@@ -58,7 +58,7 @@ class EmployeeSeeder extends Seeder
         foreach ($employees as $index => $data) {
             Employee::create([
                 'name' => $data['name'],
-                'nim' => 'P-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT), // Unique placeholder as requested
+                'nim' => 'P-'.str_pad($index + 1, 2, '0', STR_PAD_LEFT), // Unique placeholder as requested
                 'department' => $data['dept'],
                 'position' => $data['position'],
                 'status' => 'Active',

@@ -29,7 +29,7 @@
                 </a>
                 <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-semibold">Employee Master Data</span>
+                    <span class="text-sm font-semibold">Employee Insights</span>
                 </a>
             </nav>
         </aside>
@@ -42,13 +42,19 @@
                         <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     </a>
                     <div>
-                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">Employee Directory</h2>
-                        <p class="text-slate-500 font-medium">Manage corporate identity and track growth analytics.</p>
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">Employee Insights</h2>
+                        <p class="text-slate-500 font-medium">Directory + ringkasan growth dalam satu halaman.</p>
                     </div>
                 </div>
-                <button onclick="openRegisterModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
-                    Register Employee
-                </button>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.employees.export') }}" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Export Excel</span>
+                    </a>
+                    <button onclick="openRegisterModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
+                        Register Employee
+                    </button>
+                </div>
             </header>
 
             @if(session('success'))
@@ -79,9 +85,10 @@
                             </td>
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-sm font-black text-slate-700">{{ number_format($employee->average_score, 1) }}%</span>
+                                    @php($avg = $statsByNim[$employee->nim]['avg'] ?? 0)
+                                    <span class="text-sm font-black text-slate-700">{{ number_format($avg, 1) }}%</span>
                                     <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-emerald-500" style="width: {{ $employee->average_score }}%"></div>
+                                        <div class="h-full bg-emerald-500" style="width: {{ $avg }}%"></div>
                                     </div>
                                 </div>
                             </td>
@@ -108,6 +115,75 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <div class="mt-10 bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <div class="px-8 py-6 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ringkasan</p>
+                        <h3 class="text-xl font-black text-slate-900 tracking-tight">Perkembangan Nilai</h3>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
+                                <th class="px-8 py-5">Karyawan</th>
+                                <th class="px-8 py-5">Jumlah Kuis</th>
+                                <th class="px-8 py-5">Rata-rata</th>
+                                <th class="px-8 py-5">Terakhir</th>
+                                <th class="px-8 py-5">Perubahan</th>
+                                <th class="px-8 py-5 text-right">Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse($growthRows as $row)
+                                <tr class="hover:bg-indigo-50/30 transition-all">
+                                    <td class="px-8 py-5">
+                                        <p class="text-slate-900 font-black">{{ $row['name'] }}</p>
+                                        <p class="text-slate-400 text-xs font-bold">{{ $row['nim'] }} • {{ $row['department'] }}</p>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $row['attempts'] }}</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['avg'], 1) }}%</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        @if(!is_null($row['last']))
+                                            <span class="text-slate-800 font-black">{{ number_format($row['last'], 0) }}%</span>
+                                        @else
+                                            <span class="text-slate-300 font-bold">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        @if(!is_null($row['delta']))
+                                            @if($row['delta'] > 0)
+                                                <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black">+{{ number_format($row['delta'], 1) }}</span>
+                                            @elseif($row['delta'] < 0)
+                                                <span class="inline-flex items-center gap-2 bg-rose-50 text-rose-700 px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['delta'], 1) }}</span>
+                                            @else
+                                                <span class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['delta'], 1) }}</span>
+                                            @endif
+                                        @else
+                                            <span class="text-slate-300 font-bold">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-8 py-5 text-right">
+                                        <a href="{{ route('admin.employees.show', $row['id']) }}" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">
+                                            <span>Detail</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-8 py-20 text-center text-slate-400 font-bold italic">Belum ada data.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
