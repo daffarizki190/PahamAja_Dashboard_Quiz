@@ -140,31 +140,6 @@
                 }
             }
         }
-
-        // Anti-Cheat: Tab Switching Detection
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                console.warn('Violation detected: Tab switched/minimized');
-                
-                // Send violation log to backend using Fetch API
-                fetch("{{ route('admin.quiz.cheat', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        console.log('Cheat attempt logged. Total:', data.attempts);
-                        // Optional: Show warning to student
-                        alert('Warning! Tab switching is detected and recorded. Please stay on this page.');
-                    }
-                })
-                .catch(error => console.error('Error logging cheat attempt:', error));
-            }
-        });
     </script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 <?php
 
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
 return [
 
     /*
@@ -124,7 +126,7 @@ return [
     ],
 
     'aliases' => [
-        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+        'QrCode' => QrCode::class,
     ],
 
 ];

@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AiQuizController;
 use App\Http\Controllers\QuizController;
 use App\Models\Quiz;
+use Database\Seeders\EmployeeSeeder;
 use Illuminate\Support\Facades\Route;
 use MongoDB\Driver\Manager;
 
@@ -20,6 +23,10 @@ use MongoDB\Driver\Manager;
 Route::get('/', function () {
     return redirect()->route('admin.dashboard');
 });
+
+Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 Route::get('/health/mongodb', function () {
     if (! app()->environment('local')) {
@@ -67,13 +74,20 @@ Route::prefix('quiz')->name('quiz.')->group(function () {
 });
 
 // Admin Management & Dashboard Routes
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
     // Quiz Management (CRUD)
     Route::get('/', [AdminController::class, 'index'])->name('dashboard');
     Route::get('quizzes', [AdminController::class, 'index'])->name('quizzes.index');
     Route::get('quizzes/create', [AdminController::class, 'create'])->name('quizzes.create');
     Route::post('quizzes', [AdminController::class, 'store'])->name('quizzes.store');
+
+    // AI Quiz Generation Routes
+    Route::get('ai-quiz/create', [AiQuizController::class, 'aiCreate'])->name('quizzes.ai-create');
+    Route::post('ai-quiz/generate', [AiQuizController::class, 'aiGenerate'])->name('quizzes.ai-generate');
+    Route::post('ai-quiz/store', [AiQuizController::class, 'aiStore'])->name('quizzes.ai-store');
+
     Route::get('quizzes/{quiz:slug}', [AdminController::class, 'show'])->name('quizzes.show');
+
     Route::get('quizzes/{quiz:slug}/edit', [AdminController::class, 'edit'])->name('quizzes.edit');
     Route::patch('quizzes/{quiz:slug}', [AdminController::class, 'update'])->name('quizzes.update');
     Route::delete('quizzes/{quiz}', [AdminController::class, 'destroy'])->name('quizzes.destroy');
@@ -89,6 +103,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Employee Master Data & Growth Analysis
     Route::get('employees', [AdminController::class, 'employeeIndex'])->name('employees.index');
     Route::post('employees', [AdminController::class, 'employeeStore'])->name('employees.store');
+    Route::get('employees/export', [AdminController::class, 'employeeExport'])->name('employees.export');
     Route::get('employees/{employee}', [AdminController::class, 'employeeShow'])->name('employees.show');
     Route::put('employees/{employee}', [AdminController::class, 'employeeUpdate'])->name('employees.update');
     Route::delete('employees/{employee}', [AdminController::class, 'employeeDestroy'])->name('employees.destroy');
@@ -97,13 +112,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::delete('quiz/{quiz:slug}/participant/{participant}', [AdminController::class, 'participantDestroy'])
         ->name('participant.destroy');
 
-    // Temporary Seeding Route (Delete after use)
-    Route::get('force-seed', function() {
-        (new \Database\Seeders\EmployeeSeeder())->run();
-        return "SEED_COMPLETED";
-    });
+    Route::get('force-seed', function () {
+        if (! app()->environment('local')) {
+            abort(404);
+        }
 
-    // Anti-Cheat Logging Route (AJAX)
-    Route::post('quiz/{quiz:slug}/participant/{participant}/cheat', [QuizController::class, 'logCheatAttempt'])
-        ->name('quiz.cheat');
+        (new EmployeeSeeder)->run();
+
+        return 'SEED_COMPLETED';
+    })->name('force-seed');
 });

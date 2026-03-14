@@ -61,6 +61,13 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Export Analysis</span>
             </a>
+            <form action="{{ route('admin.logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center gap-3 active:scale-95 text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"></path></svg>
+                    <span>Logout</span>
+                </button>
+            </form>
             <div class="bg-indigo-50 border border-indigo-100/50 px-6 py-4 rounded-[1.5rem] flex items-center gap-3">
                 <span class="relative flex h-3 w-3">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -154,6 +161,63 @@
         </div>
     </div>
 
+    <div class="glass-card rounded-[2.5rem] overflow-hidden mb-12 animate-slide-up" style="animation-delay: 0.65s">
+        <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Item Analysis</h2>
+            <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">Per Question</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    <tr>
+                        <th class="px-10 py-6">Question</th>
+                        <th class="px-10 py-6">Answered</th>
+                        <th class="px-10 py-6">Correct Rate</th>
+                        <th class="px-10 py-6">Top Choice</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($questionAnalytics as $index => $row)
+                        <tr class="hover:bg-indigo-50/30 transition-all duration-300">
+                            <td class="px-10 py-6">
+                                <p class="text-slate-800 font-black tracking-tight">#{{ $index + 1 }}</p>
+                                <p class="text-slate-500 text-sm font-semibold mt-1 max-w-2xl leading-snug">{{ $row['text'] }}</p>
+                            </td>
+                            <td class="px-10 py-6">
+                                <span class="bg-slate-900 text-white px-4 py-2 rounded-2xl text-xs font-black">{{ $row['answered'] }}/{{ $row['participants'] }}</span>
+                            </td>
+                            <td class="px-10 py-6">
+                                @if(!is_null($row['correct_rate']))
+                                    <div class="inline-flex items-center gap-3">
+                                        <span class="text-slate-800 font-black">{{ $row['correct_rate'] }}%</span>
+                                        <div class="w-28 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-indigo-600" style="width: {{ $row['correct_rate'] }}%"></div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-slate-300 italic text-xs font-bold">No data</span>
+                                @endif
+                            </td>
+                            <td class="px-10 py-6">
+                                @if($row['top_option'])
+                                    <span class="text-slate-700 text-sm font-semibold">{{ $row['top_option'] }}</span>
+                                @else
+                                    <span class="text-slate-300 italic text-xs font-bold">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-10 py-20 text-center">
+                                <p class="text-slate-400 font-bold text-sm tracking-tight italic">No item data found.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Leaderboard -->
     <div class="glass-card rounded-[2.5rem] overflow-hidden animate-slide-up" style="animation-delay: 0.7s">
         <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
@@ -169,7 +233,6 @@
                         <th class="px-10 py-6">Rank</th>
                         <th class="px-10 py-6">Identity</th>
                         <th class="px-10 py-6">Performance</th>
-                        <th class="px-10 py-6">Violations</th>
                         <th class="px-10 py-6">Status</th>
                         <th class="px-10 py-6 text-right">Actions</th>
                     </tr>
@@ -201,16 +264,6 @@
                             @endif
                         </td>
                         <td class="px-10 py-6">
-                           @if($participant->cheat_attempts > 0)
-                               <div class="inline-flex items-center gap-2 bg-rose-50 text-rose-600 px-4 py-2 rounded-2xl font-black text-xs">
-                                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                                   {{ $participant->cheat_attempts }} Detected
-                               </div>
-                           @else
-                               <span class="text-slate-300 font-black text-xs">-</span>
-                           @endif
-                        </td>
-                        <td class="px-10 py-6">
                             @if(!is_null($participant->score))
                                 <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
                                     {{ $participant->score >= $quiz->passing_score ? 'Qualified' : 'Failed' }}
@@ -231,7 +284,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-10 py-20 text-center">
+                        <td colspan="5" class="px-10 py-20 text-center">
                             <div class="bg-slate-50 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
                                 <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             </div>
