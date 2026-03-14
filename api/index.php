@@ -1,13 +1,20 @@
 <?php
 
-// Fix storage path for Vercel
+// Fix storage and bootstrap/cache paths for Vercel
 $storagePath = '/tmp/storage';
-if (!is_dir($storagePath)) {
-    mkdir($storagePath, 0755, true);
-    mkdir($storagePath . '/framework/sessions', 0755, true);
-    mkdir($storagePath . '/framework/views', 0755, true);
-    mkdir($storagePath . '/framework/cache', 0755, true);
-    mkdir($storagePath . '/logs', 0755, true);
+$cachePath = '/tmp/bootstrap/cache';
+
+foreach ([$storagePath, $cachePath] as $p) {
+    if (!is_dir($p)) {
+        mkdir($p, 0755, true);
+    }
+}
+
+foreach (['app', 'framework/sessions', 'framework/views', 'framework/cache', 'logs'] as $sub) {
+    $dir = $storagePath . '/' . $sub;
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
 }
 
 // Ensure the environment variables for storage are set
@@ -16,6 +23,13 @@ putenv('VIEW_COMPILED_PATH=' . $storagePath . '/framework/views');
 putenv('SESSION_DRIVER=file');
 putenv('SESSION_PATH=' . $storagePath . '/framework/sessions');
 putenv('LOG_CHANNEL=stderr');
+
+// Redirect Laravel 11 bootstrap cache
+putenv('APP_SERVICES_CACHE=' . $cachePath . '/services.php');
+putenv('APP_PACKAGES_CACHE=' . $cachePath . '/packages.php');
+putenv('APP_CONFIG_CACHE=' . $cachePath . '/config.php');
+putenv('APP_ROUTES_CACHE=' . $cachePath . '/routes.php');
+putenv('APP_EVENTS_CACHE=' . $cachePath . '/events.php');
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
