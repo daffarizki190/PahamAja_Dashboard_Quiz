@@ -50,9 +50,11 @@ try {
     // Force storage path to /tmp for Vercel
     $app->useStoragePath('/tmp/storage');
     
-    // Ensure critical env vars are set for this instance
-    config(['session.driver' => 'cookie']);
-    config(['cache.default' => 'array']);
+    // Ensure critical env vars are set BEFORE handling
+    putenv('SESSION_DRIVER=cookie');
+    putenv('CACHE_STORE=array');
+    putenv('CACHE_DRIVER=array');
+    putenv('FILESYSTEM_DISK=public');
     
     // Handle the request
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
