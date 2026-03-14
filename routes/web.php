@@ -18,7 +18,7 @@ use MongoDB\Driver\Manager;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('admin.dashboard');
 });
 
 Route::get('/health/mongodb', function () {
