@@ -50,22 +50,13 @@ try {
     // Force storage path to /tmp for Vercel
     $app->useStoragePath('/tmp/storage');
     
-    // Explicitly set the Facade application to ensure aliases like Route work in Blade
-    \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
-    
-    // Ensure critical env vars are set BEFORE handling
+    // Ensure critical env vars are set
     putenv('SESSION_DRIVER=cookie');
     putenv('CACHE_STORE=array');
-    putenv('CACHE_DRIVER=array');
-    putenv('FILESYSTEM_DISK=public');
+    putenv('LOG_CHANNEL=stderr');
     
-    // Handle the request
-    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-    $response = $kernel->handle(
-        $request = Illuminate\Http\Request::capture()
-    );
-    $response->send();
-    $kernel->terminate($request, $response);
+    // Handle the request using the native Laravel 11/12 method
+    $app->handleRequest(Illuminate\Http\Request::capture());
 
 } catch (\Throwable $e) {
     http_response_code(500);
