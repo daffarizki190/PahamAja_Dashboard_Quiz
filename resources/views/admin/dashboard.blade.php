@@ -35,8 +35,9 @@
         }
     </style>
 </head>
-<body class="pb-20">
+<body class="min-h-screen flex flex-col bg-slate-50">
 
+<div class="flex-grow">
 <div class="container mx-auto px-6 py-10 max-w-[1500px]">
     
     <!-- Premium Header -->
@@ -296,63 +297,51 @@
             </table>
         </div>
     </div>
+    </div>
 </div>
 
-<script>
-    function copyLink() {
-        var copyText = document.getElementById("quizLink");
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(copyText.value);
+<footer class="mt-auto py-12 border-t border-slate-200 bg-white">
+    <div class="container mx-auto px-6 max-w-[1500px]">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-900 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl italic text-white shadow-lg">P</div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">PahamAja</h2>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Corporate Analytics Suite</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap justify-center gap-10">
+                <div class="flex flex-col gap-3">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Platform</p>
+                    <a href="{{ route('admin.dashboard') }}" class="text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors">Assessment Center</a>
+                    <a href="{{ route('admin.quizzes.index') }}" class="text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors">Quiz Builder</a>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Support</p>
+                    <a href="#" class="text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors">Documentation</a>
+                    <a href="#" class="text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors">Enterprise Help</a>
+                </div>
+            </div>
+            
+            <div class="text-right">
+                <p class="text-xs font-black text-slate-900 mb-1">System Operational</p>
+                <div class="flex items-center justify-end gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">All services normal</span>
+                </div>
+            </div>
+        </div>
         
-        let btn = event.target;
-        btn.innerText = "COPIED!";
-        setTimeout(() => btn.innerText = "COPY", 2000);
-    }
+        <div class="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">&copy; 2026 PahamAja. Industrial Grade Assessment Engine.</p>
+            <div class="flex gap-6">
+                <a href="#" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Terms</a>
+                <a href="#" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Privacy</a>
+            </div>
+        </div>
+    </div>
+</footer>
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('scoreChart').getContext('2d');
-        const chartData = @json($chartData);
-        
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    data: chartData.scores,
-                    backgroundColor: [
-                        '#f43f5e', // Rose 500
-                        '#f59e0b', // Amber 500
-                        '#10b981', // Emerald 500
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
-                        bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
-                        padding: 12,
-                        borderRadius: 12,
-                        displayColors: false
-                    }
-                },
-                cutout: '80%',
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
-                }
-            }
-        });
-    });
-</script>
 </body>
 </html>

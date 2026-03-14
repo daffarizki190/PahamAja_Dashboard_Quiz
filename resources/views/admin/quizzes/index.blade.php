@@ -82,9 +82,9 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-10 max-w-[1600px] mx-auto">
-            <header class="mb-8">
-                <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+        <main class="flex-1 p-10 flex flex-col min-h-screen">
+            <div class="flex-grow">
+                <header class="mb-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                             <span class="chip px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest">Admin</span>
@@ -245,11 +245,29 @@
                     });
                 };
 
-                if (search) {
-                    search.addEventListener('input', applySearch);
-                }
             </script>
-        </main>
-    </div>
+        </div>
+
+        <footer class="mt-20 py-12 border-t border-slate-200">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg italic text-white shadow-lg shadow-indigo-200">P</div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 leading-none">PahamAja</h2>
+                        <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">Industrial Grade Assessment</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">&copy; 2026 PahamAja</p>
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">System Operational</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+</div>
 </body>
 </html>
