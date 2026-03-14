@@ -43,8 +43,16 @@ try {
     }
     require $autoloadPath;
     
-    // Explicitly set the application instance if needed
+    // Explicitly set the application instance
+    /** @var \Illuminate\Foundation\Application $app */
     $app = require_once __DIR__ . '/../bootstrap/app.php';
+    
+    // Force storage path to /tmp for Vercel
+    $app->useStoragePath('/tmp/storage');
+    
+    // Ensure critical env vars are set for this instance
+    config(['session.driver' => 'cookie']);
+    config(['cache.default' => 'array']);
     
     // Handle the request
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
