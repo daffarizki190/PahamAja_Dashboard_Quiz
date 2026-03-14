@@ -23,6 +23,7 @@ putenv('VIEW_COMPILED_PATH=' . $storagePath . '/framework/views');
 putenv('SESSION_DRIVER=cookie');
 putenv('CACHE_STORE=array');
 putenv('SESSION_PATH=' . $storagePath . '/framework/sessions');
+putenv('SESSION_SECURE_COOKIE=true');
 putenv('LOG_CHANNEL=stderr');
 
 // Redirect Laravel 11 bootstrap cache
@@ -52,6 +53,7 @@ try {
     
     // Ensure critical env vars are set
     putenv('SESSION_DRIVER=cookie');
+    putenv('SESSION_SECURE_COOKIE=true');
     putenv('CACHE_STORE=array');
     putenv('LOG_CHANNEL=stderr');
     

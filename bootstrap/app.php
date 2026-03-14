@@ -11,7 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (!class_exists('Config')) {
                 class_alias(\Illuminate\Support\Facades\Config::class, 'Config');
             }
+            \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     })
     ->create();
