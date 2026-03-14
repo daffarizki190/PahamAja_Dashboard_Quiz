@@ -39,18 +39,21 @@ ini_set('display_errors', '1');
 try {
     $autoloadPath = __DIR__ . '/../vendor/autoload.php';
     if (!file_exists($autoloadPath)) {
-        http_response_code(500);
-        echo "<h1>CRITICAL ERROR: VENDOR DIRECTORY MISSING</h1>";
-        echo "<p>Vercel failed to bundle the <code>vendor</code> directory. The file <code>$autoloadPath</code> does not exist in the serverless function.</p>";
-        echo "<p>CWD: " . getcwd() . "</p>";
-        echo "<h3>Contents of Project Root:</h3><pre>";
-        print_r(scandir(__DIR__ . '/../'));
-        echo "</pre>";
-        die();
+        throw new \Exception("Vendor directory missing at $autoloadPath");
     }
+    require $autoloadPath;
+    
+    // Explicitly set the application instance if needed
+    $app = require_once __DIR__ . '/../bootstrap/app.php';
+    
+    // Handle the request
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    $response = $kernel->handle(
+        $request = Illuminate\Http\Request::capture()
+    );
+    $response->send();
+    $kernel->terminate($request, $response);
 
-    // Forward Vercel requests to normal Laravel entry point
-    require __DIR__ . '/../public/index.php';
 } catch (\Throwable $e) {
     http_response_code(500);
     echo "<h1>Fatal Error Caught by Vercel Entry Point</h1>";
