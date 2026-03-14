@@ -20,7 +20,8 @@ foreach (['app', 'framework/sessions', 'framework/views', 'framework/cache', 'lo
 // Ensure the environment variables for storage are set
 putenv('APP_STORAGE=' . $storagePath);
 putenv('VIEW_COMPILED_PATH=' . $storagePath . '/framework/views');
-putenv('SESSION_DRIVER=file');
+putenv('SESSION_DRIVER=cookie');
+putenv('CACHE_STORE=array');
 putenv('SESSION_PATH=' . $storagePath . '/framework/sessions');
 putenv('LOG_CHANNEL=stderr');
 
