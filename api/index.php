@@ -50,6 +50,9 @@ try {
     // Force storage path to /tmp for Vercel
     $app->useStoragePath('/tmp/storage');
     
+    // Explicitly set the Facade application to ensure aliases like Route work in Blade
+    \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
+    
     // Ensure critical env vars are set BEFORE handling
     putenv('SESSION_DRIVER=cookie');
     putenv('CACHE_STORE=array');
