@@ -16,4 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
+    ->registered(function ($app) {
+        if (env('VERCEL')) {
+            if (!class_exists('Route')) {
+                class_alias(\Illuminate\Support\Facades\Route::class, 'Route');
+            }
+            if (!class_exists('URL')) {
+                class_alias(\Illuminate\Support\Facades\URL::class, 'URL');
+            }
+            if (!class_exists('Config')) {
+                class_alias(\Illuminate\Support\Facades\Config::class, 'Config');
+            }
+        }
+    })
     ->create();
