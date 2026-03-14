@@ -19,16 +19,17 @@ class AdminAuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $configured = (string) (config('admin.password') ?? '');
+        $configured = trim((string) (config('admin.password') ?? ''));
 
         if ($configured === '') {
-            return back()->with('error', 'ADMIN_PASSWORD belum dikonfigurasi.')->withInput();
+            return back()->with('error', 'ADMIN_PASSWORD belum dikonfigurasi di Environment Variable Vercel.')->withInput();
         }
 
         $provided = (string) $request->input('password');
 
         $ok = false;
 
+        // Support both hashed (bcrypt/argon) and plain text passwords
         if (str_starts_with($configured, '$2y$') || str_starts_with($configured, '$2a$') || str_starts_with($configured, '$argon2')) {
             $ok = Hash::check($provided, $configured);
         } else {
@@ -36,7 +37,7 @@ class AdminAuthController extends Controller
         }
 
         if (! $ok) {
-            return back()->with('error', 'Password admin salah.')->withInput();
+            return back()->with('error', 'Password admin salah. Pastikan ADMIN_PASSWORD di Vercel Dashboard sudah benar (saat ini terisi ' . strlen($configured) . ' karakter).')->withInput();
         }
 
         if ($request->hasSession()) {
