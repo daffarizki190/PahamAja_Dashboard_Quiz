@@ -1,65 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Quiz - {{ $quiz->title }}</title>
-    <!-- Tailwind CSS -->
+    <title>Masuk Kuis - {{ $quiz->title }}</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen text-gray-800 p-4">
+<body class="bg-[#F2F2F7] flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-black text-indigo-700 tracking-tight mb-2">Paham<span class="text-indigo-400">Aja</span></h1>
-            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Enterprise Assessment</p>
+    <div class="glass p-8 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-sm">
+        <div class="text-center mb-10">
+            <div class="inline-block p-1 bg-indigo-50 rounded-2xl mb-4">
+                <div class="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1C1C1E] tracking-tight">Paham<span class="text-indigo-600">Aja</span></h1>
+            <p class="text-[#8E8E93] text-sm font-medium mt-1">Sertifikasi & Asesmen</p>
         </div>
 
-        <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6 text-center">
-            <h2 class="text-lg font-semibold text-indigo-900">{{ $quiz->title }}</h2>
-            <div class="mt-2 text-sm text-indigo-700 flex justify-center items-center gap-2">
+        <div class="mb-8 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-[#1C1C1E] font-bold text-base text-center leading-snug">{{ $quiz->title }}</h2>
+            <div class="mt-3 flex justify-center items-center gap-1.5 text-[#8E8E93] text-xs font-semibold">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Time Limit: {{ $quiz->time_limit }} Minutes
+                DURASI: {{ $quiz->time_limit }} MENIT
             </div>
         </div>
 
         @if(session('error'))
-            <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-medium text-center border border-red-200">
+            <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-semibold text-center border border-red-100 flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 {{ session('error') }}
             </div>
         @endif
 
-        <form action="{{ route('quiz.join.process', $quiz->slug) }}" method="POST" class="space-y-5">
+        <form action="{{ route('quiz.join.process', $quiz->slug) }}" method="POST" class="space-y-6">
             @csrf
             
-            <div>
-                <label for="nim" class="block text-sm font-medium text-gray-700 mb-1">Student ID (NIM)</label>
-                <input type="text" id="nim" name="nim" required value="{{ old('nim') }}"
-                    class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-gray-400"
-                    placeholder="e.g. 10101001">
+            <div class="space-y-2">
+                <label for="nim" class="block text-xs font-bold text-[#8E8E93] uppercase tracking-wider px-1">Nomor Induk Karyawan (NIK)</label>
+                <div class="relative group">
+                    <input type="text" id="nim" name="nim" required autofocus
+                        class="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all placeholder-[#C7C7CC] text-[#1C1C1E] font-medium"
+                        placeholder="Masukkan NIK Anda">
+                </div>
                 @error('nim')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input type="text" id="name" name="name" required value="{{ old('name') }}"
-                    class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-gray-400"
-                    placeholder="Enter your full name">
-                @error('name')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-red-600 font-medium px-1">{{ $message }}</p>
                 @enderror
             </div>
 
             <button type="submit" 
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 px-4 rounded-xl shadow-lg shadow-indigo-100 transition duration-200 mt-4 focus:ring-4 focus:ring-indigo-200 uppercase text-xs tracking-widest">
-                Start Assessment
+                class="group w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-6 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl hover:shadow-indigo-100 mt-2">
+                <span class="flex items-center justify-center gap-2">
+                    Mulai Ujian
+                    <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </span>
             </button>
             
-            <div class="text-center mt-6">
-                <a href="{{ url('/') }}" class="text-slate-400 hover:text-indigo-600 text-xs font-bold uppercase tracking-widest transition-all">
-                    ← Back to Entry
+            <div class="text-center mt-8">
+                <a href="{{ url('/') }}" class="text-[#8E8E93] hover:text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] transition-all py-2 inline-block">
+                    KEMBALI KE BERANDA
                 </a>
             </div>
         </form>

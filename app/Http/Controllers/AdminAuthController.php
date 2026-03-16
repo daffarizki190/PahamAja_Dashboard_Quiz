@@ -25,7 +25,7 @@ class AdminAuthController extends Controller
             return back()->with('error', 'ADMIN_PASSWORD belum dikonfigurasi di Environment Variable Vercel.')->withInput();
         }
 
-        $provided = (string) $request->input('password');
+        $provided = trim((string) $request->input('password'));
 
         $ok = false;
 

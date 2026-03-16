@@ -44,13 +44,36 @@ class FileParserService
         $fullText = '';
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
-                if (method_exists($element, 'getText')) {
-                    $fullText .= $element->getText()."\n";
-                }
+                $fullText .= $this->extractNodeText($element);
             }
         }
 
         return $fullText;
+    }
+
+    /**
+     * Recursively extract text from PhpWord elements.
+     */
+    private function extractNodeText($element): string
+    {
+        $text = '';
+        
+        // Handle elements that have direct text content (like Text elements)
+        if (method_exists($element, 'getText')) {
+            $content = $element->getText();
+            if (is_string($content)) {
+                $text .= $content . "\n";
+            }
+        }
+        
+        // Recurse into child elements (like TextRun, Table, etc.)
+        if (method_exists($element, 'getElements')) {
+            foreach ($element->getElements() as $child) {
+                $text .= $this->extractNodeText($child);
+            }
+        }
+
+        return $text;
     }
 
     /**
@@ -63,8 +86,12 @@ class FileParserService
         foreach ($presentation->getAllSlides() as $slide) {
             foreach ($slide->getShapeCollection() as $shape) {
                 if (method_exists($shape, 'getText')) {
-                    foreach ($shape->getText()->getParagraphs() as $paragraph) {
-                        $fullText .= $paragraph->getRichTextElements()[0]->getText()."\n";
+                    $textObj = $shape->getText();
+                    foreach ($textObj->getParagraphs() as $paragraph) {
+                        foreach ($paragraph->getRichTextElements() as $richText) {
+                            $fullText .= $richText->getText();
+                        }
+                        $fullText .= "\n";
                     }
                 }
             }

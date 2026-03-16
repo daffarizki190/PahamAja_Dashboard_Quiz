@@ -38,7 +38,8 @@ class AiQuizController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,docx,pptx|max:10240',
+            'file' => 'nullable|file|mimes:pdf,docx,pptx|max:10240',
+            'content_text' => 'nullable|string|min:100',
             'question_count' => 'required|integer|min:1|max:20',
             'difficulty' => 'required|in:Easy,Medium,Hard',
             'time_limit' => 'required|integer|min:1',
@@ -47,11 +48,19 @@ class AiQuizController extends Controller
         ]);
 
         try {
-            $file = $request->file('file');
-            $text = $this->fileParser->parseFile($file->getPathname(), $file->getClientOriginalExtension());
+            $text = '';
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $text = $this->fileParser->parseFile($file->getPathname(), $file->getClientOriginalExtension());
+            } elseif ($request->filled('content_text')) {
+                $text = (string) $request->input('content_text');
+            } else {
+                throw new Exception('Please provide either a document or paste some text.');
+            }
 
             if (empty(trim($text))) {
-                throw new Exception('Could not extract any text from the document.');
+                throw new Exception('Could not extract or read any text from the source.');
             }
 
             $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty);

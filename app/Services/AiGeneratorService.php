@@ -19,7 +19,10 @@ class AiGeneratorService
         }
 
         $this->apiKey = $apiKey;
-        $this->model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', 'gemini-1.5-flash'));
+        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', 'gemini-1.5-flash'));
+        // Ensure model name doesn't have 'models/' prefix twice if concatenated in the URL
+        // Ensure model name is clean for the URL interpolation
+        $this->model = trim(preg_replace('/^models\//', '', $model));
     }
 
     /**
@@ -34,7 +37,7 @@ class AiGeneratorService
         $response = Http::timeout(90)
             ->withQueryParameters(['key' => $this->apiKey])
             ->acceptJson()
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent", [
+            ->post("https://generativelanguage.googleapis.com/v1/models/{$this->model}:generateContent", [
                 'contents' => [
                     [
                         'role' => 'user',

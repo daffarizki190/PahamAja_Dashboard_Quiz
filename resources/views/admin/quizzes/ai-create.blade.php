@@ -158,22 +158,40 @@
                         </div>
 
                         <div class="card-enterprise rounded-2xl p-8">
-                            <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center justify-between mb-8">
                                 <div>
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Source</p>
-                                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Upload Dokumen</h3>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Source Material</p>
+                                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight" id="source-title">Input Sumber Soal</h3>
                                 </div>
-                                <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-[10px] font-bold uppercase">Max 10MB</span>
+                                <div class="bg-slate-100 p-1 rounded-xl flex">
+                                    <button type="button" onclick="switchSource('file')" id="tab-file" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-indigo-600 shadow-sm">FILE</button>
+                                    <button type="button" onclick="switchSource('text')" id="tab-text" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-700">TEKS</button>
+                                </div>
                             </div>
 
-                            <div class="relative group">
-                                <input type="file" name="file" id="file" required accept=".pdf,.docx,.pptx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center group-hover:border-indigo-400 transition-all bg-slate-50">
-                                    <div class="bg-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                                        <svg class="w-7 h-7 text-slate-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <!-- File Upload Section -->
+                            <div id="section-file" class="block">
+                                <div class="relative group">
+                                    <input type="file" name="file" id="file" accept=".pdf,.docx,.pptx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center group-hover:border-indigo-400 transition-all bg-slate-50">
+                                        <div class="bg-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                                            <svg class="w-7 h-7 text-slate-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        </div>
+                                        <p class="text-sm font-extrabold text-slate-800 mb-1" id="file-name">Klik untuk upload atau drag & drop</p>
+                                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">PDF, DOCX, PPTX (MAX 10MB)</p>
                                     </div>
-                                    <p class="text-sm font-extrabold text-slate-800 mb-1" id="file-name">Klik untuk upload atau drag & drop</p>
-                                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">PDF, DOCX, PPTX</p>
+                                </div>
+                            </div>
+
+                            <!-- Paste Text Section -->
+                            <div id="section-text" class="hidden">
+                                <div class="space-y-2">
+                                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Tempel Teks Bahan Kuis</label>
+                                    <textarea name="content_text" id="content_text" rows="8" placeholder="Masukkan atau tempel teks materi kuis di sini (minimal 100 karakter)..." class="w-full field px-6 py-4 rounded-2xl font-medium text-slate-700 placeholder:font-medium placeholder:text-slate-300"></textarea>
+                                </div>
+                                <div class="mt-4 flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest px-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Pastikan teks mencukupi untuk jumlah soal yang diminta.
                                 </div>
                             </div>
                         </div>
@@ -229,6 +247,44 @@
             const fileName = e.target.files[0] ? e.target.files[0].name : 'Klik untuk upload atau drag & drop';
             document.getElementById('file-name').textContent = fileName;
         });
+
+        function switchSource(type) {
+            const sectionFile = document.getElementById('section-file');
+            const sectionText = document.getElementById('section-text');
+            const tabFile = document.getElementById('tab-file');
+            const tabText = document.getElementById('tab-text');
+            const fileInput = document.getElementById('file');
+            const textInput = document.getElementById('content_text');
+
+            if (type === 'file') {
+                sectionFile.classList.remove('hidden');
+                sectionFile.classList.add('block');
+                sectionText.classList.remove('block');
+                sectionText.classList.add('hidden');
+
+                tabFile.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                tabFile.classList.remove('text-slate-500');
+                tabText.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                tabText.classList.add('text-slate-500');
+
+                fileInput.required = true;
+                textInput.required = false;
+            } else {
+                sectionFile.classList.remove('block');
+                sectionFile.classList.add('hidden');
+                sectionText.classList.remove('hidden');
+                sectionText.classList.add('block');
+
+                tabText.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                tabText.classList.remove('text-slate-500');
+                tabFile.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                tabFile.classList.add('text-slate-500');
+
+                fileInput.required = false;
+                textInput.required = true;
+                textInput.focus();
+            }
+        }
     </script>
 </body>
 </html>

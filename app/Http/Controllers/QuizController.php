@@ -34,29 +34,29 @@ class QuizController extends Controller
     public function joinQuiz(Request $request, Quiz $quiz, NameMatchingService $matchingService)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
             'nim' => 'required|string|max:50',
         ]);
 
-        // "AI" Name & NIM Integrity Check
-        $employee = $matchingService->matchParticipant($request->name, $request->nim);
+        // Find employee by NIM
+        $employee = \App\Models\Employee::where('nim', $request->nim)->first();
 
-        // Check if participant already exists for this quiz based on NIM or EmployeeID
+        if (!$employee) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
+        }
+
+        // Check if participant already exists for this quiz based on EmployeeID
         $participant = Participant::where('quiz_id', $quiz->id)
-            ->where(function ($query) use ($request, $employee) {
-                $query->where('nim', $request->nim);
-                if ($employee) {
-                    $query->orWhere('employee_id', $employee->id);
-                }
-            })
+            ->where('employee_id', $employee->id)
             ->first();
 
-        if (! $participant) {
+        if (!$participant) {
             $participant = Participant::create([
                 'quiz_id' => $quiz->id,
-                'employee_id' => $employee?->id,
-                'name' => $employee ? $employee->name : $request->name, // Use registered name if matched
-                'nim' => $employee ? $employee->nim : $request->nim,   // Use registered NIM if matched
+                'employee_id' => $employee->id,
+                'name' => $employee->name,
+                'nim' => $employee->nim,
             ]);
         }
 
