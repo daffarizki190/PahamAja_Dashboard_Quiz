@@ -112,6 +112,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('employees/{employee}', [AdminController::class, 'employeeDestroy'])->name('employees.destroy');
 
     // Participant Management
+    Route::get('quiz/{quiz:slug}/participant/{participant}/answers', [AdminController::class, 'participantAnswers'])
+        ->name('participant.answers');
     Route::delete('quiz/{quiz:slug}/participant/{participant}', [AdminController::class, 'participantDestroy'])
         ->name('participant.destroy');
 

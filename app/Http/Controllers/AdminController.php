@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\EmployeeGrowthExport;
+use App\Models\Answer;
 use App\Models\Employee;
 use App\Models\Participant;
 use App\Models\Question;
@@ -323,6 +324,32 @@ class AdminController extends Controller
         $employee->delete();
 
         return redirect()->route('admin.employees.index')->with('success', 'Employee removed from master list.');
+    }
+
+    public function participantAnswers(Quiz $quiz, Participant $participant)
+    {
+        if ($participant->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        $quiz->load('questions.options');
+        $answers = Answer::where('participant_id', $participant->id)->get();
+        $answersByQuestion = $answers->keyBy('question_id');
+
+        $rows = $quiz->questions->map(function ($question) use ($answersByQuestion) {
+            $answer = $answersByQuestion->get($question->id);
+            $selectedOption = $answer ? $question->options->firstWhere('id', $answer->option_id) : null;
+            $correctOption = $question->options->firstWhere('is_correct', true);
+
+            return [
+                'question' => (string) $question->text,
+                'selected' => $selectedOption?->text,
+                'correct' => $correctOption?->text,
+                'is_correct' => $selectedOption && $correctOption ? ((string) $selectedOption->id === (string) $correctOption->id) : null,
+            ];
+        })->values();
+
+        return view('admin.participants.answers', compact('quiz', 'participant', 'rows'));
     }
 
     /**

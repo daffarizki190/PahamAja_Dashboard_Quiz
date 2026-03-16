@@ -37,7 +37,7 @@ class AiGeneratorService
         $response = Http::timeout(90)
             ->withQueryParameters(['key' => $this->apiKey])
             ->acceptJson()
-            ->post("https://generativelanguage.googleapis.com/v1/models/{$this->model}:generateContent", [
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent", [
                 'contents' => [
                     [
                         'role' => 'user',

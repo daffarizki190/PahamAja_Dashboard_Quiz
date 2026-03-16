@@ -70,9 +70,27 @@
                 @endif
             </div>
 
+            @if(isset($attempts) && $attempts->count() > 1)
+                <div class="bg-white rounded-[1.75rem] shadow-lg border border-gray-100 p-6 mx-auto mb-8 text-left">
+                    <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Riwayat Nilai</p>
+                    <div class="space-y-3">
+                        @foreach($attempts as $a)
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm font-bold text-[#1C1C1E]">
+                                    Percobaan {{ $a->attempt ?? $loop->iteration }}
+                                </div>
+                                <div class="text-sm font-black text-[#1C1C1E]">
+                                    {{ $a->score }}<span class="text-[#8E8E93] font-extrabold">/100</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <div class="space-y-4">
-                <a href="{{ url('/') }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl">
-                    Selesai & Keluar
+                <a href="{{ route('quiz.join', $quiz->slug) }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl">
+                    Finish
                 </a>
             </div>
         </div>

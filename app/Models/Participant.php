@@ -17,6 +17,7 @@ class Participant extends Model
         'name',
         'nim',
         'score',
+        'attempt',
     ];
 
     /**

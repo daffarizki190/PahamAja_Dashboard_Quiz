@@ -47,25 +47,26 @@ class QuizController extends Controller
                 ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
         }
 
-        // Check if participant already exists for this quiz based on EmployeeID
-        $participant = Participant::where('quiz_id', $quiz->id)
+        $inProgress = Participant::where('quiz_id', $quiz->id)
             ->where('employee_id', $employee->id)
+            ->whereNull('score')
             ->first();
 
-        if (! $participant) {
-            $participant = Participant::create([
-                'quiz_id' => $quiz->id,
-                'employee_id' => $employee->id,
-                'name' => $employee->name,
-                'nim' => $employee->nim,
-            ]);
+        if ($inProgress) {
+            return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
         }
 
-        // If they already have a score, they've finished.
-        if (! is_null($participant->score)) {
-            return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id])
-                ->with('error', 'You have already completed this quiz.');
-        }
+        $attemptNumber = Participant::where('quiz_id', $quiz->id)
+            ->where('employee_id', $employee->id)
+            ->count() + 1;
+
+        $participant = Participant::create([
+            'quiz_id' => $quiz->id,
+            'employee_id' => $employee->id,
+            'name' => $employee->name,
+            'nim' => $employee->nim,
+            'attempt' => $attemptNumber,
+        ]);
 
         return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
     }
@@ -159,7 +160,13 @@ class QuizController extends Controller
             abort(403);
         }
 
-        return view('quiz.result', compact('quiz', 'participant'));
+        $attempts = Participant::where('quiz_id', $quiz->id)
+            ->where('employee_id', $participant->employee_id)
+            ->whereNotNull('score')
+            ->orderBy('created_at')
+            ->get(['score', 'created_at', 'attempt']);
+
+        return view('quiz.result', compact('quiz', 'participant', 'attempts'));
     }
 
     /**
