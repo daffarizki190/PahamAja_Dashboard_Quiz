@@ -175,6 +175,7 @@ class AiGeneratorService
                 'generationConfig' => [
                     'temperature' => 0.2,
                     'maxOutputTokens' => 2048,
+                    'responseMimeType' => 'application/json',
                 ],
             ]);
     }
@@ -202,10 +203,23 @@ class AiGeneratorService
         $questions = json_decode($jsonContent, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('Failed to decode AI response as JSON: '.json_last_error_msg());
+            $questions = json_decode($this->normalizeJson($jsonContent), true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Failed to decode AI response as JSON: '.json_last_error_msg());
+            }
         }
 
         return $questions;
+    }
+
+    private function normalizeJson(string $json): string
+    {
+        $normalized = trim($json);
+        $normalized = str_replace(["\u{201C}", "\u{201D}", "\u{201E}", "\u{00AB}", "\u{00BB}"], '"', $normalized);
+        $normalized = str_replace(["\u{2018}", "\u{2019}", "\u{201A}"], "'", $normalized);
+        $normalized = preg_replace('/,\s*([\]}])/m', '$1', $normalized) ?? $normalized;
+
+        return $normalized;
     }
 
     private function pickFallbackModel(): ?string
