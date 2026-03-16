@@ -57,23 +57,85 @@ class FileParserService
     private function extractNodeText($element): string
     {
         $text = '';
-        
-        // Handle elements that have direct text content (like Text elements)
-        if (method_exists($element, 'getText')) {
-            $content = $element->getText();
-            if (is_string($content)) {
-                $text .= $content . "\n";
+
+        if (is_object($element) && is_callable([$element, 'getText'])) {
+            try {
+                $text .= $this->extractTextContent($element->getText());
+            } catch (\Throwable) {
             }
         }
-        
-        // Recurse into child elements (like TextRun, Table, etc.)
-        if (method_exists($element, 'getElements')) {
-            foreach ($element->getElements() as $child) {
-                $text .= $this->extractNodeText($child);
+
+        if (is_object($element) && is_callable([$element, 'getElements'])) {
+            try {
+                $children = $element->getElements();
+                if (is_iterable($children)) {
+                    foreach ($children as $child) {
+                        $text .= $this->extractNodeText($child);
+                    }
+                }
+            } catch (\Throwable) {
             }
         }
 
         return $text;
+    }
+
+    private function extractTextContent($content): string
+    {
+        if (is_null($content)) {
+            return '';
+        }
+
+        if (is_string($content) || is_numeric($content)) {
+            $value = trim((string) $content);
+
+            return $value === '' ? '' : $value."\n";
+        }
+
+        if (is_array($content)) {
+            $text = '';
+            foreach ($content as $item) {
+                $text .= $this->extractTextContent($item);
+            }
+
+            return $text;
+        }
+
+        if (is_object($content)) {
+            if (is_callable([$content, 'getElements'])) {
+                try {
+                    $children = $content->getElements();
+                    if (! is_iterable($children)) {
+                        return '';
+                    }
+
+                    $text = '';
+                    foreach ($children as $child) {
+                        $text .= $this->extractNodeText($child);
+                    }
+
+                    return $text;
+                } catch (\Throwable) {
+                    return '';
+                }
+            }
+
+            if (is_callable([$content, 'getText'])) {
+                try {
+                    return $this->extractTextContent($content->getText());
+                } catch (\Throwable) {
+                    return '';
+                }
+            }
+
+            if (method_exists($content, '__toString')) {
+                $value = trim((string) $content);
+
+                return $value === '' ? '' : $value."\n";
+            }
+        }
+
+        return '';
     }
 
     /**

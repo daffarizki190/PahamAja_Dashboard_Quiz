@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\QuizExport;
 use App\Models\Answer;
+use App\Models\Employee;
 use App\Models\Participant;
 use App\Models\Quiz;
 use App\Services\NameMatchingService;
@@ -38,9 +39,9 @@ class QuizController extends Controller
         ]);
 
         // Find employee by NIM
-        $employee = \App\Models\Employee::where('nim', $request->nim)->first();
+        $employee = Employee::where('nim', $request->nim)->first();
 
-        if (!$employee) {
+        if (! $employee) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
@@ -51,7 +52,7 @@ class QuizController extends Controller
             ->where('employee_id', $employee->id)
             ->first();
 
-        if (!$participant) {
+        if (! $participant) {
             $participant = Participant::create([
                 'quiz_id' => $quiz->id,
                 'employee_id' => $employee->id,

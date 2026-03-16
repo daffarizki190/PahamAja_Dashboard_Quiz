@@ -37,7 +37,7 @@ class AdminAuthController extends Controller
         }
 
         if (! $ok) {
-            return back()->with('error', 'Password admin salah. Pastikan ADMIN_PASSWORD di Vercel Dashboard sudah benar (saat ini terisi ' . strlen($configured) . ' karakter).')->withInput();
+            return back()->with('error', 'Password admin salah. Pastikan ADMIN_PASSWORD di Vercel Dashboard sudah benar (saat ini terisi '.strlen($configured).' karakter).')->withInput();
         }
 
         if ($request->hasSession()) {
