@@ -225,6 +225,22 @@ class AiGeneratorService
             ->values();
 
         $preferred = $candidates->first(function ($name) {
+            return str_contains($name, 'gemini-2.5-flash');
+        });
+
+        if ($preferred) {
+            return $preferred;
+        }
+
+        $preferred = $candidates->first(function ($name) {
+            return str_contains($name, 'gemini-2.0-flash');
+        });
+
+        if ($preferred) {
+            return $preferred;
+        }
+
+        $preferred = $candidates->first(function ($name) {
             return str_contains($name, 'gemini-1.5-flash');
         });
 
