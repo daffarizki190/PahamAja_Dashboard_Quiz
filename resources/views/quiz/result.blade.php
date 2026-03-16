@@ -1,64 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Result - {{ $quiz->title }}</title>
-    <!-- Tailwind CSS -->
+    <title>Hasil Ujian - {{ $quiz->title }}</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+<body class="bg-[#F2F2F7] flex items-center justify-center min-h-screen p-6">
 
-    <div class="bg-white p-8 md:p-10 rounded-2xl shadow-xl w-full max-w-lg border border-gray-100 text-center relative overflow-hidden">
+    <div class="glass-card p-10 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-lg text-center relative overflow-hidden">
         
-        <!-- Decorative Header Background -->
-        <div class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-2xl z-0"></div>
+        <!-- Apple-style Gradient Background Accessory -->
+        <div class="absolute top-0 left-0 right-0 h-40 bg-gradient-to-br {{ $participant->score >= 70 ? 'from-green-400 to-emerald-600' : ($participant->score >= 50 ? 'from-orange-300 to-amber-500' : 'from-rose-400 to-red-600') }} opacity-90 z-0"></div>
 
-        <div class="relative z-10 pt-6">
+        <div class="relative z-10 pt-4">
             @if(session('success'))
-                <div class="inline-block bg-green-100 text-green-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-6 shadow-sm border border-green-200">
+                <div class="inline-block bg-white/20 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-8 border border-white/30">
                     {{ session('success') }}
                 </div>
             @endif
 
-            <h1 class="text-3xl font-bold text-white mb-8 drop-shadow-md">Quiz Completed!</h1>
+            <h1 class="text-3xl font-black text-white mb-10 drop-shadow-lg tracking-tight">Ujian Selesai!</h1>
             
-            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mx-auto -mt-4 relative mb-6">
-                <p class="text-gray-500 text-sm font-medium mb-1 uppercase tracking-wider">Your Score</p>
+            <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 mx-auto -mt-4 relative mb-10 group">
+                <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Skor Akhir Anda</p>
                 
-                <div class="text-6xl font-black {{ $participant->score >= 70 ? 'text-green-500' : ($participant->score >= 50 ? 'text-yellow-500' : 'text-red-500') }} my-4">
-                    {{ $participant->score ?? 0 }}<span class="text-3xl text-gray-300">/100</span>
+                <div class="relative inline-block">
+                    <div class="text-[5rem] font-black leading-none tracking-tighter {{ $participant->score >= 70 ? 'text-emerald-500' : ($participant->score >= 50 ? 'text-amber-500' : 'text-rose-500') }} transition-transform group-hover:scale-105 duration-500">
+                        {{ $participant->score ?? 0 }}<span class="text-2xl text-[#C7C7CC] ml-1 font-extrabold">/100</span>
+                    </div>
                 </div>
                 
-                <div class="h-2 w-full bg-gray-100 rounded-full mt-6 mb-2 overflow-hidden">
-                    <div class="h-full {{ $participant->score >= 70 ? 'bg-green-500' : ($participant->score >= 50 ? 'bg-yellow-500' : 'bg-red-500') }} rounded-full" 
+                <div class="h-3 w-full bg-[#F2F2F7] rounded-full mt-10 mb-4 overflow-hidden p-0.5">
+                    <div class="h-full {{ $participant->score >= 70 ? 'bg-emerald-500' : ($participant->score >= 50 ? 'bg-amber-500' : 'bg-rose-500') }} rounded-full transition-all duration-1000 ease-out shadow-sm" 
                          style="width: {{ $participant->score ?? 0 }}%"></div>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4 text-left">
+                <div class="mt-8 pt-6 border-t border-[#F2F2F7] grid grid-cols-2 gap-6 text-left">
                     <div>
-                        <p class="text-xs text-gray-400 font-medium">NAME</p>
-                        <p class="font-semibold text-gray-800 truncate">{{ $participant->name }}</p>
+                        <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">NAMA PESERTA</p>
+                        <p class="font-bold text-[#1C1C1E] text-sm truncate uppercase">{{ $participant->name }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 font-medium">NIM</p>
-                        <p class="font-semibold text-gray-800">{{ $participant->nim }}</p>
+                        <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">NOMOR INDUK</p>
+                        <p class="font-bold text-[#1C1C1E] text-sm tracking-tight">{{ $participant->nim }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="text-gray-600 mb-8 mt-4 leading-relaxed text-sm px-4">
+            <div class="text-[#1C1C1E] mb-10 leading-relaxed text-[15px] px-2 font-medium">
                 @if($participant->score !== null && $participant->score >= 70)
-                    Congratulations! Excellent work answering the questions for <span class="font-semibold text-indigo-700">{{ $quiz->title }}</span>.
+                    Luar biasa! Anda telah menyelesaikan <span class="text-indigo-600 font-bold">{{ $quiz->title }}</span> dengan hasil yang sangat memuaskan.
                 @else
-                    Thank you for participating in <span class="font-semibold text-indigo-700">{{ $quiz->title }}</span>. Here is your final result.
+                    Terima kasih telah berpartisipasi dalam <span class="text-indigo-600 font-bold">{{ $quiz->title }}</span>. Hasil ujian Anda telah tersimpan di sistem.
                 @endif
             </div>
 
-            <div class="mt-4">
-                <a href="{{ url('/') }}" class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-colors border border-gray-200">
-                    Back to Home
+            <div class="space-y-4">
+                <a href="{{ url('/') }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl">
+                    Selesai & Keluar
                 </a>
             </div>
         </div>
@@ -66,11 +80,10 @@
 
     @if($participant->score !== null && $participant->score >= 70)
     <script>
-        // Confetti effect for good scores
         window.onload = function() {
-            var duration = 3 * 1000;
+            var duration = 4 * 1000;
             var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            var defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 0 };
 
             function randomInRange(min, max) {
                 return Math.random() * (max - min) + min;
@@ -83,7 +96,7 @@
                     return clearInterval(interval);
                 }
 
-                var particleCount = 50 * (timeLeft / duration);
+                var particleCount = 60 * (timeLeft / duration);
                 
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));

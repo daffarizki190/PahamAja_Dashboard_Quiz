@@ -1,8 +1,9 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use SimpleSoftwareIO\QrCode\QrCodeServiceProvider;
 
 return [
     AppServiceProvider::class,
-    SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
+    QrCodeServiceProvider::class,
 ];

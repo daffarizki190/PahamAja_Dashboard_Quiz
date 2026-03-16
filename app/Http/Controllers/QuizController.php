@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exports\QuizExport;
+use App\Models\Answer;
+use App\Models\Employee;
 use App\Models\Participant;
 use App\Models\Quiz;
+use App\Services\NameMatchingService;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -29,32 +32,32 @@ class QuizController extends Controller
     /**
      * Register the participant and redirect to the quiz taking page.
      */
-    public function joinQuiz(Request $request, Quiz $quiz, \App\Services\NameMatchingService $matchingService)
+    public function joinQuiz(Request $request, Quiz $quiz, NameMatchingService $matchingService)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
             'nim' => 'required|string|max:50',
         ]);
 
-        // "AI" Name & NIM Integrity Check
-        $employee = $matchingService->matchParticipant($request->name, $request->nim);
+        // Find employee by NIM
+        $employee = Employee::where('nim', $request->nim)->first();
 
-        // Check if participant already exists for this quiz based on NIM or EmployeeID
+        if (! $employee) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
+        }
+
+        // Check if participant already exists for this quiz based on EmployeeID
         $participant = Participant::where('quiz_id', $quiz->id)
-            ->where(function($query) use ($request, $employee) {
-                $query->where('nim', $request->nim);
-                if ($employee) {
-                    $query->orWhere('employee_id', $employee->id);
-                }
-            })
+            ->where('employee_id', $employee->id)
             ->first();
 
-        if (!$participant) {
+        if (! $participant) {
             $participant = Participant::create([
                 'quiz_id' => $quiz->id,
-                'employee_id' => $employee?->id,
-                'name' => $employee ? $employee->name : $request->name, // Use registered name if matched
-                'nim' => $employee ? $employee->nim : $request->nim,   // Use registered NIM if matched
+                'employee_id' => $employee->id,
+                'name' => $employee->name,
+                'nim' => $employee->nim,
             ]);
         }
 
@@ -148,20 +151,6 @@ class QuizController extends Controller
     }
 
     /**
-     * Log cheat attempts (tab switching) via AJAX.
-     */
-    public function logCheatAttempt(Request $request, Quiz $quiz, Participant $participant)
-    {
-        if ($participant->quiz_id === $quiz->id) {
-            $participant->increment('cheat_attempts');
-
-            return response()->json(['status' => 'success', 'attempts' => $participant->cheat_attempts]);
-        }
-
-        return response()->json(['status' => 'error'], 403);
-    }
-
-    /**
      * Show the results page.
      */
     public function showResult(Quiz $quiz, Participant $participant)
@@ -218,6 +207,40 @@ class QuizController extends Controller
             'scores' => [$dist['low'], $dist['mid'], $dist['high']],
         ];
 
-        return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount'));
+        $quiz->load('questions.options');
+        $finishedIds = $finishedParticipants->pluck('id')->all();
+        $answers = count($finishedIds) > 0
+            ? Answer::whereIn('participant_id', $finishedIds)->get()
+            : collect();
+
+        $answersByQuestion = $answers->groupBy('question_id');
+
+        $questionAnalytics = $quiz->questions->map(function ($question) use ($finishedParticipants, $answersByQuestion) {
+            $correctOption = $question->options->firstWhere('is_correct', true);
+            $questionAnswers = $answersByQuestion->get($question->id, collect());
+
+            $answeredCount = $questionAnswers->count();
+            $correctCount = $correctOption
+                ? $questionAnswers->where('option_id', $correctOption->id)->count()
+                : 0;
+
+            $distribution = $questionAnswers->countBy('option_id');
+            $topOptionId = $distribution->sortDesc()->keys()->first();
+            $topOptionText = $topOptionId
+                ? (string) optional($question->options->firstWhere('id', $topOptionId))->text
+                : null;
+
+            return [
+                'id' => (string) $question->id,
+                'text' => (string) $question->text,
+                'answered' => $answeredCount,
+                'participants' => $finishedParticipants->count(),
+                'correct' => $correctCount,
+                'correct_rate' => $answeredCount > 0 ? round(($correctCount / $answeredCount) * 100, 1) : null,
+                'top_option' => $topOptionText,
+            ];
+        })->values();
+
+        return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount', 'questionAnalytics'));
     }
 }

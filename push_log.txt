@@ -1,3 +1,0 @@
---- Git Initialization --- 
-Initialized empty Git repository in C:/Users/MyBook Hype AMD/OneDrive/Documents/VS Code Semester 3/Dashboard_Quis/.git/
---- Git Add --- 

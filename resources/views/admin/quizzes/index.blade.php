@@ -3,103 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PahamAja Enterprise - Corporate Intelligence</title>
+    <title>Dashboard - PahamAja</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Outfit', sans-serif;
-            background: #ffffff;
-            color: #0f172a;
-        }
+        body { font-family: 'Inter', sans-serif; background: #f7f7f5; color: #0f172a; }
+        .font-serif { font-family: 'Fraunces', serif; }
         .sidebar {
-            background: #0f172a;
+            background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
             border-right: 1px solid #1e293b;
         }
         .card-enterprise {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 12px 30px -20px rgb(15 23 42 / 0.18);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
         .card-enterprise:hover {
             border-color: #cbd5e1;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 2px 6px 0 rgb(15 23 42 / 0.08), 0 18px 40px -22px rgb(15 23 42 / 0.22);
         }
         .btn-primary {
             background: #4f46e5;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
         .btn-primary:hover {
             background: #4338ca;
             transform: translateY(-1px);
         }
-        .status-badge {
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
         }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.10);
+        }
+        .chip { background: #f8fafc; border: 1px solid #e2e8f0; }
+        .kpi { background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%); }
+        summary::-webkit-details-marker { display: none; }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50/50">
+<body class="min-h-screen">
     <div class="flex">
         <!-- Enterprise Sidebar -->
         <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block z-50">
             <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
+                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-400">Aja</span></h1>
+                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
                 </div>
             </div>
 
             <nav class="space-y-1">
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-xl transition-all">
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-2xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="text-sm font-semibold">Active Assessments</span>
                 </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
+                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-300 hover:bg-white/5 hover:text-white p-3 rounded-2xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-medium">Employee Master Data</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <span class="text-sm font-medium">Growth Reports</span>
+                    <span class="text-sm font-medium">Employee Insights</span>
                 </a>
             </nav>
 
             <div class="absolute bottom-6 left-6 right-6">
-                <div class="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-500/20">
+                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
                     <p class="text-[9px] text-indigo-400 font-black uppercase tracking-widest mb-1">Corporate System</p>
-                    <p class="text-xs font-bold text-white mb-3">Enterprise Version 2.0</p>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[9px] text-indigo-300 font-bold uppercase">System Operational</span>
-                    </div>
+                    <p class="text-xs font-bold text-white mb-3">Admin Panel</p>
+                    <form action="{{ route('admin.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full btn-ghost text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                            Logout
+                        </button>
+                    </form>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-10 max-w-[1600px] mx-auto">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Enterprise Assessment Suite</h2>
-                    <p class="text-slate-500 mt-1 font-medium text-sm">Monitor employee technical competence and knowledge alignment.</p>
+        <main class="flex-1 p-10 flex flex-col min-h-screen">
+            <div class="flex-grow">
+                <header class="mb-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+                    <div>
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                            <span class="chip px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest">Admin</span>
+                            <span>/</span>
+                            <span class="text-slate-600">Dashboard</span>
+                        </div>
+                        <h2 class="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight mt-3">Dashboard</h2>
+                        <p class="text-slate-500 mt-3 font-medium text-sm max-w-2xl">Kelola kuis dan laporan.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-indigo-50 transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span>AI Generator</span>
+                        </a>
+                        <a href="{{ route('admin.quizzes.create') }}" class="btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Buat Kuis</span>
+                        </a>
+                        <form action="{{ route('admin.logout') }}" method="POST" class="md:hidden">
+                            @csrf
+                            <button type="submit" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                
-                <div class="flex items-center gap-4">
-                    <button class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span>Download Summary</span>
-                    </button>
-                    <a href="{{ route('admin.quizzes.create') }}" 
-                       class="btn-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>New Deployment</span>
-                    </a>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                    <div class="card-enterprise kpi rounded-2xl p-6">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Kuis</p>
+                        <div class="mt-2 flex items-end justify-between gap-4">
+                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['quizzes'] }}</p>
+                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Deployments</span>
+                        </div>
+                    </div>
+                    <div class="card-enterprise kpi rounded-2xl p-6">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Participants</p>
+                        <div class="mt-2 flex items-end justify-between gap-4">
+                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['participants'] }}</p>
+                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Entries</span>
+                        </div>
+                    </div>
+                    <div class="card-enterprise kpi rounded-2xl p-6">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Questions</p>
+                        <div class="mt-2 flex items-end justify-between gap-4">
+                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['questions'] }}</p>
+                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Bank</span>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -115,92 +150,124 @@
             </div>
             @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                <!-- Stats Overview -->
-                <div class="bg-white border border-slate-200 p-8 rounded-2xl">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fleet Coverage</p>
-                    <h3 class="text-3xl font-black text-slate-900 mb-6">{{ $quizzes->count() }} Deployments</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center text-sm font-bold">
-                            <span class="text-slate-500">Active Integrity Check</span>
-                            <span class="text-indigo-600">ON</span>
+            <div class="card-enterprise rounded-2xl overflow-hidden">
+                <div class="p-6 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h8a2 2 0 012 2v11a1 1 0 01-1 1H8a2 2 0 01-2-2V6a1 1 0 011-1h2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h7M9 13h7M9 17h7"></path>
+                            </svg>
                         </div>
-                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-indigo-500" style="width: 100%"></div>
+                        <div>
+                            <p class="text-sm font-black text-slate-900 tracking-tight">Daftar Kuis</p>
+                            <p class="text-xs font-semibold text-slate-500">Analytics, export, dan manajemen kuis</p>
                         </div>
                     </div>
+                    <div class="w-full lg:w-[420px]">
+                        <input id="quizSearch" type="text" placeholder="Cari judul kuis..." class="w-full bg-white border border-slate-200 px-4 py-3 rounded-2xl font-medium text-sm focus:outline-none focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600">
+                    </div>
                 </div>
-                <div class="bg-indigo-600 p-8 rounded-2xl text-white shadow-xl shadow-indigo-600/10">
-                    <p class="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Human Capital</p>
-                    <h3 class="text-3xl font-black mb-6">{{ \App\Models\Employee::count() }} Registered</h3>
-                    <p class="text-sm font-medium text-indigo-100 italic leading-relaxed">System using AI normalization to match incoming participant data.</p>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
+                                <th class="px-8 py-5">Kuis</th>
+                                <th class="px-8 py-5">Durasi</th>
+                                <th class="px-8 py-5">Passing</th>
+                                <th class="px-8 py-5">Peserta</th>
+                                <th class="px-8 py-5">Update</th>
+                                <th class="px-8 py-5 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100" id="quizRows">
+                            @forelse($quizzes as $quiz)
+                                <tr class="hover:bg-indigo-50/30 transition-all" data-title="{{ strtolower($quiz->title) }}">
+                                    <td class="px-8 py-5">
+                                        <p class="text-slate-900 font-semibold tracking-tight">{{ $quiz->title }}</p>
+                                        <p class="text-slate-400 text-xs font-semibold">{{ $quiz->slug }}</p>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->time_limit }}m</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->passing_score }}%</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="text-slate-800 font-black">{{ $quiz->participants_count }}</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <span class="text-slate-500 text-sm font-semibold">{{ $quiz->updated_at?->diffForHumans() ?? '-' }}</span>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all">
+                                                Analytics
+                                            </a>
+                                            <details class="relative">
+                                                <summary class="list-none cursor-pointer bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                                                    <span>Actions</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                </summary>
+                                                <div class="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-10">
+                                                    <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Manage</a>
+                                                    <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Export</a>
+                                                    <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" onsubmit="return confirm('Hapus kuis ini?')" class="px-1">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="w-full text-left px-2 py-2 rounded-xl text-sm font-semibold text-rose-700 hover:bg-rose-50">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </details>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-8 py-20 text-center text-slate-400 font-bold italic">Belum ada kuis.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-                <div class="bg-white border border-slate-200 p-8 rounded-2xl">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Average Integrity</p>
-                    <h3 class="text-3xl font-black text-slate-900 mb-6">94.2%</h3>
+            </div>
+
+            <script>
+                const search = document.getElementById('quizSearch');
+                const rows = Array.from(document.querySelectorAll('#quizRows tr[data-title]'));
+
+                const applySearch = () => {
+                    const q = (search.value || '').toLowerCase().trim();
+                    rows.forEach((row) => {
+                        const title = row.getAttribute('data-title') || '';
+                        row.classList.toggle('hidden', q !== '' && !title.includes(q));
+                    });
+                };
+
+            </script>
+        </div>
+
+        <footer class="mt-20 py-12 border-t border-slate-200">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg italic text-white shadow-lg shadow-indigo-200">P</div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 leading-none">PahamAja</h2>
+                        <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">Industrial Grade Assessment</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">&copy; 2026 PahamAja</p>
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-tight">Optimal Compliance</span>
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">System Operational</span>
                     </div>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                @forelse($quizzes as $quiz)
-                <div class="card-enterprise rounded-2xl overflow-hidden flex flex-col">
-                    <div class="p-8 flex-1">
-                        <div class="flex justify-between items-start mb-6">
-                            <div class="status-badge bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg">Internal Training</div>
-                            <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" onsubmit="return confirm('Secure delete this deployment?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="text-slate-300 hover:text-rose-600 transition-all">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <h3 class="text-xl font-bold text-slate-900 mb-2 truncate group-hover:text-indigo-600 transition-all line-clamp-2 h-14 uppercase tracking-tight">{{ $quiz->title }}</h3>
-                        
-                        <div class="flex items-center gap-2 text-slate-500 font-bold text-xs mb-8">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span>Updated {{ $quiz->updated_at?->diffForHumans() ?? 'Just now' }}</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-6">
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Participants</p>
-                                <p class="text-lg font-black text-slate-900">{{ $quiz->participants()->count() }}</p>
-                            </div>
-                            <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Quality Gate</p>
-                                <p class="text-lg font-black text-indigo-600">{{ $quiz->passing_score }}%</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="p-2 grid grid-cols-2 gap-2 bg-slate-50/50 border-t border-slate-100">
-                        <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" 
-                           class="bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold text-xs text-center hover:bg-gray-50 transition-all">
-                            Configure
-                        </a>
-                        <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" 
-                           class="bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs text-center hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/10">
-                            Analytics
-                        </a>
-                    </div>
-                </div>
-                @empty
-                <div class="col-span-full py-32 flex flex-col items-center justify-center text-center">
-                    <div class="bg-gray-100 w-24 h-24 rounded-3xl flex items-center justify-center mb-6 text-slate-300">
-                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">Deploy First Assessment</h3>
-                    <p class="text-slate-500 mt-2 mb-10 max-w-sm font-medium">No professional assessments found in the system. Use the button above to begin.</p>
-                </div>
-                @endforelse
-            </div>
-        </main>
-    </div>
+        </footer>
+    </main>
+</div>
 </body>
 </html>

@@ -38,7 +38,6 @@ class QuizExport implements FromCollection, WithHeadings, WithMapping
             'NIM',
             'Skor',
             'Waktu Pengerjaan',
-            'Pelanggaran (Cheat)',
             'Status (Lulus/Tidak Lulus)',
         ];
     }
@@ -53,7 +52,6 @@ class QuizExport implements FromCollection, WithHeadings, WithMapping
             $participant->nim,
             $participant->score,
             $participant->updated_at->format('Y-m-d H:i:s'),
-            $participant->cheat_attempts.' kali',
             $participant->score >= $this->passingScore ? 'Lulus' : 'Tidak Lulus',
         ];
     }

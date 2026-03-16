@@ -1,50 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Take Quiz - {{ $quiz->title }}</title>
-    <!-- Tailwind CSS -->
+    <title>{{ $quiz->title }} - Ujian</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .glass-nav {
+            background: rgba(251, 251, 253, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+        .option-card:hover { border-color: #6366f1; background-color: #f5f3ff; }
+        .option-card.selected { border-color: #4f46e5; background-color: #eef2ff; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1); }
+    </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800 pb-20">
+<body class="bg-[#F2F2F7] text-[#1C1C1E] pb-32">
 
-    <!-- Sticky Header -->
-    <div class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100 px-4 py-4 md:px-8 flex justify-between items-center">
-        <div>
-            <h1 class="text-lg font-bold text-gray-800 line-clamp-1 truncate max-w-[200px] md:max-w-md">{{ $quiz->title }}</h1>
-            <p class="text-xs text-gray-500">Participant: <span class="font-semibold text-indigo-600">{{ $participant->name }}</span> ({{ $participant->nim }})</p>
-        </div>
-        
-        <!-- Timer Widget -->
-        <div class="bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 flex items-center gap-2">
-            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span id="timerDisplay" class="font-mono font-bold text-indigo-700 tracking-wide">{{ $quiz->time_limit }}:00</span>
+    <!-- Premium Sticky Header -->
+    <div class="sticky top-0 z-50 glass-nav border-b border-[#D1D1D6]/30 px-6 py-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex-1 min-w-0 pr-4">
+                <h1 class="text-sm md:text-base font-bold text-[#1C1C1E] truncate drop-shadow-sm">{{ $quiz->title }}</h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">PESERTA</span>
+                    <p class="text-[11px] font-semibold text-[#8E8E93] truncate">{{ $participant->name }} ({{ $participant->nim }})</p>
+                </div>
+            </div>
+            
+            <!-- Apple-style Timer -->
+            <div class="shrink-0">
+                <div id="timerContainer" class="bg-white/50 border border-gray-200/50 rounded-2xl px-4 py-2 flex items-center gap-2.5 shadow-sm transition-all duration-500">
+                    <div class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" id="timerDot"></div>
+                    <span id="timerDisplay" class="font-mono font-extrabold text-[#1C1C1E] tracking-tighter text-lg leading-none">{{ $quiz->time_limit }}:00</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-6 max-w-3xl">
+    <div class="max-w-3xl mx-auto px-6 pt-10">
         
         <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
             @csrf
 
-            <div class="space-y-6">
+            <div class="space-y-10">
                 @foreach($quiz->questions as $index => $question)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="question-card-{{ $question->id }}">
-                    <!-- Question Header -->
-                    <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 flex items-start gap-3">
-                        <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Q{{ $index + 1 }}</span>
-                        <h3 class="text-base font-medium text-gray-800 mt-0.5 leading-relaxed">{{ $question->text }}</h3>
+                <div class="group" id="question-card-{{ $question->id }}">
+                    <!-- Question Header with Hierarchy -->
+                    <div class="mb-5 flex items-start gap-4">
+                        <span class="shrink-0 w-8 h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
+                            {{ $index + 1 }}
+                        </span>
+                        <h3 class="text-lg md:text-xl font-bold text-[#1C1C1E] leading-tight pt-0.5">
+                            {{ $question->text }}
+                        </h3>
                     </div>
                     
-                    <!-- Options List -->
-                    <div class="p-5 space-y-3">
+                    <!-- Options List: Cleaner Layout -->
+                    <div class="grid gap-3 pl-12">
                         @foreach($question->options as $option)
-                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-indigo-50 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-colors option-label">
+                        <label class="option-card flex items-center p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
                             <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" required
-                                class="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                            <span class="ml-3 text-sm text-gray-700">{{ $option->text }}</span>
+                                class="w-5 h-5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
+                            <span class="ml-4 text-[15px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors">{{ $option->text }}</span>
                         </label>
                         @endforeach
                     </div>
@@ -52,15 +76,13 @@
                 @endforeach
             </div>
 
-            <!-- Submit Button Bar (Sticky at bottom for mobile friendly) -->
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
-                <div class="container mx-auto max-w-3xl flex justify-between items-center">
-                    <div class="text-sm text-gray-500 hidden sm:block">
-                        Make sure to answer all questions before submitting.
-                    </div>
+            <!-- Footer Action Bar -->
+            <div class="fixed bottom-0 left-0 right-0 glass-nav border-t border-[#D1D1D6]/30 p-6 z-40">
+                <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <p class="text-xs font-semibold text-[#8E8E93] uppercase tracking-widest hidden sm:block">Periksa kembali sebelum mengirim</p>
                     <button type="button" onclick="confirmSubmit()" 
-                        class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition duration-200">
-                        Submit Answers
+                        class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98]">
+                        Kirim Jawaban
                     </button>
                     <!-- Actual hidden submit -->
                     <button type="submit" id="actualSubmitBtn" class="hidden"></button>
@@ -70,35 +92,34 @@
         </form>
     </div>
 
-    <!-- UI Enhancements Scripts -->
+    <!-- UI Logic Scripts -->
     <script>
-        // Visual indication for selected options
+        // Visual selection logic
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                // Find all labels in the same question group
                 const groupName = this.getAttribute('name');
                 const radiosInGroup = document.querySelectorAll(`input[name="${groupName}"]`);
                 
-                // Reset styling for all options in group
                 radiosInGroup.forEach(r => {
-                    const label = r.closest('label');
-                    label.classList.remove('bg-indigo-50', 'border-indigo-500', 'ring-1', 'ring-indigo-500');
-                    label.classList.add('border-gray-200');
+                    const card = r.closest('.option-card');
+                    card.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500/20');
+                    card.classList.add('border-gray-100', 'bg-white');
                 });
                 
-                // Add active styling to selected
                 if(this.checked) {
-                    const label = this.closest('label');
-                    label.classList.remove('border-gray-200');
-                    label.classList.add('bg-indigo-50', 'border-indigo-500', 'ring-1', 'ring-indigo-500');
+                    const card = this.closest('.option-card');
+                    card.classList.remove('border-gray-100', 'bg-white');
+                    card.classList.add('selected', 'border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500/20');
                 }
             });
         });
 
-        // Simple Timer Logic
+        // HIG-style Timer Logic
         let timeInMinutes = {{ $quiz->time_limit }};
         let timeInSeconds = timeInMinutes * 60;
         const timerDisplay = document.getElementById('timerDisplay');
+        const timerContainer = document.getElementById('timerContainer');
+        const timerDot = document.getElementById('timerDot');
 
         const timerInterval = setInterval(() => {
             timeInSeconds--;
@@ -106,65 +127,35 @@
             let minutes = Math.floor(timeInSeconds / 60);
             let seconds = timeInSeconds % 60;
             
-            // Format to MM:SS
             timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // Warning color when under 2 minutes
+            // Critical warning state (HIG: Clear feedback)
             if (timeInSeconds <= 120 && timeInSeconds > 0) {
-                timerDisplay.parentElement.classList.remove('bg-indigo-50', 'border-indigo-100');
-                timerDisplay.parentElement.classList.add('bg-red-50', 'border-red-200');
-                timerDisplay.classList.remove('text-indigo-700');
-                timerDisplay.classList.add('text-red-700', 'animate-pulse');
+                timerContainer.classList.remove('bg-white/50', 'border-gray-200/50');
+                timerContainer.classList.add('bg-red-50/80', 'border-red-200');
+                timerDisplay.classList.add('text-red-600', 'animate-pulse');
+                timerDot.classList.remove('bg-indigo-600');
+                timerDot.classList.add('bg-red-600');
             }
 
-            // Time's up
             if (timeInSeconds <= 0) {
                 clearInterval(timerInterval);
-                alert("Time is up! Submitting your answers current progress.");
                 document.getElementById('quizForm').submit();
             }
         }, 1000);
 
         function confirmSubmit() {
-            // Check if all questions are answered
             const totalQuestions = {{ $quiz->questions->count() }};
             const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
             
-            if (answeredCount < totalQuestions) {
-                if(confirm(`You have only answered ${answeredCount} out of ${totalQuestions} questions. Are you sure you want to submit?`)) {
-                    document.getElementById('actualSubmitBtn').click();
-                }
-            } else {
-                if(confirm('Are you sure you want to submit your final answers?')) {
-                    document.getElementById('actualSubmitBtn').click();
-                }
+            let message = answeredCount < totalQuestions 
+                ? `Anda baru menjawab ${answeredCount} dari ${totalQuestions} soal. Tetap kirim?`
+                : 'Apakah Anda yakin ingin mengirim jawaban sekarang?';
+
+            if(confirm(message)) {
+                document.getElementById('actualSubmitBtn').click();
             }
         }
-
-        // Anti-Cheat: Tab Switching Detection
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                console.warn('Violation detected: Tab switched/minimized');
-                
-                // Send violation log to backend using Fetch API
-                fetch("{{ route('admin.quiz.cheat', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        console.log('Cheat attempt logged. Total:', data.attempts);
-                        // Optional: Show warning to student
-                        alert('Warning! Tab switching is detected and recorded. Please stay on this page.');
-                    }
-                })
-                .catch(error => console.error('Error logging cheat attempt:', error));
-            }
-        });
     </script>
 </body>
 </html>

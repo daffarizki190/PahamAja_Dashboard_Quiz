@@ -11,17 +11,12 @@ class Participant extends Model
 {
     use HasFactory;
 
-    protected $attributes = [
-        'cheat_attempts' => 0,
-    ];
-
     protected $fillable = [
         'quiz_id',
-        'employee_id', // Link to master employee record
+        'employee_id',
         'name',
         'nim',
         'score',
-        'cheat_attempts',
     ];
 
     /**
