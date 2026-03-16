@@ -192,24 +192,7 @@ class AiGeneratorService
             throw new Exception('AI returned an empty response.');
         }
 
-        $jsonStart = strpos($responseBody, '[');
-        $jsonEnd = strrpos($responseBody, ']') + 1;
-
-        if ($jsonStart === false || $jsonEnd === false) {
-            throw new Exception('AI failed to return a valid JSON array of questions.');
-        }
-
-        $jsonContent = substr($responseBody, $jsonStart, $jsonEnd - $jsonStart);
-        $questions = json_decode($jsonContent, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $questions = json_decode($this->normalizeJson($jsonContent), true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception('Failed to decode AI response as JSON: '.json_last_error_msg());
-            }
-        }
-
-        return $questions;
+        return $this->parseQuestionsFromText($responseBody);
     }
 
     private function normalizeJson(string $json): string
@@ -220,6 +203,168 @@ class AiGeneratorService
         $normalized = preg_replace('/,\s*([\]}])/m', '$1', $normalized) ?? $normalized;
 
         return $normalized;
+    }
+
+    private function parseQuestionsFromText(string $text): array
+    {
+        $normalized = $this->normalizeJson($text);
+
+        $decoded = json_decode($normalized, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $questions = $this->extractQuestionsFromDecoded($decoded);
+            if (is_array($questions)) {
+                return $questions;
+            }
+        }
+
+        $arrayJson = $this->extractFirstJsonArray($normalized);
+        if (is_string($arrayJson)) {
+            $decodedArray = json_decode($this->normalizeJson($arrayJson), true);
+            if (json_last_error() === JSON_ERROR_NONE && $this->looksLikeQuestionsArray($decodedArray)) {
+                return $decodedArray;
+            }
+        }
+
+        $objectJson = $this->extractFirstJsonObject($normalized);
+        if (is_string($objectJson)) {
+            $decodedObject = json_decode($this->normalizeJson($objectJson), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $questions = $this->extractQuestionsFromDecoded($decodedObject);
+                if (is_array($questions)) {
+                    return $questions;
+                }
+            }
+        }
+
+        $tail = mb_substr($normalized, 0, 600);
+        throw new Exception('Failed to decode AI response as JSON: Syntax error. Cuplikan respons: '.trim($tail));
+    }
+
+    private function extractQuestionsFromDecoded($decoded): ?array
+    {
+        if ($this->looksLikeQuestionsArray($decoded)) {
+            return $decoded;
+        }
+
+        if (is_array($decoded)) {
+            foreach (['questions', 'data', 'items', 'result'] as $key) {
+                if (isset($decoded[$key]) && $this->looksLikeQuestionsArray($decoded[$key])) {
+                    return $decoded[$key];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function looksLikeQuestionsArray($value): bool
+    {
+        if (! is_array($value) || count($value) === 0) {
+            return false;
+        }
+
+        $first = $value[0] ?? null;
+        if (! is_array($first)) {
+            return false;
+        }
+
+        if (! array_key_exists('text', $first) || ! array_key_exists('options', $first)) {
+            return false;
+        }
+
+        return is_array($first['options']);
+    }
+
+    private function extractFirstJsonArray(string $text): ?string
+    {
+        $start = strpos($text, '[');
+        if ($start === false) {
+            return null;
+        }
+
+        $depth = 0;
+        $inString = false;
+        $escape = false;
+        $len = strlen($text);
+
+        for ($i = $start; $i < $len; $i++) {
+            $ch = $text[$i];
+
+            if ($inString) {
+                if ($escape) {
+                    $escape = false;
+                } elseif ($ch === '\\') {
+                    $escape = true;
+                } elseif ($ch === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($ch === '"') {
+                $inString = true;
+
+                continue;
+            }
+
+            if ($ch === '[') {
+                $depth++;
+            } elseif ($ch === ']') {
+                $depth--;
+                if ($depth === 0) {
+                    return substr($text, $start, $i - $start + 1);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function extractFirstJsonObject(string $text): ?string
+    {
+        $start = strpos($text, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        $depth = 0;
+        $inString = false;
+        $escape = false;
+        $len = strlen($text);
+
+        for ($i = $start; $i < $len; $i++) {
+            $ch = $text[$i];
+
+            if ($inString) {
+                if ($escape) {
+                    $escape = false;
+                } elseif ($ch === '\\') {
+                    $escape = true;
+                } elseif ($ch === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($ch === '"') {
+                $inString = true;
+
+                continue;
+            }
+
+            if ($ch === '{') {
+                $depth++;
+            } elseif ($ch === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    return substr($text, $start, $i - $start + 1);
+                }
+            }
+        }
+
+        return null;
     }
 
     private function pickFallbackModel(): ?string
@@ -275,6 +420,11 @@ The output MUST be a valid JSON array of objects. Each object must have:
 - "options": An array of at least 4 objects, each with:
     - "text": The option string.
     - "is_correct": A boolean (true for exactly one correct option, false otherwise).
+
+Rules:
+- Return ONLY a JSON array, no markdown, no code fences.
+- Use double quotes for all JSON keys/strings.
+- Do not use trailing commas.
 
 Source Material:
 {$content}
