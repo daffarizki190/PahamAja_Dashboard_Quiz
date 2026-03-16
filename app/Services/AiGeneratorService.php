@@ -34,55 +34,66 @@ class AiGeneratorService
     {
         $prompt = $this->buildPrompt($text, $questionCount, $difficulty);
 
-        $response = Http::timeout(90)
-            ->withQueryParameters(['key' => $this->apiKey])
-            ->acceptJson()
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent", [
-                'contents' => [
-                    [
-                        'role' => 'user',
-                        'parts' => [
-                            ['text' => $prompt],
-                        ],
-                    ],
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.2,
-                    'maxOutputTokens' => 2048,
-                ],
-            ]);
+        $response = $this->requestGenerateContent($this->model, $prompt);
 
         if (! $response->successful()) {
             $message = $response->json('error.message') ?: 'Gemini request failed.';
+
+            if ($response->status() === 404) {
+                $fallbackModel = $this->pickFallbackModel();
+                if ($fallbackModel) {
+                    $retry = $this->requestGenerateContent($fallbackModel, $prompt);
+                    if ($retry->successful()) {
+                        return $this->extractQuestionsFromResponse($retry);
+                    }
+                }
+
+                $models = $this->listAvailableModels();
+                if (count($models) === 0) {
+                    throw new Exception('Gemini API Key tidak memiliki akses model text. Pastikan Generative Language API aktif dan billing/akses Gemini sudah tersedia.');
+                }
+
+                $modelNames = collect($models)->pluck('name')->take(10)->implode(', ');
+                throw new Exception('Model Gemini tidak tersedia untuk API key ini. Model tersedia (contoh): '.$modelNames);
+            }
+
             throw new Exception($message.' (HTTP '.$response->status().')');
         }
 
-        $parts = $response->json('candidates.0.content.parts') ?? [];
-        $responseBody = collect($parts)
-            ->pluck('text')
-            ->filter()
-            ->implode("\n");
+        return $this->extractQuestionsFromResponse($response);
+    }
 
-        if ($responseBody === '') {
-            throw new Exception('AI returned an empty response.');
+    public function listAvailableModels(): array
+    {
+        $response = Http::timeout(30)
+            ->withQueryParameters(['key' => $this->apiKey])
+            ->acceptJson()
+            ->get('https://generativelanguage.googleapis.com/v1beta/models');
+
+        if (! $response->successful()) {
+            return [];
         }
 
-        // Extract JSON from response if there's any markdown wrapping
-        $jsonStart = strpos($responseBody, '[');
-        $jsonEnd = strrpos($responseBody, ']') + 1;
-
-        if ($jsonStart === false || $jsonEnd === false) {
-            throw new Exception('AI failed to return a valid JSON array of questions.');
+        $models = $response->json('models') ?? [];
+        if (! is_array($models)) {
+            return [];
         }
 
-        $jsonContent = substr($responseBody, $jsonStart, $jsonEnd - $jsonStart);
-        $questions = json_decode($jsonContent, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('Failed to decode AI response as JSON: '.json_last_error_msg());
-        }
-
-        return $questions;
+        return collect($models)
+            ->map(function ($m) {
+                return [
+                    'name' => (string) ($m['name'] ?? ''),
+                    'displayName' => (string) ($m['displayName'] ?? ''),
+                    'supportedGenerationMethods' => $m['supportedGenerationMethods'] ?? [],
+                    'inputTokenLimit' => $m['inputTokenLimit'] ?? null,
+                    'outputTokenLimit' => $m['outputTokenLimit'] ?? null,
+                ];
+            })
+            ->filter(function ($m) {
+                return $m['name'] !== '';
+            })
+            ->values()
+            ->all();
     }
 
     public function qualityCheck(array $questions): array
@@ -145,6 +156,79 @@ class AiGeneratorService
         }
 
         return $result;
+    }
+
+    private function requestGenerateContent(string $model, string $prompt)
+    {
+        return Http::timeout(90)
+            ->withQueryParameters(['key' => $this->apiKey])
+            ->acceptJson()
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.2,
+                    'maxOutputTokens' => 2048,
+                ],
+            ]);
+    }
+
+    private function extractQuestionsFromResponse($response): array
+    {
+        $parts = $response->json('candidates.0.content.parts') ?? [];
+        $responseBody = collect($parts)
+            ->pluck('text')
+            ->filter()
+            ->implode("\n");
+
+        if ($responseBody === '') {
+            throw new Exception('AI returned an empty response.');
+        }
+
+        $jsonStart = strpos($responseBody, '[');
+        $jsonEnd = strrpos($responseBody, ']') + 1;
+
+        if ($jsonStart === false || $jsonEnd === false) {
+            throw new Exception('AI failed to return a valid JSON array of questions.');
+        }
+
+        $jsonContent = substr($responseBody, $jsonStart, $jsonEnd - $jsonStart);
+        $questions = json_decode($jsonContent, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Failed to decode AI response as JSON: '.json_last_error_msg());
+        }
+
+        return $questions;
+    }
+
+    private function pickFallbackModel(): ?string
+    {
+        $models = $this->listAvailableModels();
+
+        $candidates = collect($models)
+            ->filter(function ($m) {
+                $methods = $m['supportedGenerationMethods'];
+
+                return is_array($methods) && in_array('generateContent', $methods, true);
+            })
+            ->pluck('name')
+            ->map(function ($name) {
+                return trim(preg_replace('/^models\//', '', (string) $name));
+            })
+            ->values();
+
+        $preferred = $candidates->first(function ($name) {
+            return str_contains($name, 'gemini-1.5-flash');
+        });
+
+        return $preferred ?: $candidates->first();
     }
 
     /**

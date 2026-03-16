@@ -119,4 +119,11 @@ class AiQuizController extends Controller
             return back()->with('error', 'Storage Error: '.$e->getMessage());
         }
     }
+
+    public function aiModels()
+    {
+        $models = $this->aiGenerator->listAvailableModels();
+
+        return view('admin.quizzes.ai-models', compact('models'));
+    }
 }
