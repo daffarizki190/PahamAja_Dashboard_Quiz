@@ -83,6 +83,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
     // AI Quiz Generation Routes
     Route::get('ai-quiz/create', [AiQuizController::class, 'aiCreate'])->name('quizzes.ai-create');
+    Route::get('ai-quiz/generate', function () {
+        return redirect()->route('admin.quizzes.ai-create');
+    });
     Route::post('ai-quiz/generate', [AiQuizController::class, 'aiGenerate'])->name('quizzes.ai-generate');
     Route::post('ai-quiz/store', [AiQuizController::class, 'aiStore'])->name('quizzes.ai-store');
 
