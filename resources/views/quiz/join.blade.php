@@ -73,12 +73,6 @@
                     </svg>
                 </span>
             </button>
-            
-            <div class="text-center mt-8">
-                <a href="{{ url('/') }}" class="text-[#8E8E93] hover:text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] transition-all py-2 inline-block">
-                    KEMBALI KE BERANDA
-                </a>
-            </div>
         </form>
     </div>
 
