@@ -80,7 +80,7 @@
                                     @if($loop->first)
                                         Nilai Saya
                                     @else
-                                        Remidial {{ $loop->iteration - 1 }}
+                                        Remedial {{ $loop->iteration - 1 }}
                                     @endif
                                 </div>
                                 <div class="text-sm font-black text-[#1C1C1E]">
