@@ -69,30 +69,23 @@
                     </a>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl">
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
                         <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">1</div>
-                        <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
-                            <p class="text-sm font-bold text-slate-900">Tahap</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
-                        <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">2</div>
                         <div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Unggah</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-80">
-                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
+                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">2</div>
                         <div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Tinjau</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-70">
-                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">4</div>
+                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
                         <div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Terbitkan</p>
