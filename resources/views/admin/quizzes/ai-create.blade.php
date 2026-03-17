@@ -73,22 +73,22 @@
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
                         <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">1</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Upload</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Unggah</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-80">
                         <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">2</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Review</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Tinjau</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-70">
                         <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Deploy</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Terbitkan</p>
                         </div>
                     </div>
                 </div>
@@ -143,6 +143,13 @@
                                             <option value="Easy" {{ old('difficulty', 'Medium') === 'Easy' ? 'selected' : '' }}>Easy</option>
                                             <option value="Medium" {{ old('difficulty', 'Medium') === 'Medium' ? 'selected' : '' }}>Medium</option>
                                             <option value="Hard" {{ old('difficulty', 'Medium') === 'Hard' ? 'selected' : '' }}>Hard</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Bahasa Soal</label>
+                                        <select name="language" class="w-full field px-6 py-4 rounded-2xl font-bold text-slate-700 appearance-none">
+                                            <option value="id" {{ old('language', 'id') === 'id' ? 'selected' : '' }}>Indonesia</option>
+                                            <option value="en" {{ old('language', 'id') === 'en' ? 'selected' : '' }}>English</option>
                                         </select>
                                     </div>
                                     <div class="space-y-2">

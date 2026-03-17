@@ -42,6 +42,7 @@ class AiQuizController extends Controller
             'content_text' => 'nullable|string|min:100',
             'question_count' => 'required|integer|min:1|max:20',
             'difficulty' => 'required|in:Easy,Medium,Hard',
+            'language' => 'required|in:id,en',
             'time_limit' => 'required|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
             'qc' => 'nullable|boolean',
@@ -64,12 +65,13 @@ class AiQuizController extends Controller
             }
 
             $regenToken = $request->filled('regen_token') ? (string) $request->input('regen_token') : null;
-            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken);
+            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken, (string) $request->language);
             $qc = $request->boolean('qc') ? $this->aiGenerator->qualityCheck($questions) : null;
 
             return view('admin.quizzes.ai-preview', [
                 'title' => $request->title,
                 'difficulty' => $request->difficulty,
+                'language' => (string) $request->language,
                 'time_limit' => $request->time_limit,
                 'passing_score' => $request->passing_score,
                 'question_count' => (int) $request->question_count,

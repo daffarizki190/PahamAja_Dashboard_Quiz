@@ -70,6 +70,9 @@
                     </div>
                     <div class="flex items-center gap-3 h-fit">
                         <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $difficulty }}</span>
+                        @if(isset($language))
+                            <span class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $language === 'en' ? 'EN' : 'ID' }}</span>
+                        @endif
                         <span class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $time_limit }} MIN</span>
                         <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">PASS {{ $passing_score }}</span>
                         @if(isset($source_text) && isset($question_count))
@@ -79,6 +82,7 @@
                                 <textarea name="content_text" class="hidden">{{ $source_text }}</textarea>
                                 <input type="hidden" name="question_count" value="{{ $question_count }}">
                                 <input type="hidden" name="difficulty" value="{{ $difficulty }}">
+                                <input type="hidden" name="language" value="{{ $language ?? 'id' }}">
                                 <input type="hidden" name="time_limit" value="{{ $time_limit }}">
                                 <input type="hidden" name="passing_score" value="{{ $passing_score }}">
                                 <input type="hidden" name="qc" value="{{ !empty($qc_enabled) ? '1' : '0' }}">
@@ -100,22 +104,22 @@
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-90">
                         <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">1</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Upload</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Unggah</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
                         <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">2</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Review</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Tinjau</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-70">
                         <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step</p>
-                            <p class="text-sm font-bold text-slate-900">Deploy</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-sm font-bold text-slate-900">Terbitkan</p>
                         </div>
                     </div>
                 </div>

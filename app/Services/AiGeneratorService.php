@@ -30,9 +30,9 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null): array
+    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id'): array
     {
-        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken);
+        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language);
         $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
 
         $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens);
@@ -436,14 +436,16 @@ class AiGeneratorService
     /**
      * Build the prompt for Gemini.
      */
-    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null): string
+    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id'): string
     {
         $content = $this->limitSourceMaterial($content);
         $regenLine = $regenToken ? "\nRegeneration token: {$regenToken}\n" : "\n";
+        $langLine = $language === 'en' ? 'Output language: English' : 'Output language: Indonesian';
 
         return <<<PROMPT
 You are a professional quiz generator. Based on the provided text, generate exactly {$count} multiple-choice questions.
 Difficulty Level: {$difficulty}
+{$langLine}
 
 The output MUST be a valid JSON array of objects. Each object must have:
 - "text": The question string.
