@@ -20,12 +20,12 @@
         .option-card.selected { border-color: #4f46e5; background-color: #eef2ff; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1); }
     </style>
 </head>
-<body class="bg-[#F2F2F7] text-[#1C1C1E] pb-32">
+<body class="bg-[#F2F2F7] text-[#1C1C1E] pb-40">
 
     <!-- Premium Sticky Header -->
-    <div class="sticky top-0 z-50 glass-nav border-b border-[#D1D1D6]/30 px-6 py-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div class="flex-1 min-w-0 pr-4">
+    <div class="sticky top-0 z-50 glass-nav border-b border-[#D1D1D6]/30 px-4 md:px-6 py-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-3">
+            <div class="flex-1 min-w-0 pr-2">
                 <h1 class="text-sm md:text-base font-bold text-[#1C1C1E] truncate drop-shadow-sm">{{ $quiz->title }}</h1>
                 <div class="flex items-center gap-2 mt-0.5">
                     <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">PESERTA</span>
@@ -37,14 +37,14 @@
             <div class="shrink-0">
                 <div id="timerContainer" class="bg-white/50 border border-gray-200/50 rounded-2xl px-4 py-2 flex items-center gap-2.5 shadow-sm transition-all duration-500">
                     <div class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" id="timerDot"></div>
-                    <span id="timerDisplay" class="font-mono font-extrabold text-[#1C1C1E] tracking-tighter text-lg leading-none">{{ $quiz->time_limit }}:00</span>
+                    <span id="timerDisplay" class="font-mono font-extrabold text-[#1C1C1E] tracking-tighter text-base sm:text-lg leading-none">{{ $quiz->time_limit }}:00</span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-3xl mx-auto px-6 pt-10">
+    <div class="max-w-3xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
         
         <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
             @csrf
@@ -53,22 +53,22 @@
                 @foreach($quiz->questions as $index => $question)
                 <div class="group" id="question-card-{{ $question->id }}">
                     <!-- Question Header with Hierarchy -->
-                    <div class="mb-5 flex items-start gap-4">
-                        <span class="shrink-0 w-8 h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
+                    <div class="mb-5 flex items-start gap-3 md:gap-4">
+                        <span class="shrink-0 w-7 h-7 md:w-8 md:h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-[11px] md:text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
                             {{ $index + 1 }}
                         </span>
-                        <h3 class="text-lg md:text-xl font-bold text-[#1C1C1E] leading-tight pt-0.5">
+                        <h3 class="text-base sm:text-lg md:text-xl font-bold text-[#1C1C1E] leading-tight pt-0.5 break-words">
                             {{ $question->text }}
                         </h3>
                     </div>
                     
                     <!-- Options List: Cleaner Layout -->
-                    <div class="grid gap-3 pl-12">
+                    <div class="grid gap-3 md:pl-12">
                         @foreach($question->options as $option)
-                        <label class="option-card flex items-center p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
+                        <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
                             <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" required
-                                class="w-5 h-5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
-                            <span class="ml-4 text-[15px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors">{{ $option->text }}</span>
+                                class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
+                            <span class="ml-4 text-sm sm:text-[15px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
                         </label>
                         @endforeach
                     </div>
@@ -77,7 +77,7 @@
             </div>
 
             <!-- Footer Action Bar -->
-            <div class="fixed bottom-0 left-0 right-0 glass-nav border-t border-[#D1D1D6]/30 p-6 z-40">
+            <div class="fixed bottom-0 left-0 right-0 glass-nav border-t border-[#D1D1D6]/30 p-4 md:p-6 z-40" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
                 <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p class="text-xs font-semibold text-[#8E8E93] uppercase tracking-widest hidden sm:block">Periksa kembali sebelum mengirim</p>
                     <button type="button" onclick="confirmSubmit()" 
