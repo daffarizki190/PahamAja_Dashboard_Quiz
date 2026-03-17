@@ -26,10 +26,10 @@
     <div class="sticky top-0 z-50 glass-nav border-b border-[#D1D1D6]/30 px-4 md:px-6 py-4">
         <div class="max-w-4xl mx-auto flex justify-between items-center gap-3">
             <div class="flex-1 min-w-0 pr-2">
-                <h1 class="text-sm md:text-base font-bold text-[#1C1C1E] truncate drop-shadow-sm">{{ $quiz->title }}</h1>
+                <h1 class="text-base md:text-lg font-bold text-[#1C1C1E] truncate drop-shadow-sm">{{ $quiz->title }}</h1>
                 <div class="flex items-center gap-2 mt-0.5">
                     <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">PESERTA</span>
-                    <p class="text-[11px] font-semibold text-[#8E8E93] truncate">{{ $participant->name }} ({{ $participant->nim }})</p>
+                    <p class="text-xs md:text-sm font-semibold text-[#8E8E93] truncate">{{ $participant->name }} ({{ $participant->nim }})</p>
                 </div>
             </div>
             
@@ -57,7 +57,7 @@
                         <span class="shrink-0 w-7 h-7 md:w-8 md:h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-[11px] md:text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
                             {{ $index + 1 }}
                         </span>
-                        <h3 class="text-base sm:text-lg md:text-xl font-bold text-[#1C1C1E] leading-tight pt-0.5 break-words">
+                        <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-[#1C1C1E] leading-tight pt-0.5 break-words">
                             {{ $question->text }}
                         </h3>
                     </div>
@@ -68,7 +68,7 @@
                         <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
                             <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" required
                                 class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
-                            <span class="ml-4 text-sm sm:text-[15px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
+                            <span class="ml-4 text-base sm:text-[16px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
                         </label>
                         @endforeach
                     </div>
@@ -90,6 +90,34 @@
             </div>
             
         </form>
+    </div>
+
+    <div id="submitModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" data-modal-backdrop></div>
+        <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+            <div class="w-full max-w-md bg-white rounded-[1.75rem] shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Konfirmasi</p>
+                            <h2 id="submitModalTitle" class="text-xl font-black text-slate-900 tracking-tight">Kirim jawaban sekarang?</h2>
+                            <p id="submitModalMessage" class="text-slate-600 font-semibold text-sm mt-3 leading-relaxed"></p>
+                        </div>
+                        <button type="button" class="shrink-0 w-10 h-10 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all active:scale-95" data-modal-close aria-label="Tutup">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="px-6 pb-6 flex flex-col-reverse sm:flex-row gap-3">
+                    <button type="button" class="w-full sm:w-auto flex-1 bg-white border border-slate-200 text-slate-700 font-black py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]" data-modal-cancel>
+                        Batal
+                    </button>
+                    <button type="button" class="w-full sm:w-auto flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-3.5 px-6 rounded-2xl shadow-lg transition-all active:scale-[0.98]" data-modal-confirm>
+                        Kirim
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- UI Logic Scripts -->
@@ -148,14 +176,50 @@
             const totalQuestions = {{ $quiz->questions->count() }};
             const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
             
-            let message = answeredCount < totalQuestions 
+            const message = answeredCount < totalQuestions
                 ? `Anda baru menjawab ${answeredCount} dari ${totalQuestions} soal. Tetap kirim?`
-                : 'Apakah Anda yakin ingin mengirim jawaban sekarang?';
+                : 'Semua soal sudah terjawab. Kirim jawaban sekarang?';
 
-            if(confirm(message)) {
-                document.getElementById('actualSubmitBtn').click();
-            }
+            openSubmitModal(message);
         }
+
+        const submitModal = document.getElementById('submitModal');
+        const submitModalMessage = document.getElementById('submitModalMessage');
+        const modalConfirm = submitModal?.querySelector('[data-modal-confirm]');
+        const modalCancel = submitModal?.querySelector('[data-modal-cancel]');
+        const modalClose = submitModal?.querySelector('[data-modal-close]');
+        const modalBackdrop = submitModal?.querySelector('[data-modal-backdrop]');
+
+        const openSubmitModal = (message) => {
+            if (!submitModal || !submitModalMessage) return;
+            submitModalMessage.textContent = message;
+            submitModal.classList.remove('hidden');
+            submitModal.setAttribute('aria-hidden', 'false');
+            document.documentElement.classList.add('overflow-hidden');
+            modalConfirm?.focus();
+        };
+
+        const closeSubmitModal = () => {
+            if (!submitModal) return;
+            submitModal.classList.add('hidden');
+            submitModal.setAttribute('aria-hidden', 'true');
+            document.documentElement.classList.remove('overflow-hidden');
+        };
+
+        modalConfirm?.addEventListener('click', () => {
+            closeSubmitModal();
+            document.getElementById('actualSubmitBtn')?.click();
+        });
+
+        modalCancel?.addEventListener('click', closeSubmitModal);
+        modalClose?.addEventListener('click', closeSubmitModal);
+        modalBackdrop?.addEventListener('click', closeSubmitModal);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && submitModal && !submitModal.classList.contains('hidden')) {
+                closeSubmitModal();
+            }
+        });
     </script>
 </body>
 </html>

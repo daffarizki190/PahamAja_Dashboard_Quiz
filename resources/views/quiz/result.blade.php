@@ -77,7 +77,11 @@
                         @foreach($attempts as $a)
                             <div class="flex items-center justify-between">
                                 <div class="text-sm font-bold text-[#1C1C1E]">
-                                    Percobaan {{ $a->attempt ?? $loop->iteration }}
+                                    @if($loop->first)
+                                        Nilai Saya
+                                    @else
+                                        Remidial {{ $loop->iteration - 1 }}
+                                    @endif
                                 </div>
                                 <div class="text-sm font-black text-[#1C1C1E]">
                                     {{ $a->score }}<span class="text-[#8E8E93] font-extrabold">/100</span>
