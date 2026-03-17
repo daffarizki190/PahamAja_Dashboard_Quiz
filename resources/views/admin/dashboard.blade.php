@@ -126,12 +126,21 @@
             
             <div class="relative mb-10 group">
                 <div class="absolute -inset-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] blur-xl opacity-10 group-hover:opacity-20 transition-all duration-500"></div>
-                <div class="relative bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100">
+                <div class="relative bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100" id="qrWrap">
                     {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(180)
                         ->color(15, 23, 42)
                         ->margin(1)
                         ->generate(route('quiz.join', $quiz->slug)) !!}
                 </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3 -mt-4 mb-8">
+                <button type="button" onclick="copyQr()" class="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl text-xs font-black hover:bg-gray-50 transition-all active:scale-95">
+                    Copy QR
+                </button>
+                <button type="button" onclick="downloadQr()" class="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl text-xs font-black hover:bg-gray-50 transition-all active:scale-95">
+                    Download QR
+                </button>
             </div>
             
             <p class="text-slate-400 text-sm font-medium mb-10 leading-relaxed max-w-[200px]">Admit participants via direct entry point or QR.</p>
@@ -139,7 +148,7 @@
             <div class="w-full flex bg-slate-100/50 p-2 rounded-[1.5rem] border border-slate-200">
                 <input type="text" id="quizLink" value="{{ url('/quiz/'.$quiz->slug) }}" 
                        class="flex-1 bg-transparent px-4 py-2 text-xs font-bold text-slate-500 focus:outline-none" readonly>
-                <button onclick="copyLink()" 
+                <button type="button" onclick="copyLink()"
                         class="bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 px-6 py-2.5 rounded-[1.2rem] text-xs font-black transition-all shadow-sm active:scale-95">
                     Copy
                 </button>
@@ -304,6 +313,94 @@
     </div>
     </div>
 </div>
+
+<script>
+    const copyTextToClipboard = async (text) => {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.top = '0';
+        textarea.style.left = '0';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    };
+
+    const getQrSvg = () => {
+        const wrap = document.getElementById('qrWrap');
+        if (!wrap) return null;
+        return wrap.querySelector('svg');
+    };
+
+    const svgToPngBlob = async (svgEl, size = 512) => {
+        const svgData = new XMLSerializer().serializeToString(svgEl);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = url;
+        await img.decode();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+
+        URL.revokeObjectURL(url);
+
+        return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    };
+
+    const copyLink = async () => {
+        const input = document.getElementById('quizLink');
+        if (!input) return;
+        await copyTextToClipboard(input.value);
+    };
+
+    const downloadQr = async () => {
+        const svg = getQrSvg();
+        if (!svg) return;
+
+        const blob = await svgToPngBlob(svg);
+        if (!blob) return;
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'qr-quiz.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    const copyQr = async () => {
+        const svg = getQrSvg();
+        if (!svg) return;
+
+        const blob = await svgToPngBlob(svg);
+        if (!blob) return;
+
+        if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            return;
+        }
+
+        await downloadQr();
+    };
+</script>
 
 <footer class="mt-auto py-12 border-t border-slate-200 bg-white">
     <div class="container mx-auto px-6 max-w-[1500px]">
