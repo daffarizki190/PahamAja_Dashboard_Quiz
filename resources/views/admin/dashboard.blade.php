@@ -35,9 +35,8 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50">
+<body class="bg-slate-50">
 
-<div class="flex-grow">
 <div class="container mx-auto px-6 py-10 max-w-[1500px]">
     
     <!-- Premium Header -->
@@ -402,7 +401,7 @@
     };
 </script>
 
-<footer class="mt-auto py-12 border-t border-slate-200 bg-white">
+<footer class="py-12 border-t border-slate-200 bg-white">
     <div class="container mx-auto px-6 max-w-[1500px]">
         <div class="flex flex-col md:flex-row justify-between items-center gap-8">
             <div class="flex items-center gap-3">
