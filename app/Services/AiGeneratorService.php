@@ -33,8 +33,9 @@ class AiGeneratorService
     public function generateQuestions(string $text, int $questionCount, string $difficulty): array
     {
         $prompt = $this->buildPrompt($text, $questionCount, $difficulty);
+        $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
 
-        $response = $this->requestGenerateContent($this->model, $prompt);
+        $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens);
 
         if (! $response->successful()) {
             $message = $response->json('error.message') ?: 'Gemini request failed.';
@@ -42,9 +43,9 @@ class AiGeneratorService
             if ($response->status() === 404) {
                 $fallbackModel = $this->pickFallbackModel();
                 if ($fallbackModel) {
-                    $retry = $this->requestGenerateContent($fallbackModel, $prompt);
+                    $retry = $this->requestGenerateContent($fallbackModel, $prompt, $maxOutputTokens);
                     if ($retry->successful()) {
-                        return $this->extractQuestionsFromResponse($retry);
+                        return $this->parseQuestionsFromText($this->extractTextFromResponse($retry));
                     }
                 }
 
@@ -60,7 +61,19 @@ class AiGeneratorService
             throw new Exception($message.' (HTTP '.$response->status().')');
         }
 
-        return $this->extractQuestionsFromResponse($response);
+        try {
+            return $this->parseQuestionsFromText($this->extractTextFromResponse($response));
+        } catch (Exception $e) {
+            $finishReason = (string) ($response->json('candidates.0.finishReason') ?? '');
+            if ($finishReason === 'MAX_TOKENS') {
+                $retry = $this->requestGenerateContent($this->pickFallbackModel() ?: $this->model, $prompt, $this->recommendedMaxOutputTokens($questionCount, true));
+                if ($retry->successful()) {
+                    return $this->parseQuestionsFromText($this->extractTextFromResponse($retry));
+                }
+            }
+
+            throw $e;
+        }
     }
 
     public function listAvailableModels(): array
@@ -158,7 +171,7 @@ class AiGeneratorService
         return $result;
     }
 
-    private function requestGenerateContent(string $model, string $prompt)
+    private function requestGenerateContent(string $model, string $prompt, int $maxOutputTokens)
     {
         return Http::timeout(90)
             ->withQueryParameters(['key' => $this->apiKey])
@@ -174,13 +187,13 @@ class AiGeneratorService
                 ],
                 'generationConfig' => [
                     'temperature' => 0.2,
-                    'maxOutputTokens' => 2048,
+                    'maxOutputTokens' => $maxOutputTokens,
                     'responseMimeType' => 'application/json',
                 ],
             ]);
     }
 
-    private function extractQuestionsFromResponse($response): array
+    private function extractTextFromResponse($response): string
     {
         $parts = $response->json('candidates.0.content.parts') ?? [];
         $responseBody = collect($parts)
@@ -192,7 +205,7 @@ class AiGeneratorService
             throw new Exception('AI returned an empty response.');
         }
 
-        return $this->parseQuestionsFromText($responseBody);
+        return $responseBody;
     }
 
     private function normalizeJson(string $json): string
@@ -236,6 +249,10 @@ class AiGeneratorService
             }
         }
 
+        if ($this->looksLikeTruncatedJson($normalized)) {
+            throw new Exception('Failed to decode AI response as JSON: Syntax error. Respons AI terpotong. Coba kurangi jumlah soal atau ringkas materi.');
+        }
+
         $tail = mb_substr($normalized, 0, 600);
         throw new Exception('Failed to decode AI response as JSON: Syntax error. Cuplikan respons: '.trim($tail));
     }
@@ -273,6 +290,16 @@ class AiGeneratorService
         }
 
         return is_array($first['options']);
+    }
+
+    private function looksLikeTruncatedJson(string $text): bool
+    {
+        $trimmed = ltrim($text);
+        if ($trimmed === '' || $trimmed[0] !== '[') {
+            return false;
+        }
+
+        return strpos($trimmed, ']') === false;
     }
 
     private function extractFirstJsonArray(string $text): ?string
@@ -411,6 +438,8 @@ class AiGeneratorService
      */
     private function buildPrompt(string $content, int $count, string $difficulty): string
     {
+        $content = $this->limitSourceMaterial($content);
+
         return <<<PROMPT
 You are a professional quiz generator. Based on the provided text, generate exactly {$count} multiple-choice questions.
 Difficulty Level: {$difficulty}
@@ -425,11 +454,38 @@ Rules:
 - Return ONLY a JSON array, no markdown, no code fences.
 - Use double quotes for all JSON keys/strings.
 - Do not use trailing commas.
+- Keep questions and options concise.
 
 Source Material:
 {$content}
 
 Return ONLY the JSON array. Do not include any explanation or markdown formatting outside the JSON block.
 PROMPT;
+    }
+
+    private function limitSourceMaterial(string $content): string
+    {
+        $maxChars = (int) env('AI_SOURCE_MAX_CHARS', 20000);
+        $trimmed = trim($content);
+
+        if ($maxChars <= 0 || mb_strlen($trimmed) <= $maxChars) {
+            return $trimmed;
+        }
+
+        return mb_substr($trimmed, 0, $maxChars);
+    }
+
+    private function recommendedMaxOutputTokens(int $questionCount, bool $aggressive = false): int
+    {
+        $configured = (int) env('GEMINI_MAX_OUTPUT_TOKENS', 0);
+        if ($configured > 0) {
+            return $configured;
+        }
+
+        $base = $aggressive ? 8192 : 4096;
+        $perQuestion = $aggressive ? 800 : 600;
+        $tokens = $base + ($perQuestion * max(1, $questionCount));
+
+        return min(16384, max(2048, $tokens));
     }
 }
