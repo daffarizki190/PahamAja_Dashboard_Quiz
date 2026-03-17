@@ -82,6 +82,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     // Quiz Management (CRUD)
     Route::get('/', [AdminController::class, 'index'])->name('dashboard');
     Route::get('quizzes', [AdminController::class, 'index'])->name('quizzes.index');
+    Route::get('quizzes/import', [AdminController::class, 'import'])->name('quizzes.import');
+    Route::post('quizzes/import', [AdminController::class, 'importStore'])->name('quizzes.import.store');
     Route::get('quizzes/create', [AdminController::class, 'create'])->name('quizzes.create');
     Route::post('quizzes', [AdminController::class, 'store'])->name('quizzes.store');
 

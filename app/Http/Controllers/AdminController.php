@@ -8,6 +8,8 @@ use App\Models\Employee;
 use App\Models\Participant;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Services\QuizImportService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -101,6 +103,49 @@ class AdminController extends Controller
     public function create()
     {
         return view('admin.quizzes.create');
+    }
+
+    public function import()
+    {
+        return view('admin.quizzes.import');
+    }
+
+    public function importStore(Request $request, QuizImportService $importer)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'time_limit' => 'required|integer|min:1',
+            'passing_score' => 'required|integer|min:0|max:100',
+            'file' => 'required|file|mimes:csv,json|max:10240',
+        ]);
+
+        try {
+            $questions = $importer->parseUploadedQuestions($request->file('file'));
+
+            $quiz = Quiz::create([
+                'title' => $request->title,
+                'slug' => Str::slug($request->title).'-'.Str::random(5),
+                'time_limit' => $request->time_limit,
+                'passing_score' => $request->passing_score,
+            ]);
+
+            foreach ($questions as $qData) {
+                $question = $quiz->questions()->create([
+                    'text' => $qData['text'],
+                ]);
+
+                foreach ($qData['options'] as $oData) {
+                    $question->options()->create([
+                        'text' => $oData['text'],
+                        'is_correct' => $oData['is_correct'] === true,
+                    ]);
+                }
+            }
+
+            return redirect()->route('admin.quizzes.index')->with('success', 'Import berhasil. Kuis dibuat.');
+        } catch (Exception $e) {
+            return back()->with('error', 'Import gagal: '.$e->getMessage())->withInput();
+        }
     }
 
     /**
