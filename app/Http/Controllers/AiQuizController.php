@@ -63,7 +63,8 @@ class AiQuizController extends Controller
                 throw new Exception('Could not extract or read any text from the source.');
             }
 
-            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty);
+            $regenToken = $request->filled('regen_token') ? (string) $request->input('regen_token') : null;
+            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken);
             $qc = $request->boolean('qc') ? $this->aiGenerator->qualityCheck($questions) : null;
 
             return view('admin.quizzes.ai-preview', [
@@ -71,6 +72,9 @@ class AiQuizController extends Controller
                 'difficulty' => $request->difficulty,
                 'time_limit' => $request->time_limit,
                 'passing_score' => $request->passing_score,
+                'question_count' => (int) $request->question_count,
+                'source_text' => mb_substr($text, 0, 20000),
+                'qc_enabled' => $request->boolean('qc'),
                 'questions' => $questions,
                 'qc' => $qc,
             ]);

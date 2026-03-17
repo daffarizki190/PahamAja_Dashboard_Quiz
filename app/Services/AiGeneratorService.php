@@ -30,9 +30,9 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty): array
+    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null): array
     {
-        $prompt = $this->buildPrompt($text, $questionCount, $difficulty);
+        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken);
         $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
 
         $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens);
@@ -436,9 +436,10 @@ class AiGeneratorService
     /**
      * Build the prompt for Gemini.
      */
-    private function buildPrompt(string $content, int $count, string $difficulty): string
+    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null): string
     {
         $content = $this->limitSourceMaterial($content);
+        $regenLine = $regenToken ? "\nRegeneration token: {$regenToken}\n" : "\n";
 
         return <<<PROMPT
 You are a professional quiz generator. Based on the provided text, generate exactly {$count} multiple-choice questions.
@@ -458,6 +459,7 @@ Rules:
 
 Source Material:
 {$content}
+{$regenLine}
 
 Return ONLY the JSON array. Do not include any explanation or markdown formatting outside the JSON block.
 PROMPT;

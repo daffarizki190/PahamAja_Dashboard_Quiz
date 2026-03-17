@@ -72,9 +72,26 @@
                         <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $difficulty }}</span>
                         <span class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $time_limit }} MIN</span>
                         <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">PASS {{ $passing_score }}</span>
+                        @if(isset($source_text) && isset($question_count))
+                            <form action="{{ route('admin.quizzes.ai-generate') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="title" value="{{ $title }}">
+                                <textarea name="content_text" class="hidden">{{ $source_text }}</textarea>
+                                <input type="hidden" name="question_count" value="{{ $question_count }}">
+                                <input type="hidden" name="difficulty" value="{{ $difficulty }}">
+                                <input type="hidden" name="time_limit" value="{{ $time_limit }}">
+                                <input type="hidden" name="passing_score" value="{{ $passing_score }}">
+                                <input type="hidden" name="qc" value="{{ !empty($qc_enabled) ? '1' : '0' }}">
+                                <input type="hidden" name="regen_token" value="{{ uniqid('regen_', true) }}">
+                                <button type="submit" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8 8 0 104.582 9m0 0H9"></path></svg>
+                                    <span>Buat Soal Lagi</span>
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                            <span>Regenerate</span>
+                            <span>Ubah Materi</span>
                         </a>
                     </div>
                 </div>
