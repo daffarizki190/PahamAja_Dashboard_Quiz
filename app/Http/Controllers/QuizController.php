@@ -120,10 +120,21 @@ class QuizController extends Controller
 
         session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
 
-        // Eager load questions and options to minimize distinct queries
+        // Eager load questions, options, and existing answers; apply deterministic randomization per participant
         $quiz->load('questions.options');
+        $pid = (string) $participant->id;
+        $quiz->setRelation('questions', $quiz->questions->sortBy(function ($q) use ($pid) {
+            return sha1($pid.'|'.$q->id);
+        })->values());
+        $quiz->questions->each(function ($q) use ($pid) {
+            $q->setRelation('options', $q->options->sortBy(function ($o) use ($pid) {
+                return sha1($pid.'|'.$o->id);
+            })->values());
+        });
 
-        return view('quiz.take', compact('quiz', 'participant'));
+        $selected = $participant->answers()->get(['question_id', 'option_id'])->pluck('option_id', 'question_id');
+
+        return view('quiz.take', compact('quiz', 'participant', 'selected'));
     }
 
     /**
@@ -185,6 +196,43 @@ class QuizController extends Controller
 
         return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id])
             ->with('success', 'Quiz submitted successfully!');
+    }
+
+    /**
+     * Autosave a single answer while quiz is in progress.
+     */
+    public function autosaveAnswer(Request $request, Quiz $quiz, Participant $participant)
+    {
+        if ($participant->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        if (! is_null($participant->score)) {
+            return response()->json(['ok' => false, 'message' => 'Quiz already submitted'], 400);
+        }
+
+        $request->validate([
+            'question_id' => 'required',
+            'option_id' => 'required',
+        ]);
+
+        $quiz->load('questions.options');
+        $questions = $quiz->questions->keyBy('id');
+        $options = $quiz->questions->pluck('options')->flatten()->keyBy('id');
+
+        $q = $questions->get($request->question_id);
+        $o = $options->get($request->option_id);
+
+        if (! $q || ! $o || (string) $o->question_id !== (string) $q->id) {
+            return response()->json(['ok' => false, 'message' => 'Invalid mapping'], 422);
+        }
+
+        $participant->answers()->updateOrCreate(
+            ['question_id' => $q->id],
+            ['option_id' => $o->id]
+        );
+
+        return response()->json(['ok' => true]);
     }
 
     /**

@@ -69,6 +69,10 @@ Route::prefix('quiz')->name('quiz.')->group(function () {
     Route::post('{quiz:slug}/participant/{participant}/answers', [QuizController::class, 'storeAnswer'])
         ->name('storeAnswer');
 
+    // Autosave single answer
+    Route::post('{quiz:slug}/participant/{participant}/autosave', [QuizController::class, 'autosaveAnswer'])
+        ->name('autosave');
+
     // Result page after submission
     Route::get('{quiz:slug}/participant/{participant}/result', [QuizController::class, 'showResult'])->name('result');
 });

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $quiz->title }} - Ujian</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +71,7 @@
                     <div class="grid gap-3 md:pl-12">
                         @foreach($question->options as $option)
                         <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
-                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}"
+                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
                                 class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
                             <span class="ml-4 text-lg sm:text-[18px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
                         </label>
@@ -187,7 +188,7 @@
             scrollToTop();
         };
 
-        // Visual selection logic
+        // Visual selection + autosave
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const groupName = this.getAttribute('name');
@@ -206,6 +207,21 @@
                 }
 
                 updatePagerUi();
+
+                // Autosave to backend
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const qid = groupName.match(/answers\[(.+?)\]/)?.[1];
+                const oid = this.value;
+                if (!qid || !oid) return;
+
+                fetch(@json(route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id])), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf || ''
+                    },
+                    body: JSON.stringify({ question_id: qid, option_id: oid })
+                }).catch(() => {});
             });
         });
 
