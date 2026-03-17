@@ -38,10 +38,23 @@ class QuizController extends Controller
             'nim' => 'required|string|max:50',
         ]);
 
-        // Find employee by NIM
-        $employee = Employee::where('nim', $request->nim)->first();
+        $nik = trim((string) $request->input('nim'));
+
+        $employee = Employee::where('nim', $nik)
+            ->where('status', 'Active')
+            ->first();
 
         if (! $employee) {
+            $inactive = Employee::where('nim', $nik)
+                ->where('status', 'Inactive')
+                ->first();
+
+            if ($inactive) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Maaf, NIK tersebut tidak aktif.');
+            }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');

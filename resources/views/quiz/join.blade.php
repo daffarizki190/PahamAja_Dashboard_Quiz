@@ -57,7 +57,7 @@
                 <div class="relative group">
                     <input type="text" id="nim" name="nim" required autofocus
                         class="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all placeholder-[#C7C7CC] text-[#1C1C1E] font-medium"
-                        placeholder="Masukkan NIK Anda">
+                        placeholder="Masukkan NIK Anda" value="{{ old('nim') }}">
                 </div>
                 @error('nim')
                     <p class="mt-1 text-xs text-red-600 font-medium px-1">{{ $message }}</p>
