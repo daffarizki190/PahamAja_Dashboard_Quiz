@@ -46,9 +46,14 @@
 
     <!-- Main Content -->
     <div class="max-w-3xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
-        <div class="mb-6 flex items-center justify-between">
+        <div class="mb-6 flex items-center justify-between gap-3">
             <p id="progressText" class="text-sm font-black text-slate-700 tracking-tight"></p>
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Satu soal per halaman</p>
+            <div class="flex items-center gap-3">
+                <button type="button" id="reviewBtn" class="bg-white border border-slate-200 text-slate-700 font-black px-4 py-2 rounded-2xl text-xs hover:bg-slate-50 transition-all active:scale-[0.98]">
+                    Ringkasan
+                </button>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Satu soal per halaman</p>
+            </div>
         </div>
         
         <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
@@ -129,21 +134,64 @@
         </div>
     </div>
 
+    <div id="reviewModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" data-review-backdrop></div>
+        <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+            <div class="w-full max-w-md bg-white rounded-[1.75rem] shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ringkasan</p>
+                            <h2 id="reviewModalTitle" class="text-xl font-black text-slate-900 tracking-tight">Status Jawaban</h2>
+                            <p class="text-slate-600 font-semibold text-sm mt-3 leading-relaxed">
+                                Terjawab: <span id="answeredCount" class="font-black text-slate-900"></span>/<span id="totalCount" class="font-black text-slate-900"></span>
+                            </p>
+                        </div>
+                        <button type="button" class="shrink-0 w-10 h-10 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all active:scale-95" data-review-close aria-label="Tutup">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="px-6 pb-2">
+                    <div id="reviewGrid" class="grid grid-cols-6 gap-2"></div>
+                </div>
+                <div class="px-6 pb-6 pt-4">
+                    <button type="button" class="w-full bg-white border border-slate-200 text-slate-700 font-black py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]" data-review-cancel>
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- UI Logic Scripts -->
     <script>
         const questionPages = Array.from(document.querySelectorAll('.question-page'));
         const totalQuestions = questionPages.length;
         let currentIndex = 0;
+        let unlockedMax = 0;
 
         const progressText = document.getElementById('progressText');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const submitBtn = document.getElementById('submitBtn');
+        const reviewBtn = document.getElementById('reviewBtn');
 
         const isAnswered = (index) => {
             const page = questionPages[index];
             if (!page) return false;
             return Boolean(page.querySelector('input[type="radio"]:checked'));
+        };
+
+        const getAnsweredCount = () => {
+            return document.querySelectorAll('input[type="radio"]:checked').length;
+        };
+
+        const getFirstUnansweredIndex = () => {
+            for (let i = 0; i < totalQuestions; i++) {
+                if (!isAnswered(i)) return i;
+            }
+            return totalQuestions - 1;
         };
 
         const scrollToTop = () => {
@@ -160,6 +208,9 @@
             }
 
             const answered = isAnswered(currentIndex);
+            if (answered) {
+                unlockedMax = Math.max(unlockedMax, currentIndex + 1);
+            }
 
             const isLast = currentIndex === totalQuestions - 1;
             if (nextBtn && submitBtn) {
@@ -176,16 +227,81 @@
                 submitBtn.classList.toggle('opacity-50', !answered);
                 submitBtn.classList.toggle('cursor-not-allowed', !answered);
             }
+
+            renderReviewGrid();
         };
 
         const showQuestion = (index) => {
-            const target = Math.max(0, Math.min(totalQuestions - 1, index));
+            const clamped = Math.max(0, Math.min(totalQuestions - 1, index));
+            const target = clamped > unlockedMax ? unlockedMax : clamped;
             questionPages.forEach((page, i) => {
                 page.classList.toggle('hidden', i !== target);
             });
             currentIndex = target;
             updatePagerUi();
             scrollToTop();
+        };
+
+        const reviewModal = document.getElementById('reviewModal');
+        const reviewGrid = document.getElementById('reviewGrid');
+        const answeredCountEl = document.getElementById('answeredCount');
+        const totalCountEl = document.getElementById('totalCount');
+        const reviewClose = reviewModal?.querySelector('[data-review-close]');
+        const reviewCancel = reviewModal?.querySelector('[data-review-cancel]');
+        const reviewBackdrop = reviewModal?.querySelector('[data-review-backdrop]');
+
+        const openReviewModal = () => {
+            if (!reviewModal) return;
+            reviewModal.classList.remove('hidden');
+            reviewModal.setAttribute('aria-hidden', 'false');
+            document.documentElement.classList.add('overflow-hidden');
+            renderReviewGrid();
+            reviewCancel?.focus();
+        };
+
+        const closeReviewModal = () => {
+            if (!reviewModal) return;
+            reviewModal.classList.add('hidden');
+            reviewModal.setAttribute('aria-hidden', 'true');
+            document.documentElement.classList.remove('overflow-hidden');
+        };
+
+        const renderReviewGrid = () => {
+            if (!reviewGrid || !answeredCountEl || !totalCountEl) return;
+
+            const answeredCount = getAnsweredCount();
+            answeredCountEl.textContent = String(answeredCount);
+            totalCountEl.textContent = String(totalQuestions);
+
+            const items = [];
+            for (let i = 0; i < totalQuestions; i++) {
+                const answered = isAnswered(i);
+                const isCurrent = i === currentIndex;
+                const isLocked = i > unlockedMax;
+
+                const base = 'w-full aspect-square rounded-2xl font-black text-sm transition-all active:scale-[0.98]';
+                const state = isLocked
+                    ? 'bg-slate-100 text-slate-300 border border-slate-200 cursor-not-allowed'
+                    : answered
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+
+                const currentRing = isCurrent ? ' ring-2 ring-indigo-500/30' : '';
+
+                items.push(
+                    `<button type="button" data-jump="${i}" ${isLocked ? 'disabled' : ''} class="${base} ${state}${currentRing}">${i + 1}</button>`
+                );
+            }
+
+            reviewGrid.innerHTML = items.join('');
+
+            reviewGrid.querySelectorAll('button[data-jump]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = Number(btn.getAttribute('data-jump'));
+                    closeReviewModal();
+                    showQuestion(idx);
+                });
+            });
         };
 
         // Visual selection + autosave
@@ -234,7 +350,19 @@
             showQuestion(currentIndex + 1);
         });
 
-        showQuestion(0);
+        reviewBtn?.addEventListener('click', openReviewModal);
+        reviewClose?.addEventListener('click', closeReviewModal);
+        reviewCancel?.addEventListener('click', closeReviewModal);
+        reviewBackdrop?.addEventListener('click', closeReviewModal);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && reviewModal && !reviewModal.classList.contains('hidden')) {
+                closeReviewModal();
+            }
+        });
+
+        unlockedMax = getFirstUnansweredIndex();
+        showQuestion(getFirstUnansweredIndex());
 
         // HIG-style Timer Logic
         let timeInMinutes = {{ $quiz->time_limit }};
@@ -269,12 +397,13 @@
         function confirmSubmit() {
             const totalQuestions = {{ $quiz->questions->count() }};
             const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
-            
-            const message = answeredCount < totalQuestions
-                ? `Anda baru menjawab ${answeredCount} dari ${totalQuestions} soal. Tetap kirim?`
-                : 'Semua soal sudah terjawab. Kirim jawaban sekarang?';
 
-            openSubmitModal(message);
+            if (answeredCount < totalQuestions) {
+                openReviewModal();
+                return;
+            }
+
+            openSubmitModal('Semua soal sudah terjawab. Kirim jawaban sekarang?');
         }
 
         const submitModal = document.getElementById('submitModal');

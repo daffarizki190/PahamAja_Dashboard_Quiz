@@ -160,6 +160,10 @@ class QuizController extends Controller
         $totalQuestions = $questions->count();
         $questionsById = $questions->keyBy('id');
 
+        if (count($request->answers) !== $totalQuestions) {
+            abort(422, 'Semua soal harus dijawab.');
+        }
+
         $optionsById = $questions
             ->pluck('options')
             ->flatten()
