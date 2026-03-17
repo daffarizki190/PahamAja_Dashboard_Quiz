@@ -45,13 +45,17 @@
 
     <!-- Main Content -->
     <div class="max-w-3xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
+        <div class="mb-6 flex items-center justify-between">
+            <p id="progressText" class="text-sm font-black text-slate-700 tracking-tight"></p>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Satu soal per halaman</p>
+        </div>
         
         <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
             @csrf
 
-            <div class="space-y-10">
+            <div class="space-y-10" id="questionPager">
                 @foreach($quiz->questions as $index => $question)
-                <div class="group" id="question-card-{{ $question->id }}">
+                <div class="group question-page hidden" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
                     <!-- Question Header with Hierarchy -->
                     <div class="mb-5 flex items-start gap-3 md:gap-4">
                         <span class="shrink-0 w-7 h-7 md:w-8 md:h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-[11px] md:text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
@@ -66,9 +70,9 @@
                     <div class="grid gap-3 md:pl-12">
                         @foreach($question->options as $option)
                         <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
-                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" required
+                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}"
                                 class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
-                            <span class="ml-4 text-base sm:text-[16px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
+                            <span class="ml-4 text-lg sm:text-[18px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
                         </label>
                         @endforeach
                     </div>
@@ -78,10 +82,14 @@
 
             <!-- Footer Action Bar -->
             <div class="fixed bottom-0 left-0 right-0 glass-nav border-t border-[#D1D1D6]/30 p-4 md:p-6 z-40" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
-                <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <p class="text-xs font-semibold text-[#8E8E93] uppercase tracking-widest hidden sm:block">Periksa kembali sebelum mengirim</p>
-                    <button type="button" onclick="confirmSubmit()" 
-                        class="w-full sm:w-auto bg-[#1C1C1E] hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98]">
+                <div class="max-w-3xl mx-auto flex items-center gap-3">
+                    <button type="button" id="prevBtn" class="flex-1 bg-white border border-slate-200 text-slate-700 font-black py-4 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        Kembali
+                    </button>
+                    <button type="button" id="nextBtn" class="flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                        Lanjutkan
+                    </button>
+                    <button type="button" id="submitBtn" onclick="confirmSubmit()" class="hidden flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98]">
                         Kirim Jawaban
                     </button>
                     <!-- Actual hidden submit -->
@@ -122,6 +130,63 @@
 
     <!-- UI Logic Scripts -->
     <script>
+        const questionPages = Array.from(document.querySelectorAll('.question-page'));
+        const totalQuestions = questionPages.length;
+        let currentIndex = 0;
+
+        const progressText = document.getElementById('progressText');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const isAnswered = (index) => {
+            const page = questionPages[index];
+            if (!page) return false;
+            return Boolean(page.querySelector('input[type="radio"]:checked'));
+        };
+
+        const scrollToTop = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        const updatePagerUi = () => {
+            if (progressText) {
+                progressText.textContent = `Soal ${currentIndex + 1} dari ${totalQuestions}`;
+            }
+
+            if (prevBtn) {
+                prevBtn.disabled = currentIndex === 0;
+            }
+
+            const answered = isAnswered(currentIndex);
+
+            const isLast = currentIndex === totalQuestions - 1;
+            if (nextBtn && submitBtn) {
+                nextBtn.classList.toggle('hidden', isLast);
+                submitBtn.classList.toggle('hidden', !isLast);
+            }
+
+            if (nextBtn) {
+                nextBtn.disabled = !answered;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = !answered;
+                submitBtn.classList.toggle('opacity-50', !answered);
+                submitBtn.classList.toggle('cursor-not-allowed', !answered);
+            }
+        };
+
+        const showQuestion = (index) => {
+            const target = Math.max(0, Math.min(totalQuestions - 1, index));
+            questionPages.forEach((page, i) => {
+                page.classList.toggle('hidden', i !== target);
+            });
+            currentIndex = target;
+            updatePagerUi();
+            scrollToTop();
+        };
+
         // Visual selection logic
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', function() {
@@ -139,8 +204,21 @@
                     card.classList.remove('border-gray-100', 'bg-white');
                     card.classList.add('selected', 'border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500/20');
                 }
+
+                updatePagerUi();
             });
         });
+
+        prevBtn?.addEventListener('click', () => {
+            showQuestion(currentIndex - 1);
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            if (!isAnswered(currentIndex)) return;
+            showQuestion(currentIndex + 1);
+        });
+
+        showQuestion(0);
 
         // HIG-style Timer Logic
         let timeInMinutes = {{ $quiz->time_limit }};
