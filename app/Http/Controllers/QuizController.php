@@ -26,6 +26,21 @@ class QuizController extends Controller
      */
     public function showJoinForm(Quiz $quiz)
     {
+        $sessionKey = "quiz_in_progress.{$quiz->id}";
+        $participantId = session($sessionKey);
+
+        if ($participantId) {
+            $participant = Participant::where('id', $participantId)
+                ->where('quiz_id', $quiz->id)
+                ->first();
+
+            if ($participant && is_null($participant->score)) {
+                return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
+            }
+
+            session()->forget($sessionKey);
+        }
+
         return view('quiz.join', compact('quiz'));
     }
 
@@ -66,6 +81,8 @@ class QuizController extends Controller
             ->first();
 
         if ($inProgress) {
+            session()->put("quiz_in_progress.{$quiz->id}", (string) $inProgress->id);
+
             return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
         }
 
@@ -80,6 +97,8 @@ class QuizController extends Controller
             'nim' => $employee->nim,
             'attempt' => $attemptNumber,
         ]);
+
+        session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
 
         return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
     }
@@ -98,6 +117,8 @@ class QuizController extends Controller
         if (! is_null($participant->score)) {
             return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
         }
+
+        session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
 
         // Eager load questions and options to minimize distinct queries
         $quiz->load('questions.options');
@@ -160,6 +181,8 @@ class QuizController extends Controller
 
         $participant->update(['score' => $finalScore]);
 
+        session()->forget("quiz_in_progress.{$quiz->id}");
+
         return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id])
             ->with('success', 'Quiz submitted successfully!');
     }
@@ -171,6 +194,10 @@ class QuizController extends Controller
     {
         if ($participant->quiz_id !== $quiz->id) {
             abort(403);
+        }
+
+        if (! is_null($participant->score)) {
+            session()->forget("quiz_in_progress.{$quiz->id}");
         }
 
         $attempts = Participant::where('quiz_id', $quiz->id)
