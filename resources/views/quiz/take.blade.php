@@ -443,6 +443,14 @@
                 closeSubmitModal();
             }
         });
+
+        // Prevent back button
+        (function() {
+            history.pushState(null, null, location.href);
+            window.onpopstate = function() {
+                history.pushState(null, null, location.href);
+            };
+        })();
     </script>
 </body>
 </html>

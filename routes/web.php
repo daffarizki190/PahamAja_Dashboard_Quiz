@@ -54,7 +54,7 @@ Route::get('/health/mongodb', function () {
 });
 
 // Quiz Engine Routes for Participants
-Route::prefix('quiz')->name('quiz.')->group(function () {
+Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
 
     // Form to join the quiz (Enter Name & NIM)
     Route::get('{quiz:slug}', [QuizController::class, 'showJoinForm'])->name('join');
@@ -78,7 +78,7 @@ Route::prefix('quiz')->name('quiz.')->group(function () {
 });
 
 // Admin Management & Dashboard Routes
-Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->group(function () {
     // Quiz Management (CRUD)
     Route::get('/', [AdminController::class, 'index'])->name('dashboard');
     Route::get('quizzes', [AdminController::class, 'index'])->name('quizzes.index');

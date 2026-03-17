@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias([
             'admin.auth' => AdminAuth::class,
+            'nocache' => \App\Http\Middleware\ForceNoCache::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
