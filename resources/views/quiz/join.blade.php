@@ -31,7 +31,7 @@
                 </div>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1C1C1E] tracking-tight">Paham<span class="text-indigo-600">Aja</span></h1>
-            <p class="text-[#8E8E93] text-sm font-medium mt-1">Dukungan untuk Peserta</p>
+            <p class="text-[#8E8E93] text-sm font-medium mt-1">Jika mengalami kendala, hubungi pengawas ujian.</p>
         </div>
 
         <div class="mb-8 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
