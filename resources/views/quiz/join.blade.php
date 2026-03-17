@@ -38,7 +38,7 @@
             <h2 class="text-[#1C1C1E] font-bold text-base text-center leading-snug">{{ $quiz->title }}</h2>
             <div class="mt-3 flex justify-center items-center gap-1.5 text-[#8E8E93] text-xs font-semibold">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                DURASI: {{ $quiz->time_limit }} MENIT
+                Waktu pengerjaan: {{ $quiz->time_limit }} menit
             </div>
         </div>
 
