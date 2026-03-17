@@ -69,25 +69,32 @@
                     </a>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 max-w-xl">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
                         <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">1</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
+                            <p class="text-sm font-bold text-slate-900">Tahap</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4">
+                        <div class="w-9 h-9 rounded-xl step-on flex items-center justify-center font-black text-sm">2</div>
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Unggah</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-80">
-                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">2</div>
+                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Tinjau</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 card-enterprise rounded-2xl p-4 opacity-70">
-                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">3</div>
+                        <div class="w-9 h-9 rounded-xl step-off flex items-center justify-center font-black text-sm">4</div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tahap</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Langkah</p>
                             <p class="text-sm font-bold text-slate-900">Terbitkan</p>
                         </div>
                     </div>
@@ -146,11 +153,22 @@
                                         </select>
                                     </div>
                                     <div class="space-y-2">
-                                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Bahasa Soal</label>
-                                        <select name="language" class="w-full field px-6 py-4 rounded-2xl font-bold text-slate-700 appearance-none">
-                                            <option value="id" {{ old('language', 'id') === 'id' ? 'selected' : '' }}>Indonesia</option>
-                                            <option value="en" {{ old('language', 'id') === 'en' ? 'selected' : '' }}>English</option>
-                                        </select>
+                                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1 block mb-2">Bahasa Soal</label>
+                                        <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+                                            <input type="hidden" name="language" id="language-input" value="{{ old('language', 'id') }}">
+                                            <button type="button" 
+                                                    onclick="setLanguage('id')" 
+                                                    id="btn-lang-id" 
+                                                    class="px-8 py-3 rounded-xl text-sm font-black transition-all {{ old('language', 'id') === 'id' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-700' }}">
+                                                ID
+                                            </button>
+                                            <button type="button" 
+                                                    onclick="setLanguage('en')" 
+                                                    id="btn-lang-en" 
+                                                    class="px-8 py-3 rounded-xl text-sm font-black transition-all {{ old('language') === 'en' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-700' }}">
+                                                ENG
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="space-y-2">
                                         <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Durasi (Menit)</label>
@@ -254,6 +272,26 @@
             const fileName = e.target.files[0] ? e.target.files[0].name : 'Klik untuk upload atau drag & drop';
             document.getElementById('file-name').textContent = fileName;
         });
+
+        function setLanguage(lang) {
+            const input = document.getElementById('language-input');
+            const btnId = document.getElementById('btn-lang-id');
+            const btnEn = document.getElementById('btn-lang-en');
+            
+            input.value = lang;
+            
+            if (lang === 'id') {
+                btnId.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                btnId.classList.remove('text-slate-500', 'hover:text-slate-700');
+                btnEn.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                btnEn.classList.add('text-slate-500', 'hover:text-slate-700');
+            } else {
+                btnEn.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                btnEn.classList.remove('text-slate-500', 'hover:text-slate-700');
+                btnId.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                btnId.classList.add('text-slate-500', 'hover:text-slate-700');
+            }
+        }
 
         function switchSource(type) {
             const sectionFile = document.getElementById('section-file');
