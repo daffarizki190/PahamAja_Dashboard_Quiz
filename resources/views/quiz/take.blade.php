@@ -2,85 +2,91 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $quiz->title }} - Ujian</title>
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Inter & Outfit for header -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-        .glass-nav {
-            background: rgba(251, 251, 253, 0.8);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+        .option-card:hover { border-color: #10b981; background-color: #f0fdf4; }
+        .option-card.selected { border-color: #059669; background-color: #ecfdf5; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1); }
+        .progress-bar { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        input[type="radio"]:checked + .radio-custom {
+            border-color: #059669;
+            background-color: #059669;
+            box-shadow: inset 0 0 0 3px white;
         }
-        .option-card:hover { border-color: #6366f1; background-color: #f5f3ff; }
-        .option-card.selected { border-color: #4f46e5; background-color: #eef2ff; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1); }
+        /* Mobile-first specific height adjustments */
+        @media (max-width: 640px) {
+            .question-content { height: calc(100vh - 180px); }
+        }
     </style>
 </head>
-<body class="bg-[#F2F2F7] text-[#1C1C1E] pb-40">
+<body class="bg-gray-50 text-gray-900 overflow-x-hidden selection:bg-emerald-100 selection:text-emerald-900">
 
-    <!-- Premium Sticky Header -->
-    <div class="sticky top-0 z-50 glass-nav border-b border-[#D1D1D6]/30 px-4 md:px-6 py-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center gap-3">
-            <div class="flex-1 min-w-0 pr-2">
-                <h1 class="text-base md:text-lg font-bold text-[#1C1C1E] truncate drop-shadow-sm">{{ $quiz->title }}</h1>
-                <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">PESERTA</span>
-                    <p class="text-xs md:text-sm font-semibold text-[#8E8E93] truncate">{{ $participant->name }} ({{ $participant->nim }})</p>
-                </div>
+    <!-- Slim Modern Progress Header -->
+    <div class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="h-1 bg-gray-100 w-full overflow-hidden">
+            <div id="mainProgressBar" class="h-full bg-emerald-500 progress-bar" style="width: 0%"></div>
+        </div>
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <button type="button" onclick="window.location.href='{{ route('quiz.join', $quiz->slug) }}'" class="p-2 -ml-2 text-gray-400 hover:text-gray-900 transition-colors" aria-label="Tutup">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center flex-1">
+                <span id="headerTimer" class="font-outfit font-extrabold text-sm tracking-tight text-gray-900 tabular-nums"></span>
             </div>
-            
-            <!-- Apple-style Timer -->
-            <div class="shrink-0">
-                <div id="timerContainer" class="bg-white/50 border border-gray-200/50 rounded-2xl px-4 py-2 flex items-center gap-2.5 shadow-sm transition-all duration-500">
-                    <div class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" id="timerDot"></div>
-                    <span id="timerDisplay" class="font-mono font-extrabold text-[#1C1C1E] tracking-tighter text-base sm:text-lg leading-none">{{ $quiz->time_limit }}:00</span>
-                </div>
+            <div class="flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[11px] font-black text-emerald-700 uppercase tracking-widest tabular-nums" id="pageIndicatorTop">1/{{ $quiz->questions->count() }}</span>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-3xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
-        <div class="mb-6 flex items-center justify-between gap-3">
-            <p id="progressText" class="text-sm font-black text-slate-700 tracking-tight"></p>
-            <div class="flex items-center gap-3">
-                <button type="button" id="reviewBtn" class="bg-white border border-slate-200 text-slate-700 font-black px-4 py-2 rounded-2xl text-xs hover:bg-slate-50 transition-all active:scale-[0.98]">
-                    Ringkasan
-                </button>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Satu soal per halaman</p>
-            </div>
-        </div>
-        
+    <!-- Main Content Container -->
+    <div class="max-w-2xl mx-auto px-5 pt-20 pb-40 min-h-screen relative">
         <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
             @csrf
 
-            <div class="space-y-10" id="questionPager">
+            <div id="questionPager">
                 @foreach($quiz->questions as $index => $question)
-                <div class="group question-page hidden" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
-                    <!-- Question Header with Hierarchy -->
-                    <div class="mb-5 flex items-start gap-3 md:gap-4">
-                        <span class="shrink-0 w-7 h-7 md:w-8 md:h-8 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-[11px] md:text-xs font-black text-indigo-600 shadow-sm group-hover:border-indigo-200 transition-colors">
-                            {{ $index + 1 }}
-                        </span>
-                        <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-[#1C1C1E] leading-tight pt-0.5 break-words">
+                <div class="question-page hidden" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
+                    <!-- Question Header -->
+                    <div class="mb-8">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-[0.2em]">Pertanyaan {{ $index + 1 }}</span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight">
                             {{ $question->text }}
                         </h3>
                     </div>
                     
-                    <!-- Options List: Cleaner Layout -->
-                    <div class="grid gap-3 md:pl-12">
-                        @foreach($question->options as $option)
-                        <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
+                    <!-- Options List: Large Mobile-first Cards -->
+                    <div class="space-y-4">
+                        @php $labels = ['A', 'B', 'C', 'D', 'E', 'F']; @endphp
+                        @foreach($question->options as $oIndex => $option)
+                        <label class="option-card flex items-center p-4 bg-white border-2 border-gray-100 rounded-3xl cursor-pointer transition-all duration-300 shadow-sm relative overflow-hidden group">
                             <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" 
                                 @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
                                 @if($participant->nim === '01-2024060107') data-is-correct="{{ $option->is_correct ? 1 : 0 }}" @endif
-                                class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
-                            <span class="ml-4 text-lg sm:text-[18px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
+                                class="hidden">
+                            
+                            <div class="flex items-center w-full gap-4">
+                                <!-- Option Label (A, B, C) -->
+                                <div class="w-11 h-11 shrink-0 rounded-2xl bg-gray-50 flex items-center justify-center font-outfit font-black text-gray-400 group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-all border border-gray-50">
+                                    {{ $labels[$oIndex] ?? '?' }}
+                                </div>
+                                
+                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug group-hover:text-emerald-900 transition-colors pr-2">{{ $option->text }}</span>
+                                
+                                <!-- Radio Circle Replacement -->
+                                <div class="radio-custom w-6 h-6 shrink-0 rounded-full border-2 border-gray-200 transition-all"></div>
+                            </div>
                         </label>
                         @endforeach
                     </div>
@@ -88,19 +94,28 @@
                 @endforeach
             </div>
 
-            <!-- Footer Action Bar -->
-            <div class="fixed bottom-0 left-0 right-0 glass-nav border-t border-[#D1D1D6]/30 p-4 md:p-6 z-40" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
-                <div class="max-w-3xl mx-auto flex items-center gap-3">
-                    <button type="button" id="prevBtn" class="flex-1 bg-white border border-slate-200 text-slate-700 font-black py-4 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-                        Kembali
+            <!-- Floating Mobile Navigation -->
+            <div class="fixed bottom-10 left-0 right-0 z-50 px-6">
+                <div class="max-w-xs mx-auto flex items-center justify-between gap-4">
+                    <!-- Previous Circle -->
+                    <button type="button" id="prevBtn" class="w-14 h-14 shrink-0 bg-white border-2 border-gray-100 text-gray-400 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:scale-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
-                    <button type="button" id="nextBtn" class="flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-                        Lanjutkan
+
+                    <!-- Page Counter Pill -->
+                    <div class="flex-1 h-14 bg-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 px-6 border-b-4 border-emerald-800">
+                        <span id="pageIndicator" class="text-white font-outfit font-black text-lg tracking-widest">01 / {{ $quiz->questions->count() }}</span>
+                    </div>
+
+                    <!-- Next Circle -->
+                    <button type="button" id="nextBtn" class="w-14 h-14 shrink-0 bg-white border-2 border-gray-100 text-gray-400 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:scale-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                     </button>
-                    <button type="button" id="submitBtn" onclick="confirmSubmit()" class="hidden flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 transform active:scale-[0.98]">
-                        Kirim Jawaban
+
+                    <!-- Hidden actual submit buttons -->
+                    <button type="button" id="submitBtn" onclick="confirmSubmit()" class="hidden w-14 h-14 shrink-0 bg-emerald-600 border-b-4 border-emerald-800 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/20 transition-all active:scale-90">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                     </button>
-                    <!-- Actual hidden submit -->
                     <button type="submit" id="actualSubmitBtn" class="hidden"></button>
                 </div>
             </div>
@@ -108,59 +123,19 @@
         </form>
     </div>
 
-    <div id="submitModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" data-modal-backdrop></div>
-        <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
-            <div class="w-full max-w-md bg-white rounded-[1.75rem] shadow-2xl border border-slate-200 overflow-hidden">
-                <div class="p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Konfirmasi</p>
-                            <h2 id="submitModalTitle" class="text-xl font-black text-slate-900 tracking-tight">Kirim jawaban sekarang?</h2>
-                            <p id="submitModalMessage" class="text-slate-600 font-semibold text-sm mt-3 leading-relaxed"></p>
-                        </div>
-                        <button type="button" class="shrink-0 w-10 h-10 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all active:scale-95" data-modal-close aria-label="Tutup">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
+    <!-- Modals (Submit & Review) - Minimalist Style -->
+    <div id="submitModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" data-modal-backdrop></div>
+        <div class="absolute inset-x-4 bottom-10 sm:inset-0 flex items-end sm:items-center justify-center p-4">
+            <div class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden p-8 text-center">
+                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <div class="px-6 pb-6 flex flex-col-reverse sm:flex-row gap-3">
-                    <button type="button" class="w-full sm:w-auto flex-1 bg-white border border-slate-200 text-slate-700 font-black py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]" data-modal-cancel>
-                        Batal
-                    </button>
-                    <button type="button" class="w-full sm:w-auto flex-1 bg-[#1C1C1E] hover:bg-black text-white font-black py-3.5 px-6 rounded-2xl shadow-lg transition-all active:scale-[0.98]" data-modal-confirm>
-                        Kirim
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="reviewModal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" data-review-backdrop></div>
-        <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
-            <div class="w-full max-w-md bg-white rounded-[1.75rem] shadow-2xl border border-slate-200 overflow-hidden">
-                <div class="p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ringkasan</p>
-                            <h2 id="reviewModalTitle" class="text-xl font-black text-slate-900 tracking-tight">Status Jawaban</h2>
-                            <p class="text-slate-600 font-semibold text-sm mt-3 leading-relaxed">
-                                Terjawab: <span id="answeredCount" class="font-black text-slate-900"></span>/<span id="totalCount" class="font-black text-slate-900"></span>
-                            </p>
-                        </div>
-                        <button type="button" class="shrink-0 w-10 h-10 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all active:scale-95" data-review-close aria-label="Tutup">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="px-6 pb-2">
-                    <div id="reviewGrid" class="grid grid-cols-6 gap-2"></div>
-                </div>
-                <div class="px-6 pb-6 pt-4">
-                    <button type="button" class="w-full bg-white border border-slate-200 text-slate-700 font-black py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]" data-review-cancel>
-                        Tutup
-                    </button>
+                <h2 class="text-2xl font-black text-gray-900 mb-3 tracking-tight">Kirim Jawaban?</h2>
+                <p class="text-gray-500 font-medium leading-relaxed mb-8 px-4">Pastikan semua soal telah dijawab dengan teliti sebelum mengirim.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" class="bg-gray-100 text-gray-900 font-extrabold py-4 rounded-2xl hover:bg-gray-200 transition-all active:scale-95" data-modal-cancel>Nanti</button>
+                    <button type="button" class="bg-emerald-600 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95" data-modal-confirm>Kirim</button>
                 </div>
             </div>
         </div>
@@ -173,286 +148,112 @@
         let currentIndex = 0;
         let unlockedMax = 0;
 
-        const progressText = document.getElementById('progressText');
+        const mainProgressBar = document.getElementById('mainProgressBar');
+        const pageIndicator = document.getElementById('pageIndicator');
+        const pageIndicatorTop = document.getElementById('pageIndicatorTop');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const submitBtn = document.getElementById('submitBtn');
-        const reviewBtn = document.getElementById('reviewBtn');
 
         const isAnswered = (index) => {
             const page = questionPages[index];
-            if (!page) return false;
-            return Boolean(page.querySelector('input[type="radio"]:checked'));
-        };
-
-        const getAnsweredCount = () => {
-            return document.querySelectorAll('input[type="radio"]:checked').length;
-        };
-
-        const getFirstUnansweredIndex = () => {
-            for (let i = 0; i < totalQuestions; i++) {
-                if (!isAnswered(i)) return i;
-            }
-            return totalQuestions - 1;
-        };
-
-        const scrollToTop = () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return page ? Boolean(page.querySelector('input[type="radio"]:checked')) : false;
         };
 
         const updatePagerUi = () => {
-            if (progressText) {
-                progressText.textContent = `Soal ${currentIndex + 1} dari ${totalQuestions}`;
-            }
+            // Update Progress
+            const progress = ((currentIndex + 1) / totalQuestions) * 100;
+            mainProgressBar.style.width = `${progress}%`;
 
-            if (prevBtn) {
-                prevBtn.disabled = currentIndex === 0;
-            }
+            const currentStr = (currentIndex + 1).toString().padStart(2, '0');
+            const totalStr = totalQuestions.toString().padStart(2, '0');
+            pageIndicator.textContent = `${currentStr} / ${totalStr}`;
+            pageIndicatorTop.textContent = `${currentIndex + 1}/${totalQuestions}`;
+
+            // Buttons State
+            prevBtn.disabled = currentIndex === 0;
+            prevBtn.classList.toggle('text-gray-900', currentIndex > 0);
+            prevBtn.classList.toggle('border-gray-900/10', currentIndex > 0);
 
             const answered = isAnswered(currentIndex);
-            if (answered) {
-                unlockedMax = Math.max(unlockedMax, currentIndex + 1);
-            }
-
             const isLast = currentIndex === totalQuestions - 1;
-            if (nextBtn && submitBtn) {
-                nextBtn.classList.toggle('hidden', isLast);
-                submitBtn.classList.toggle('hidden', !isLast);
-            }
 
-            if (nextBtn) {
+            if (isLast) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
                 nextBtn.disabled = !answered;
+                nextBtn.classList.toggle('bg-emerald-50', answered);
+                nextBtn.classList.toggle('text-emerald-600', answered);
+                nextBtn.classList.toggle('border-emerald-100', answered);
             }
-
-            if (submitBtn) {
-                submitBtn.disabled = !answered;
-                submitBtn.classList.toggle('opacity-50', !answered);
-                submitBtn.classList.toggle('cursor-not-allowed', !answered);
-            }
-
-            renderReviewGrid();
         };
 
         const showQuestion = (index) => {
-            const clamped = Math.max(0, Math.min(totalQuestions - 1, index));
-            const target = clamped > unlockedMax ? unlockedMax : clamped;
             questionPages.forEach((page, i) => {
-                page.classList.toggle('hidden', i !== target);
+                page.classList.toggle('hidden', i !== index);
             });
-            currentIndex = target;
+            currentIndex = index;
             updatePagerUi();
-            scrollToTop();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        const reviewModal = document.getElementById('reviewModal');
-        const reviewGrid = document.getElementById('reviewGrid');
-        const answeredCountEl = document.getElementById('answeredCount');
-        const totalCountEl = document.getElementById('totalCount');
-        const reviewClose = reviewModal?.querySelector('[data-review-close]');
-        const reviewCancel = reviewModal?.querySelector('[data-review-cancel]');
-        const reviewBackdrop = reviewModal?.querySelector('[data-review-backdrop]');
-
-        const openReviewModal = () => {
-            if (!reviewModal) return;
-            reviewModal.classList.remove('hidden');
-            reviewModal.setAttribute('aria-hidden', 'false');
-            document.documentElement.classList.add('overflow-hidden');
-            renderReviewGrid();
-            reviewCancel?.focus();
-        };
-
-        const closeReviewModal = () => {
-            if (!reviewModal) return;
-            reviewModal.classList.add('hidden');
-            reviewModal.setAttribute('aria-hidden', 'true');
-            document.documentElement.classList.remove('overflow-hidden');
-        };
-
-        const renderReviewGrid = () => {
-            if (!reviewGrid || !answeredCountEl || !totalCountEl) return;
-
-            const answeredCount = getAnsweredCount();
-            answeredCountEl.textContent = String(answeredCount);
-            totalCountEl.textContent = String(totalQuestions);
-
-            const items = [];
-            for (let i = 0; i < totalQuestions; i++) {
-                const answered = isAnswered(i);
-                const isCurrent = i === currentIndex;
-                const isLocked = i > unlockedMax;
-
-                const base = 'w-full aspect-square rounded-2xl font-black text-sm transition-all active:scale-[0.98]';
-                const state = isLocked
-                    ? 'bg-slate-100 text-slate-300 border border-slate-200 cursor-not-allowed'
-                    : answered
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
-
-                const currentRing = isCurrent ? ' ring-2 ring-indigo-500/30' : '';
-
-                items.push(
-                    `<button type="button" data-jump="${i}" ${isLocked ? 'disabled' : ''} class="${base} ${state}${currentRing}">${i + 1}</button>`
-                );
-            }
-
-            reviewGrid.innerHTML = items.join('');
-
-            reviewGrid.querySelectorAll('button[data-jump]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const idx = Number(btn.getAttribute('data-jump'));
-                    closeReviewModal();
-                    showQuestion(idx);
-                });
-            });
-        };
-
-        // Visual selection + autosave
+        // Radio click logic
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                const groupName = this.getAttribute('name');
-                const radiosInGroup = document.querySelectorAll(`input[name="${groupName}"]`);
+                const page = this.closest('.question-page');
+                page.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+                this.closest('.option-card').classList.add('selected');
                 
-                radiosInGroup.forEach(r => {
-                    const card = r.closest('.option-card');
-                    card.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500/20');
-                    card.classList.add('border-gray-100', 'bg-white');
-                });
-                
-                if(this.checked) {
-                    const card = this.closest('.option-card');
-                    card.classList.remove('border-gray-100', 'bg-white');
-                    card.classList.add('selected', 'border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500/20');
-                }
-
                 updatePagerUi();
 
-                // Autosave to backend
-                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                const qid = groupName.match(/answers\[(.+?)\]/)?.[1];
+                // Autosave
+                const qid = this.getAttribute('name').match(/answers\[(.+?)\]/)?.[1];
                 const oid = this.value;
-                if (!qid || !oid) return;
-
                 fetch(@json(route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id])), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrf || ''
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
                     body: JSON.stringify({ question_id: qid, option_id: oid })
                 }).catch(() => {});
             });
-        });
-
-        prevBtn?.addEventListener('click', () => {
-            showQuestion(currentIndex - 1);
-        });
-
-        nextBtn?.addEventListener('click', () => {
-            if (!isAnswered(currentIndex)) return;
-            showQuestion(currentIndex + 1);
-        });
-
-        reviewBtn?.addEventListener('click', openReviewModal);
-        reviewClose?.addEventListener('click', closeReviewModal);
-        reviewCancel?.addEventListener('click', closeReviewModal);
-        reviewBackdrop?.addEventListener('click', closeReviewModal);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && reviewModal && !reviewModal.classList.contains('hidden')) {
-                closeReviewModal();
+            
+            // Re-apply selected class on initial load for checked items
+            if(radio.checked) {
+                radio.closest('.option-card').classList.add('selected');
             }
         });
 
-        unlockedMax = getFirstUnansweredIndex();
-        showQuestion(getFirstUnansweredIndex());
+        prevBtn.addEventListener('click', () => { if(currentIndex > 0) showQuestion(currentIndex - 1); });
+        nextBtn.addEventListener('click', () => { if(currentIndex < totalQuestions - 1 && isAnswered(currentIndex)) showQuestion(currentIndex + 1); });
 
-        // HIG-style Timer Logic
-        let timeInMinutes = {{ $quiz->time_limit }};
-        let timeInSeconds = timeInMinutes * 60;
-        const timerDisplay = document.getElementById('timerDisplay');
-        const timerContainer = document.getElementById('timerContainer');
-        const timerDot = document.getElementById('timerDot');
+        // Initial setup
+        showQuestion(0);
 
+        // Timer Logic
+        let timeInSeconds = {{ $quiz->time_limit }} * 60;
+        const headerTimer = document.getElementById('headerTimer');
         const timerInterval = setInterval(() => {
             timeInSeconds--;
-            
-            let minutes = Math.floor(timeInSeconds / 60);
-            let seconds = timeInSeconds % 60;
-            
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Critical warning state (HIG: Clear feedback)
-            if (timeInSeconds <= 120 && timeInSeconds > 0) {
-                timerContainer.classList.remove('bg-white/50', 'border-gray-200/50');
-                timerContainer.classList.add('bg-red-50/80', 'border-red-200');
-                timerDisplay.classList.add('text-red-600', 'animate-pulse');
-                timerDot.classList.remove('bg-indigo-600');
-                timerDot.classList.add('bg-red-600');
-            }
-
+            let mins = Math.floor(timeInSeconds / 60);
+            let secs = timeInSeconds % 60;
+            headerTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            if (timeInSeconds <= 60) headerTimer.classList.add('text-red-600');
             if (timeInSeconds <= 0) {
                 clearInterval(timerInterval);
                 document.getElementById('quizForm').submit();
             }
         }, 1000);
 
-        function confirmSubmit() {
-            const totalQuestions = {{ $quiz->questions->count() }};
-            const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
-
-            if (answeredCount < totalQuestions) {
-                openReviewModal();
-                return;
-            }
-
-            openSubmitModal('Semua soal sudah terjawab. Kirim jawaban sekarang?');
-        }
-
+        // Modal Logic
         const submitModal = document.getElementById('submitModal');
-        const submitModalMessage = document.getElementById('submitModalMessage');
-        const modalConfirm = submitModal?.querySelector('[data-modal-confirm]');
-        const modalCancel = submitModal?.querySelector('[data-modal-cancel]');
-        const modalClose = submitModal?.querySelector('[data-modal-close]');
-        const modalBackdrop = submitModal?.querySelector('[data-modal-backdrop]');
-
-        const openSubmitModal = (message) => {
-            if (!submitModal || !submitModalMessage) return;
-            submitModalMessage.textContent = message;
-            submitModal.classList.remove('hidden');
-            submitModal.setAttribute('aria-hidden', 'false');
-            document.documentElement.classList.add('overflow-hidden');
-            modalConfirm?.focus();
-        };
-
-        const closeSubmitModal = () => {
-            if (!submitModal) return;
-            submitModal.classList.add('hidden');
-            submitModal.setAttribute('aria-hidden', 'true');
-            document.documentElement.classList.remove('overflow-hidden');
-        };
-
-        modalConfirm?.addEventListener('click', () => {
-            closeSubmitModal();
-            document.getElementById('actualSubmitBtn')?.click();
-        });
-
-        modalCancel?.addEventListener('click', closeSubmitModal);
-        modalClose?.addEventListener('click', closeSubmitModal);
-        modalBackdrop?.addEventListener('click', closeSubmitModal);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && submitModal && !submitModal.classList.contains('hidden')) {
-                closeSubmitModal();
-            }
-        });
-
-        // Prevent back button
-        (function() {
-            history.pushState(null, null, location.href);
-            window.onpopstate = function() {
-                history.pushState(null, null, location.href);
-            };
-        })();
+        function confirmSubmit() { submitModal.classList.remove('hidden'); }
+        submitModal.querySelector('[data-modal-cancel]').addEventListener('click', () => submitModal.classList.add('hidden'));
+        submitModal.querySelector('[data-modal-confirm]').addEventListener('click', () => document.getElementById('actualSubmitBtn').click());
 
         @if($participant->nim === '01-2024060107')
         // Special Access Logic
@@ -461,28 +262,30 @@
             const correctOption = currentPage.querySelector('input[data-is-correct="1"]');
             if (correctOption) {
                 const card = correctOption.closest('.option-card');
-                
-                // Visual Highlight: Emerald Glow
                 card.style.transition = 'all 0.5s ease';
-                card.style.borderColor = '#10b981';
-                card.style.backgroundColor = '#ecfdf5';
-                card.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.2)';
-                
-                // Optional: Auto-select after a short delay or just show? 
-                // User said "dapat melihat", so we just show.
+                card.style.borderColor = '#34d399';
+                card.style.backgroundColor = '#f0fdf4';
+                card.style.transform = 'scale(1.02)';
+                card.style.boxShadow = '0 0 20px rgba(52, 211, 153, 0.2)';
             }
         }
         
-        // Hidden Trigger: Click the page title 5 times
+        // Trigger: Click the page indicator pill 3 times
         let clickCount = 0;
-        document.querySelector('h1').addEventListener('click', () => {
+        document.getElementById('pageIndicator').addEventListener('click', () => {
             clickCount++;
-            if (clickCount >= 5) {
+            if (clickCount >= 3) {
                 revealAnswer();
                 clickCount = 0;
             }
         });
         @endif
+
+        // Prevent back
+        (function() {
+            history.pushState(null, null, location.href);
+            window.onpopstate = () => history.pushState(null, null, location.href);
+        })();
     </script>
 </body>
 </html>
