@@ -67,7 +67,8 @@
                     </div>
                     <div class="divide-y divide-slate-100">
                         @forelse($participations as $participation)
-                        <div class="px-8 py-6 hover:bg-slate-50 transition-all cursor-default group">
+                        <a href="{{ route('admin.participant.answers', ['quiz' => $participation->quiz->slug, 'participant' => $participation->id]) }}" 
+                           class="block px-8 py-6 hover:bg-slate-50 transition-all cursor-pointer group">
                             <div class="flex justify-between items-start mb-2">
                                 <h4 class="text-base font-black text-slate-800 tracking-tight group-hover:text-indigo-600 transition-all uppercase">{{ $participation->quiz->title }}</h4>
                                 <span class="text-lg font-black text-slate-900">{{ $participation->score }}</span>
@@ -78,7 +79,7 @@
                                     <div class="h-full bg-indigo-500" style="width: {{ $participation->score }}%"></div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                         @empty
                         <div class="px-8 py-20 text-center text-slate-400 font-bold italic">No completed assessments recorded.</div>
                         @endforelse
