@@ -17,13 +17,6 @@ class AdminAuth
             }
         }
 
-        if ($request->cookie('admin_auth') === '1') {
-            if ($request->hasSession()) {
-                $request->session()->put('admin.authenticated', true);
-            }
-
-            return $next($request);
-        }
 
         return redirect()->route('admin.login');
     }

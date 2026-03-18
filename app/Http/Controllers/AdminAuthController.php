@@ -45,8 +45,6 @@ class AdminAuthController extends Controller
             $request->session()->regenerate();
         }
 
-        Cookie::queue('admin_auth', '1', 60 * 24 * 30);
-
         return redirect()->route('admin.dashboard');
     }
 
@@ -58,7 +56,6 @@ class AdminAuthController extends Controller
             $request->session()->regenerateToken();
         }
 
-        Cookie::queue(Cookie::forget('admin_auth'));
 
         return redirect()->route('admin.login');
     }

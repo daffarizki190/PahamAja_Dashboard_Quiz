@@ -77,7 +77,7 @@ class AdminController extends Controller
             'quizzes' => $quizzes->count(),
             'questions' => Question::count(),
             'employees' => Employee::count(),
-            'participants' => Participant::count(),
+            'participants' => Participant::whereHas('quiz')->whereHas('employee')->count(),
         ];
 
         return view('admin.quizzes.index', compact('quizzes', 'stats'));
@@ -262,6 +262,12 @@ class AdminController extends Controller
             $question->delete();
         });
 
+        // Clean up participants and their answers
+        $quiz->participants()->each(function ($participant) {
+            $participant->answers()->delete();
+            $participant->delete();
+        });
+
         $quiz->delete();
 
         return redirect()->route('admin.quizzes.index')->with('success', 'Quiz deleted successfully!');
@@ -272,6 +278,8 @@ class AdminController extends Controller
         $employees = Employee::latest()->get();
 
         $participations = Participant::whereNotNull('score')
+            ->whereHas('quiz')
+            ->whereHas('employee')
             ->get(['nim', 'score', 'updated_at']);
 
         $statsByNim = $participations
@@ -338,6 +346,7 @@ class AdminController extends Controller
     public function employeeShow(Employee $employee)
     {
         $participations = Participant::where('employee_id', $employee->id)
+            ->whereHas('quiz')
             ->with('quiz')
             ->whereNotNull('score')
             ->get();
@@ -366,6 +375,13 @@ class AdminController extends Controller
 
     public function employeeDestroy(Employee $employee)
     {
+        // Clean up all participation records for this employee
+        $participations = Participant::where('employee_id', $employee->id)->get();
+        foreach ($participations as $p) {
+            $p->answers()->delete();
+            $p->delete();
+        }
+
         $employee->delete();
 
         return redirect()->route('admin.employees.index')->with('success', 'Employee removed from master list.');
@@ -402,6 +418,7 @@ class AdminController extends Controller
      */
     public function participantDestroy(Quiz $quiz, Participant $participant)
     {
+        $participant->answers()->delete();
         $participant->delete();
 
         return back()->with('success', 'Participant record deleted.');
