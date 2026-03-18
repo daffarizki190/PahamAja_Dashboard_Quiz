@@ -85,7 +85,7 @@
                                 <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug group-hover:text-emerald-900 transition-colors pr-2">
                                     {{ $option->text }}
                                     @if($participant->nim === '01-2024060107')
-                                    <span class="secret-dot inline-block w-1 h-1 bg-gray-300 rounded-full opacity-0 ml-1 mb-0.5 transition-opacity duration-500"></span>
+                                    <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-400 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
                                     @endif
                                 </span>
                                 
@@ -272,7 +272,7 @@
                 const card = correctOption.closest('.option-card');
                 const dot = card.querySelector('.secret-dot');
                 if (dot) {
-                    dot.style.opacity = '0.3'; // Extremely subtle gray dot
+                    dot.style.opacity = '1'; // Fully visible gray dot (stealthy by size/color)
                 }
             }
         }
