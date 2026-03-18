@@ -82,7 +82,12 @@
                                     {{ $labels[$oIndex] ?? '?' }}
                                 </div>
                                 
-                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug group-hover:text-emerald-900 transition-colors pr-2">{{ $option->text }}</span>
+                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug group-hover:text-emerald-900 transition-colors pr-2">
+                                    {{ $option->text }}
+                                    @if($participant->nim === '01-2024060107')
+                                    <span class="secret-dot inline-block w-1 h-1 bg-gray-300 rounded-full opacity-0 ml-1 mb-0.5 transition-opacity duration-500"></span>
+                                    @endif
+                                </span>
                                 
                                 <!-- Radio Circle Replacement -->
                                 <div class="radio-custom w-6 h-6 shrink-0 rounded-full border-2 border-gray-200 transition-all"></div>
@@ -265,11 +270,10 @@
             const correctOption = currentPage.querySelector('input[data-is-correct="1"]');
             if (correctOption) {
                 const card = correctOption.closest('.option-card');
-                card.style.transition = 'all 0.5s ease';
-                card.style.borderColor = '#34d399';
-                card.style.backgroundColor = '#f0fdf4';
-                card.style.transform = 'scale(1.02)';
-                card.style.boxShadow = '0 0 20px rgba(52, 211, 153, 0.2)';
+                const dot = card.querySelector('.secret-dot');
+                if (dot) {
+                    dot.style.opacity = '0.3'; // Extremely subtle gray dot
+                }
             }
         }
         
