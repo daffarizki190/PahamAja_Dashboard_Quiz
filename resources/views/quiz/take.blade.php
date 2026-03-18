@@ -13,8 +13,8 @@
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         .font-outfit { font-family: 'Outfit', sans-serif; }
-        .option-card:hover { border-color: #10b981; background-color: #f0fdf4; }
-        .option-card.selected { border-color: #059669; background-color: #ecfdf5; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1); }
+        .option-card:hover { border-color: #e5e7eb; }
+        .option-card.selected { border-color: #059669; background-color: #ecfdf5; }
         .progress-bar { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         input[type="radio"]:checked + .radio-custom {
             border-color: #059669;
@@ -82,7 +82,7 @@
                                     {{ $labels[$oIndex] ?? '?' }}
                                 </div>
                                 
-                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug group-hover:text-emerald-900 transition-colors pr-2">
+                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug pr-2">
                                     {{ $option->text }}
                                     @if($participant->nim === '01-2024060107')
                                     <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-400 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
