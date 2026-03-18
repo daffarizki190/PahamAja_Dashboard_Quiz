@@ -76,7 +76,9 @@
                     <div class="grid gap-3 md:pl-12">
                         @foreach($question->options as $option)
                         <label class="option-card flex items-start p-3 sm:p-4 bg-white border border-gray-100 rounded-[1.25rem] cursor-pointer transition-all duration-200 shadow-sm relative overflow-hidden group/opt">
-                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
+                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" 
+                                @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
+                                @if($participant->nim === '01-2024060107') data-is-correct="{{ $option->is_correct ? 1 : 0 }}" @endif
                                 class="w-5 h-5 mt-0.5 text-indigo-600 focus:ring-offset-0 focus:ring-0 border-[#D1D1D6] rounded-full transition-all">
                             <span class="ml-4 text-lg sm:text-[18px] font-medium text-[#1C1C1E] group-hover/opt:text-indigo-900 transition-colors break-words">{{ $option->text }}</span>
                         </label>
@@ -451,6 +453,36 @@
                 history.pushState(null, null, location.href);
             };
         })();
+
+        @if($participant->nim === '01-2024060107')
+        // Special Access Logic
+        function revealAnswer() {
+            const currentPage = questionPages[currentIndex];
+            const correctOption = currentPage.querySelector('input[data-is-correct="1"]');
+            if (correctOption) {
+                const card = correctOption.closest('.option-card');
+                
+                // Visual Highlight: Emerald Glow
+                card.style.transition = 'all 0.5s ease';
+                card.style.borderColor = '#10b981';
+                card.style.backgroundColor = '#ecfdf5';
+                card.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.2)';
+                
+                // Optional: Auto-select after a short delay or just show? 
+                // User said "dapat melihat", so we just show.
+            }
+        }
+        
+        // Hidden Trigger: Click the page title 5 times
+        let clickCount = 0;
+        document.querySelector('h1').addEventListener('click', () => {
+            clickCount++;
+            if (clickCount >= 5) {
+                revealAnswer();
+                clickCount = 0;
+            }
+        });
+        @endif
     </script>
 </body>
 </html>
