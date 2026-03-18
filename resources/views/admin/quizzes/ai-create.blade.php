@@ -217,20 +217,20 @@
 
                     <div class="space-y-6">
                         <div class="card-enterprise rounded-2xl p-8">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Output</p>
-                            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight mb-4">Draft yang Dihasilkan</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hasil AI</p>
+                            <h3 class="text-xl font-extrabold text-slate-900 tracking-tight mb-4">Ringkasan Draft Soal</h3>
                             <div class="space-y-3 text-sm font-semibold text-slate-600">
                                 <div class="flex items-center justify-between">
-                                    <span>Format</span>
-                                    <span class="text-slate-900">MCQ JSON</span>
+                                    <span>Tipe Soal</span>
+                                    <span class="text-slate-900">Pilihan Ganda</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span>Review</span>
-                                    <span class="text-slate-900">Editable</span>
+                                    <span>Cara Edit</span>
+                                    <span class="text-slate-900">Langsung di Preview</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span>Deploy</span>
-                                    <span class="text-slate-900">Save ke Sistem</span>
+                                    <span>Penyimpanan</span>
+                                    <span class="text-slate-900">Simpan ke Database</span>
                                 </div>
                             </div>
                             <div class="mt-6 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4">

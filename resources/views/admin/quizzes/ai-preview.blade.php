@@ -44,11 +44,11 @@
             </nav>
             <div class="absolute bottom-6 left-6 right-6">
                 <div class="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-500/20">
-                    <p class="text-[9px] text-indigo-400 font-black uppercase tracking-widest mb-1">Review</p>
-                    <p class="text-xs font-bold text-white mb-3">Curate Draft</p>
+                    <p class="text-[9px] text-indigo-400 font-black uppercase tracking-widest mb-1">Tinjau</p>
+                    <p class="text-xs font-bold text-white mb-3">Sesuaikan Soal</p>
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[9px] text-indigo-300 font-bold uppercase">Editable</span>
+                        <span class="text-[9px] text-indigo-300 font-bold uppercase">Dapat Diubah</span>
                     </div>
                 </div>
             </div>
@@ -65,8 +65,8 @@
                             <span>/</span>
                             <span class="text-slate-600">Review</span>
                         </div>
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-2">Review Draft Soal</h2>
-                        <p class="text-slate-500 mt-2 font-medium text-sm">Edit pertanyaan & opsi, pilih jawaban benar, lalu deploy.</p>
+                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-2">Edit & Terbitkan Soal</h2>
+                        <p class="text-slate-500 mt-2 font-medium text-sm">Edit pertanyaan & opsi, pilih jawaban benar, lalu simpan.</p>
                     </div>
                     <div class="flex items-center gap-3 h-fit">
                         <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $difficulty }}</span>
@@ -205,12 +205,12 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <div>
-                                <p class="text-sm font-black text-slate-900">Siap Deploy</p>
+                                <p class="text-sm font-black text-slate-900">Siap Terbitkan</p>
                                 <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Tersisa <span id="question-count-bottom">{{ count($questions) }}</span> soal</p>
                             </div>
                         </div>
                         <button type="submit" id="deploy-button" class="btn-primary text-white px-10 py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-600/20 flex items-center gap-3">
-                            <span>Deploy</span>
+                            <span>Terbitkan Sekarang</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </button>
                     </div>
