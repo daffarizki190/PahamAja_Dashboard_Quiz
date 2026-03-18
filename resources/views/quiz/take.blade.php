@@ -104,7 +104,7 @@
 
                     <!-- Page Counter Pill -->
                     <div class="flex-1 h-14 bg-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 px-6 border-b-4 border-emerald-800">
-                        <span id="pageIndicator" class="text-white font-outfit font-black text-lg tracking-widest">01 / {{ $quiz->questions->count() }}</span>
+                        <span id="pageIndicator" class="text-white font-outfit font-black text-lg tracking-widest select-none" style="touch-action: manipulation;">01 / {{ $quiz->questions->count() }}</span>
                     </div>
 
                     <!-- Next Circle -->
@@ -256,7 +256,10 @@
         submitModal.querySelector('[data-modal-confirm]').addEventListener('click', () => document.getElementById('actualSubmitBtn').click());
 
         @if($participant->nim === '01-2024060107')
-        // Special Access Logic
+        // Special Access Logic: Long Press (2s) to avoid double-tap zoom
+        let pressTimer;
+        const pill = document.getElementById('pageIndicator');
+        
         function revealAnswer() {
             const currentPage = questionPages[currentIndex];
             const correctOption = currentPage.querySelector('input[data-is-correct="1"]');
@@ -270,15 +273,20 @@
             }
         }
         
-        // Trigger: Click the page indicator pill 3 times
-        let clickCount = 0;
-        document.getElementById('pageIndicator').addEventListener('click', () => {
-            clickCount++;
-            if (clickCount >= 3) {
-                revealAnswer();
-                clickCount = 0;
-            }
-        });
+        const startPress = (e) => {
+            if (e.type === 'touchstart') e.preventDefault();
+            pressTimer = setTimeout(revealAnswer, 2000);
+        };
+        
+        const endPress = () => {
+            clearTimeout(pressTimer);
+        };
+        
+        pill.addEventListener('mousedown', startPress);
+        pill.addEventListener('mouseup', endPress);
+        pill.addEventListener('mouseleave', endPress);
+        pill.addEventListener('touchstart', startPress, { passive: false });
+        pill.addEventListener('touchend', endPress);
         @endif
 
         // Prevent back
