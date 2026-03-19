@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hasil Ujian - {{ $quiz->title }}</title>
+    <title>Hasil Kuis - {{ $quiz->title }}</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +34,7 @@
                 </div>
             @endif
 
-            <h1 class="text-3xl font-black text-white mb-10 drop-shadow-lg tracking-tight">Ujian Selesai!</h1>
+            <h1 class="text-3xl font-black text-white mb-10 drop-shadow-lg tracking-tight">Kuis Selesai!</h1>
             
             <div class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 mx-auto -mt-4 relative mb-10 group">
                 <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Skor Akhir Anda</p>

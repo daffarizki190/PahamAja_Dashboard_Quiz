@@ -67,7 +67,7 @@
             <button type="submit" 
                 class="group w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-6 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl hover:shadow-indigo-100 mt-2">
                 <span class="flex items-center justify-center gap-2">
-                    Mulai Ujian
+                    Mulai Kuis
                     <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
