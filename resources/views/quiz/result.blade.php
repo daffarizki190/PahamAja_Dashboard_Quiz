@@ -7,11 +7,26 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; }
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         .glass-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px);
@@ -22,7 +37,7 @@
 </head>
 <body class="bg-[#F2F2F7] flex items-center justify-center min-h-screen p-6">
 
-    <div class="glass-card p-10 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-lg text-center relative overflow-hidden">
+    <div class="glass-card p-8 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-lg text-center relative overflow-hidden animate-slide-up opacity-0">
         
         <!-- Apple-style Gradient Background Accessory -->
         <div class="absolute top-0 left-0 right-0 h-40 bg-gradient-to-br {{ $participant->score >= 70 ? 'from-green-400 to-emerald-600' : ($participant->score >= 50 ? 'from-orange-300 to-amber-500' : 'from-rose-400 to-red-600') }} opacity-90 z-0"></div>
@@ -40,8 +55,8 @@
                 <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Skor Akhir Anda</p>
                 
                 <div class="relative inline-block">
-                    <div class="text-[5rem] font-black leading-none tracking-tighter {{ $participant->score >= 70 ? 'text-emerald-500' : ($participant->score >= 50 ? 'text-amber-500' : 'text-rose-500') }} transition-transform group-hover:scale-105 duration-500">
-                        {{ $participant->score ?? 0 }}<span class="text-2xl text-[#C7C7CC] ml-1 font-extrabold">/100</span>
+                    <div class="text-[4rem] sm:text-[5rem] font-black leading-none tracking-tighter {{ $participant->score >= 70 ? 'text-emerald-500' : ($participant->score >= 50 ? 'text-amber-500' : 'text-rose-500') }} transition-transform group-hover:scale-105 duration-500 font-outfit">
+                        {{ $participant->score ?? 0 }}<span class="text-xl sm:text-2xl text-[#C7C7CC] ml-1 font-extrabold font-sans">/100</span>
                     </div>
                 </div>
                 
@@ -93,8 +108,8 @@
             @endif
 
             <div class="space-y-4">
-                <a href="{{ route('quiz.join', $quiz->slug) }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl">
-                    Finish
+                <a href="{{ route('quiz.join', $quiz->slug) }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-black py-5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl uppercase text-xs tracking-widest">
+                    Finish Assessment
                 </a>
             </div>
         </div>

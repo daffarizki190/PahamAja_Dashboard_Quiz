@@ -8,8 +8,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #ffffff; }
-        .sidebar { background: #0f172a; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
+        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .delay-100 { animation-delay: 100ms; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -17,13 +32,14 @@
         <!-- Sidebar -->
         <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block">
             <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
+                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-400">Aja</span></h1>
+                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
                 </div>
             </div>
             <nav class="space-y-1">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="text-sm font-medium">Active Assessments</span>
@@ -42,24 +58,24 @@
                 <span>Back to Directory</span>
             </a>
 
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8 animate-fade-in opacity-0">
                 <div>
-                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-2 leading-none">Security Cleared • Corporate Analyst</p>
+                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Security Cleared • Corporate Analyst</p>
                     <h2 class="text-5xl font-black text-slate-900 tracking-tight leading-none">{{ $employee->name }}</h2>
-                    <p class="text-slate-500 mt-4 font-medium flex items-center gap-3">
-                        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg text-xs font-black">{{ $employee->nim }}</span>
-                        <span>{{ $employee->department }}</span>
+                    <p class="text-slate-500 mt-5 font-medium flex items-center gap-3">
+                        <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black shadow-lg shadow-indigo-600/20">{{ $employee->nim }}</span>
+                        <span class="font-bold text-slate-700 uppercase tracking-widest text-[10px]">{{ $employee->department }}</span>
                         <span class="w-1.5 h-1.5 bg-slate-200 rounded-full"></span>
-                        <span class="text-slate-400">{{ $employee->position }}</span>
+                        <span class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{{ $employee->position }}</span>
                     </p>
                 </div>
-                <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl shadow-slate-200">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Average Integrity Score</p>
-                    <p class="text-3xl font-black">{{ number_format($employee->average_score, 1) }}%</p>
+                <div class="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl shadow-slate-200 border border-slate-800">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Performa Akumulatif</p>
+                    <p class="text-3xl font-black font-outfit">{{ number_format($employee->average_score, 1) }}%</p>
                 </div>
             </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-slide-up opacity-0 delay-100">
                 <!-- Assessment History -->
                 <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden self-start">
                     <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50">

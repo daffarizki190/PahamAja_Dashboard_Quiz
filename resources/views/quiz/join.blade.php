@@ -7,10 +7,18 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { font-family: 'Inter', sans-serif; }
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .glass {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
@@ -21,17 +29,17 @@
 </head>
 <body class="bg-[#F2F2F7] flex items-center justify-center min-h-screen p-4">
 
-    <div class="glass p-8 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-sm">
+    <div class="glass p-8 md:p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm animate-slide-up opacity-0">
         <div class="text-center mb-10">
-            <div class="inline-block p-1 bg-indigo-50 rounded-2xl mb-4">
-                <div class="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+            <div class="inline-block p-1.5 bg-indigo-50 rounded-2xl mb-4">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
             </div>
-            <h1 class="text-2xl font-extrabold text-[#1C1C1E] tracking-tight">Paham<span class="text-indigo-600">Aja</span></h1>
-            <p class="text-[#8E8E93] text-sm font-medium mt-1">Semangat! Fokus, teliti, dan kerjakan dengan tenang.</p>
+            <h1 class="text-2xl font-black text-[#1C1C1E] tracking-tight font-outfit">Paham<span class="text-indigo-600">Aja</span></h1>
+            <p class="text-[#8E8E93] text-sm font-medium mt-1 leading-relaxed">Persiapkan diri Anda untuk asesmen ini.</p>
         </div>
 
         <div class="mb-8 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -65,11 +73,11 @@
             </div>
 
             <button type="submit" 
-                class="group w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-4.5 px-6 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl hover:shadow-indigo-100 mt-2">
+                class="group w-full bg-[#1C1C1E] hover:bg-black text-white font-black py-5 px-6 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl hover:shadow-indigo-100 mt-2 uppercase text-xs tracking-widest">
                 <span class="flex items-center justify-center gap-2">
                     Mulai Kuis
                     <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                 </span>
             </button>

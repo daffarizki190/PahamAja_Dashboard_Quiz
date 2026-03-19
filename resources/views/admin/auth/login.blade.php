@@ -8,10 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Outfit', sans-serif; }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-md animate-fade-in opacity-0">
         <div class="bg-white border border-slate-200 shadow-sm rounded-3xl p-10">
             <div class="flex items-center gap-3 mb-8">
                 <div class="bg-indigo-600 w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl italic text-white shadow-lg shadow-indigo-600/20">P</div>

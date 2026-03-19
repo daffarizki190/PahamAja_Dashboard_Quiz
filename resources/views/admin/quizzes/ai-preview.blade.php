@@ -7,8 +7,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #ffffff; color: #0f172a; }
-        .sidebar { background: #0f172a; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
+        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
         .card-enterprise { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
         .btn-primary { background: #4f46e5; transition: all 0.2s ease; }
         .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
@@ -21,9 +37,9 @@
     <div class="flex">
         <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block z-50">
             <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
+                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-400">Aja</span></h1>
+                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
                 </div>
             </div>
@@ -31,11 +47,7 @@
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-semibold">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.quizzes.index') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h6m2 0a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2"></path></svg>
-                    <span class="text-sm font-semibold">Quiz Builder</span>
+                    <span class="text-sm font-medium">Active Assessments</span>
                 </a>
                 <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -55,18 +67,18 @@
         </aside>
 
         <main class="flex-1 p-10 max-w-5xl mx-auto">
-            <header class="mb-10 flex flex-col gap-6">
-                <div class="flex items-start justify-between gap-6">
+            <header class="mb-10 flex flex-col gap-6 animate-fade-in opacity-0">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div>
-                        <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                        <div class="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
                             <a class="hover:text-indigo-600" href="{{ route('admin.quizzes.index') }}">Assessments</a>
                             <span>/</span>
                             <a class="hover:text-indigo-600" href="{{ route('admin.quizzes.ai-create') }}">AI Generator</a>
                             <span>/</span>
-                            <span class="text-slate-600">Review</span>
+                            <span class="text-indigo-600">Review Generation</span>
                         </div>
-                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-2">Edit & Terbitkan Soal</h2>
-                        <p class="text-slate-500 mt-2 font-medium text-sm">Edit pertanyaan & opsi, pilih jawaban benar, lalu simpan.</p>
+                        <h2 class="text-4xl font-black text-slate-900 tracking-tight mt-3">Edit & Terbitkan Soal</h2>
+                        <p class="text-slate-500 mt-3 font-medium text-sm">Edit pertanyaan & opsi, pilih jawaban benar, lalu simpan.</p>
                     </div>
                     <div class="flex items-center gap-3 h-fit">
                         <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $difficulty }}</span>

@@ -11,19 +11,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; }
         .font-outfit { font-family: 'Outfit', sans-serif; }
-        .option-card:hover { border-color: #e5e7eb; }
-        .option-card.selected { border-color: #059669; background-color: #ecfdf5; }
-        .progress-bar { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-card { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .option-card:hover { border-color: #e5e8eb; transform: translateY(-2px); }
+        .option-card.selected { border-color: #10b981; background-color: #ffffff; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1); }
+        .progress-bar { transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         input[type="radio"]:checked + .radio-custom {
-            border-color: #059669;
-            background-color: #059669;
+            border-color: #10b981;
+            background-color: #10b981;
             box-shadow: inset 0 0 0 3px white;
         }
-        /* Mobile-first specific height adjustments */
+        
+        /* Mobile Optimization */
         @media (max-width: 640px) {
-            .question-content { height: calc(100vh - 180px); }
+            .question-text { font-size: 1.5rem; line-height: 1.2; }
+            .option-text { font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -55,13 +67,13 @@
 
             <div id="questionPager">
                 @foreach($quiz->questions as $index => $question)
-                <div class="question-page hidden" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
+                <div class="question-page hidden animate-slide-up opacity-0" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
                     <!-- Question Header -->
-                    <div class="mb-8">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-[0.2em]">Pertanyaan {{ $index + 1 }}</span>
+                    <div class="mb-10">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg uppercase tracking-[0.2em] border border-emerald-100/50">Question {{ $index + 1 }}</span>
                         </div>
-                        <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight">
+                        <h3 class="question-text text-3xl md:text-4xl font-outfit font-extrabold text-gray-900 leading-tight tracking-tight">
                             {{ $question->text }}
                         </h3>
                     </div>
@@ -82,10 +94,10 @@
                                     {{ $labels[$oIndex] ?? '?' }}
                                 </div>
                                 
-                                <span class="flex-1 text-[17px] font-bold text-gray-800 leading-snug pr-2">
+                                <span class="flex-1 option-text text-[17px] font-bold text-gray-800 leading-snug pr-2">
                                     {{ $option->text }}
                                     @if($participant->nim === '01-2024060107')
-                                    <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-400 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
+                                    <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-200 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
                                     @endif
                                 </span>
                                 

@@ -27,12 +27,24 @@
             background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
         }
         .animate-slide-up {
-            animation: slideUp 0.5s ease-out forwards;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
         }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+        .delay-500 { animation-delay: 500ms; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -55,32 +67,32 @@
             </div>
         </div>
         
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-4">
             <a href="{{ route('admin.quiz.export', $quiz->slug) }}" 
-               class="bg-slate-900 hover:bg-indigo-600 text-white px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-slate-200 transition-all flex items-center gap-3 active:scale-95 text-sm">
+               class="bg-slate-900 hover:bg-indigo-600 text-white px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Export Analysis</span>
             </a>
-            <form action="{{ route('admin.logout') }}" method="POST">
+            <form action="{{ route('admin.logout') }}" method="POST" class="w-full sm:w-auto">
                 @csrf
-                <button type="submit" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center gap-3 active:scale-95 text-sm">
+                <button type="submit" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"></path></svg>
                     <span>Logout</span>
                 </button>
             </form>
-            <div class="bg-indigo-50 border border-indigo-100/50 px-6 py-4 rounded-[1.5rem] flex items-center gap-3">
+            <div class="bg-indigo-50 border border-indigo-100/50 px-6 py-4 rounded-[1.5rem] flex items-center justify-center gap-3 w-full sm:w-auto">
                 <span class="relative flex h-3 w-3">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
                 </span>
-                <span class="text-indigo-700 font-extrabold text-sm">{{ $participants->count() }} Live Activity</span>
+                <span class="text-indigo-700 font-extrabold text-sm whitespace-nowrap">{{ $participants->count() }} Live Activity</span>
             </div>
         </div>
     </header>
 
     <!-- Professional Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div class="glass-card p-8 rounded-[2rem] animate-slide-up" style="animation-delay: 0.1s">
+        <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-100">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-50 text-indigo-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -89,7 +101,7 @@
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ number_format($avgScore, 1) }}%</h3>
         </div>
-        <div class="glass-card p-8 rounded-[2rem] animate-slide-up" style="animation-delay: 0.2s">
+        <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-200">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-violet-50 text-violet-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -98,7 +110,7 @@
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ $inProgressCount }}</h3>
         </div>
-        <div class="glass-card p-8 rounded-[2rem] animate-slide-up" style="animation-delay: 0.3s">
+        <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-300">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.158-2.046-.452-2.992z"></path></svg>
@@ -107,7 +119,7 @@
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ $quiz->passing_score }}</h3>
         </div>
-        <div class="glass-card p-8 rounded-[2rem] animate-slide-up" style="animation-delay: 0.4s">
+        <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-400">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-50 text-emerald-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>

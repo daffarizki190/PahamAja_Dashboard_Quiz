@@ -5,14 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - PahamAja</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f7f7f5; color: #0f172a; }
+        body { font-family: 'Outfit', sans-serif; background: #f7f7f5; color: #0f172a; }
         .font-serif { font-family: 'Fraunces', serif; }
         .sidebar {
             background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
             border-right: 1px solid #1e293b;
         }
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+        
         .card-enterprise {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -95,7 +114,7 @@
                         <p class="text-slate-500 mt-3 font-medium text-sm max-w-2xl">Kelola kuis dan laporan.</p>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 animate-fade-in opacity-0 delay-100">
                         <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-indigo-50 transition-all flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>AI Generator</span>
@@ -117,7 +136,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 animate-slide-up opacity-0 delay-200">
                     <div class="card-enterprise kpi rounded-2xl p-6">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Kuis</p>
                         <div class="mt-2 flex items-end justify-between gap-4">
