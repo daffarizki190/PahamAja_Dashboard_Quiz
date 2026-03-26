@@ -172,23 +172,38 @@
                 </div>
             </header>
 
-            <!-- Update Notification Banner -->
-            <div class="bg-indigo-600 rounded-[2rem] p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between shadow-xl shadow-indigo-600/20 border border-indigo-500 animate-slide-up relative overflow-hidden group">
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-                <div class="flex items-center gap-5 z-10 relative">
-                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/20">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <!-- Floating Toast Notification -->
+            <div id="updateToast" class="fixed bottom-6 right-6 z-[100] bg-indigo-600 rounded-3xl p-5 w-[380px] text-white flex flex-col shadow-2xl shadow-indigo-900/30 border border-indigo-400/30 transform translate-y-[150%] transition-transform duration-500 ease-out">
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                <div class="flex items-start gap-4 z-10 w-full relative">
+                    <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-md border border-white/20 mt-0.5 flex-shrink-0">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-black tracking-[0.3em] text-indigo-200 uppercase mb-1">System Update Deployed</p>
-                        <h3 class="text-xl font-bold tracking-tight">PahamAja Dashboard UI Update 🚀</h3>
-                        <p class="text-sm font-medium text-indigo-100 mt-1 max-w-2xl">Desain baru (Glassmorphism & animasi premium) serta perlindungan pencegahan double-submit (Error 419) telah berhasil diterapkan secara global.</p>
+                    <div class="flex-1">
+                        <p class="text-[9px] font-black tracking-[0.2em] text-indigo-200 uppercase mb-0.5">Update Deployed</p>
+                        <h3 class="text-base font-bold tracking-tight leading-tight mb-1.5">PahamAja Web v2.0 🚀</h3>
+                        <p class="text-xs font-medium text-indigo-100/90 leading-relaxed">Desain UI/UX baru & pencegahan Error 419 telah aktif perlindungan ganda.</p>
                     </div>
+                    <button onclick="document.getElementById('updateToast').classList.add('translate-y-[150%]'); setTimeout(() => document.getElementById('updateToast').remove(), 500)" class="text-indigo-200 hover:text-white transition-colors p-1 flex-shrink-0 active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <button onclick="this.parentElement.style.display='none'" class="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl text-sm font-black transition-all border border-white/10 z-10 relative active:scale-95">
-                    Tutup
-                </button>
             </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    setTimeout(() => {
+                        const toast = document.getElementById('updateToast');
+                        if(toast) toast.classList.remove('translate-y-[150%]');
+                    }, 500);
+                    setTimeout(() => {
+                        const toast = document.getElementById('updateToast');
+                        if(toast) {
+                            toast.classList.add('translate-y-[150%]');
+                            setTimeout(() => toast.remove(), 500);
+                        }
+                    }, 8000);
+                });
+            </script>
 
             @if(session('success'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-8 flex items-center justify-between animate-fade-in">
