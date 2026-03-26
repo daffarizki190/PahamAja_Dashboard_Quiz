@@ -13,10 +13,17 @@
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; }
         .font-outfit { font-family: 'Outfit', sans-serif; }
-        .option-card { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .option-card:hover { border-color: #e5e8eb; transform: translateY(-2px); }
-        .option-card.selected { border-color: #10b981; background-color: #ffffff; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1); }
-        .progress-bar { transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .option-card { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .option-card:hover { border-color: #d1d5db; transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .option-card:active { transform: scale(0.98); }
+        .option-card.selected { 
+            border-color: #10b981; 
+            background-color: #ecfdf5; 
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3), inset 0 0 0 1px #10b981; 
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        .progress-bar { transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
         
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -24,6 +31,14 @@
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         
         input[type="radio"]:checked + .radio-custom {
@@ -69,9 +84,9 @@
                 @foreach($quiz->questions as $index => $question)
                 <div class="question-page hidden animate-slide-up opacity-0" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
                     <!-- Question Header -->
-                    <div class="mb-10">
+                    <div class="mb-10 animate-slide-up">
                         <div class="flex items-center gap-2 mb-4">
-                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg uppercase tracking-[0.2em] border border-emerald-100/50">Question {{ $index + 1 }}</span>
+                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg uppercase tracking-[0.2em] border border-emerald-100/50 shadow-sm">Question {{ $index + 1 }}</span>
                         </div>
                         <h3 class="question-text text-3xl md:text-4xl font-outfit font-extrabold text-gray-900 leading-tight tracking-tight">
                             {{ $question->text }}
@@ -201,10 +216,21 @@
             } else {
                 nextBtn.classList.remove('hidden');
                 submitBtn.classList.add('hidden');
+                
+                const wasDisabled = nextBtn.disabled;
                 nextBtn.disabled = !answered;
+                
+                // Animate pop-in when answer is selected
+                if(answered && wasDisabled) {
+                    nextBtn.classList.remove('animate-pop-in');
+                    void nextBtn.offsetWidth; // trigger reflow
+                    nextBtn.classList.add('animate-pop-in');
+                }
+                
                 nextBtn.classList.toggle('bg-emerald-50', answered);
                 nextBtn.classList.toggle('text-emerald-600', answered);
-                nextBtn.classList.toggle('border-emerald-100', answered);
+                nextBtn.classList.toggle('border-emerald-200', answered);
+                nextBtn.classList.toggle('shadow-emerald-500/20', answered);
             }
         };
 

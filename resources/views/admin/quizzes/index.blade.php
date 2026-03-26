@@ -237,8 +237,8 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+                    <table class="w-full text-left block lg:table">
+                        <thead class="bg-slate-50 border-b border-slate-200 hidden lg:table-header-group">
                             <tr class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
                                 <th class="px-8 py-5">Kuis</th>
                                 <th class="px-8 py-5">Durasi</th>
@@ -248,26 +248,43 @@
                                 <th class="px-8 py-5 text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100" id="quizRows">
+                        <tbody class="divide-y divide-slate-100 block lg:table-row-group" id="quizRows">
                             @forelse($quizzes as $quiz)
-                                <tr class="hover:bg-indigo-50/30 transition-all" data-title="{{ strtolower($quiz->title) }}">
-                                    <td class="px-8 py-5">
-                                        <p class="text-slate-900 font-semibold tracking-tight">{{ $quiz->title }}</p>
-                                        <p class="text-slate-400 text-xs font-semibold">{{ $quiz->slug }}</p>
+                                <tr class="block lg:table-row bg-white hover:bg-indigo-50/30 transition-all p-5 lg:p-0 my-4 lg:my-0 border border-slate-100 lg:border-none rounded-2xl lg:rounded-none shadow-sm lg:shadow-none" data-title="{{ strtolower($quiz->title) }}">
+                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
+                                        <div class="flex lg:block items-center justify-between">
+                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Kuis</span>
+                                            <div class="text-right lg:text-left">
+                                                <p class="text-slate-900 font-semibold tracking-tight">{{ $quiz->title }}</p>
+                                                <p class="text-slate-400 text-xs font-semibold">{{ $quiz->slug }}</p>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="px-8 py-5">
-                                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->time_limit }}m</span>
+                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
+                                        <div class="flex items-center justify-between lg:justify-start">
+                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Durasi</span>
+                                            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->time_limit }}m</span>
+                                        </div>
                                     </td>
-                                    <td class="px-8 py-5">
-                                        <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->passing_score }}%</span>
+                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
+                                        <div class="flex items-center justify-between lg:justify-start">
+                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Passing</span>
+                                            <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->passing_score }}%</span>
+                                        </div>
                                     </td>
-                                    <td class="px-8 py-5">
-                                        <span class="text-slate-800 font-black">{{ $quiz->participants_count }}</span>
+                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
+                                        <div class="flex items-center justify-between lg:justify-start">
+                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Peserta</span>
+                                            <span class="text-slate-800 font-black">{{ $quiz->participants_count }}</span>
+                                        </div>
                                     </td>
-                                    <td class="px-8 py-5">
-                                        <span class="text-slate-500 text-sm font-semibold">{{ $quiz->updated_at?->diffForHumans() ?? '-' }}</span>
+                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
+                                        <div class="flex items-center justify-between lg:justify-start">
+                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Update</span>
+                                            <span class="text-slate-500 text-sm font-semibold">{{ $quiz->updated_at?->diffForHumans() ?? '-' }}</span>
+                                        </div>
                                     </td>
-                                    <td class="px-8 py-5">
+                                    <td class="block lg:table-cell lg:px-8 pt-4 pb-2 lg:py-5">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all">
                                                 Analytics

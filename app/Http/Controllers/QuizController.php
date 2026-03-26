@@ -340,6 +340,24 @@ class QuizController extends Controller
             ];
         })->values();
 
+        if (request()->wantsJson()) {
+            return response()->json([
+                'avgScore' => number_format($avgScore, 1),
+                'inProgressCount' => $inProgressCount,
+                'completedCount' => $participants->whereNotNull('score')->count(),
+                'liveActivity' => $participants->count(),
+                'participants' => $participants->map(function($p) use ($quiz) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'nim' => $p->nim,
+                        'score' => $p->score,
+                        'is_passing' => $p->score >= $quiz->passing_score
+                    ];
+                })->toArray()
+            ]);
+        }
+
         return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount', 'questionAnalytics'));
     }
 }

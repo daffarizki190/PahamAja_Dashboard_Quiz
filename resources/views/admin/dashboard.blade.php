@@ -85,7 +85,7 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
                 </span>
-                <span class="text-indigo-700 font-extrabold text-sm whitespace-nowrap">{{ $participants->count() }} Live Activity</span>
+                <span class="text-indigo-700 font-extrabold text-sm whitespace-nowrap transition-opacity duration-300" id="statLiveActivity">{{ $participants->count() }} Live Activity</span>
             </div>
         </div>
     </header>
@@ -99,7 +99,7 @@
                 </div>
                 <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Performance</p>
             </div>
-            <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ number_format($avgScore, 1) }}%</h3>
+            <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statAvgScore">{{ number_format($avgScore, 1) }}%</h3>
         </div>
         <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-200">
             <div class="flex items-center gap-4 mb-6">
@@ -108,7 +108,7 @@
                 </div>
                 <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Active Now</p>
             </div>
-            <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ $inProgressCount }}</h3>
+            <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statInProgress">{{ $inProgressCount }}</h3>
         </div>
         <div class="glass-card p-8 rounded-[2rem] animate-slide-up opacity-0 delay-300">
             <div class="flex items-center gap-4 mb-6">
@@ -126,7 +126,7 @@
                 </div>
                 <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Completed</p>
             </div>
-            <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ $participants->whereNotNull('score')->count() }}</h3>
+            <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statCompleted">{{ $participants->whereNotNull('score')->count() }}</h3>
         </div>
     </div>
 
@@ -248,8 +248,8 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            <table class="w-full text-left block lg:table">
+                <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hidden lg:table-header-group">
                     <tr>
                         <th class="px-10 py-6">Rank</th>
                         <th class="px-10 py-6">Identity</th>
@@ -258,43 +258,57 @@
                         <th class="px-10 py-6 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-50 transition-opacity duration-300 block lg:table-row-group" id="liveLeaderboard">
                     @forelse($participants as $index => $participant)
-                    <tr class="hover:bg-indigo-50/30 transition-all duration-300 group">
-                        <td class="px-10 py-6">
-                            @if($index == 0 && !is_null($participant->score)) <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-black">1</div>
-                            @elseif($index == 1 && !is_null($participant->score)) <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center font-black">2</div>
-                            @elseif($index == 2 && !is_null($participant->score)) <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center font-black">3</div>
-                            @else <span class="text-slate-400 font-bold text-sm ml-4 italic">#{{ $index + 1 }}</span>
-                            @endif
+                    <tr class="block lg:table-row bg-white hover:bg-indigo-50/30 transition-all duration-300 p-5 lg:p-0 my-4 lg:my-0 border border-slate-100 lg:border-none rounded-2xl lg:rounded-none shadow-sm lg:shadow-none group">
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Rank</span>
+                                @if($index == 0 && !is_null($participant->score)) <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-black">1</div>
+                                @elseif($index == 1 && !is_null($participant->score)) <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center font-black">2</div>
+                                @elseif($index == 2 && !is_null($participant->score)) <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center font-black">3</div>
+                                @else <span class="text-slate-400 font-bold text-sm lg:ml-4 italic">#{{ $index + 1 }}</span>
+                                @endif
+                            </div>
                         </td>
-                        <td class="px-10 py-6">
-                            <p class="text-slate-800 font-black tracking-tight">{{ $participant->name }}</p>
-                            <p class="text-slate-400 text-xs font-bold">{{ $participant->nim }}</p>
-                        </td>
-                        <td class="px-10 py-6">
-                            @if(!is_null($participant->score))
-                                <div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
-                                    <span class="text-xs font-black">{{ $participant->score }}</span>
-                                    <div class="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
-                                        <div class="h-full bg-indigo-500" style="width: {{ $participant->score }}%"></div>
-                                    </div>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex lg:block items-center justify-between">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Identity</span>
+                                <div class="text-right lg:text-left">
+                                    <p class="text-slate-800 font-black tracking-tight">{{ $participant->name }}</p>
+                                    <p class="text-slate-400 text-xs font-bold">{{ $participant->nim }}</p>
                                 </div>
-                            @else
-                                <span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Running</span>
-                            @endif
+                            </div>
                         </td>
-                        <td class="px-10 py-6">
-                            @if(!is_null($participant->score))
-                                <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
-                                    {{ $participant->score >= $quiz->passing_score ? 'Qualified' : 'Failed' }}
-                                </span>
-                            @else
-                                <span class="text-slate-300 italic text-[10px] font-bold">Synchronizing...</span>
-                            @endif
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Score</span>
+                                @if(!is_null($participant->score))
+                                    <div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
+                                        <span class="text-xs font-black">{{ $participant->score }}</span>
+                                        <div class="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                                            <div class="h-full bg-indigo-500" style="width: {{ $participant->score }}%"></div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Running</span>
+                                @endif
+                            </div>
                         </td>
-                        <td class="px-10 py-6 text-right">
-                            <div class="inline-flex items-center gap-2">
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
+                                @if(!is_null($participant->score))
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
+                                        {{ $participant->score >= $quiz->passing_score ? 'Qualified' : 'Failed' }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-300 italic text-[10px] font-bold">Synchronizing...</span>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 pt-4 pb-2 lg:py-6 text-right">
+                            <div class="flex items-center justify-end gap-2">
                                 <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" class="text-slate-400 hover:text-indigo-600 transition-all p-2 hover:bg-indigo-50 rounded-lg">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
@@ -455,6 +469,128 @@
         </div>
     </div>
 </footer>
+
+<script>
+    // Real-time Dashboard Polling with Shimmer/Skeleton Effect
+    let pollInterval = setInterval(fetchLiveStats, 5000);
+
+    async function fetchLiveStats() {
+        try {
+            const url = '{{ route('admin.quiz.dashboard', $quiz->slug) }}';
+            const res = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            updateDashboard(data);
+        } catch (e) {
+            console.error('Polling error:', e);
+        }
+    }
+
+    function updateDashboard(data) {
+        // Skeleton effect
+        const targets = ['statAvgScore', 'statInProgress', 'statCompleted', 'statLiveActivity', 'liveLeaderboard'];
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('opacity-50', 'animate-pulse');
+        });
+
+        setTimeout(() => {
+            if (document.getElementById('statAvgScore')) document.getElementById('statAvgScore').innerText = data.avgScore + '%';
+            if (document.getElementById('statInProgress')) document.getElementById('statInProgress').innerText = data.inProgressCount;
+            if (document.getElementById('statCompleted')) document.getElementById('statCompleted').innerText = data.completedCount;
+            if (document.getElementById('statLiveActivity')) document.getElementById('statLiveActivity').innerText = data.liveActivity + ' Live Activity';
+
+            // Rebuild Leaderboard
+            const tbody = document.getElementById('liveLeaderboard');
+            if (tbody && data.participants) {
+                tbody.innerHTML = data.participants.map((p, index) => {
+                    const rankBadge = index === 0 && p.score !== null ? `<div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-black">1</div>`
+                        : index === 1 && p.score !== null ? `<div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center font-black">2</div>`
+                        : index === 2 && p.score !== null ? `<div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center font-black">3</div>`
+                        : `<span class="text-slate-400 font-bold text-sm ml-4 italic">#${index + 1}</span>`;
+                    
+                    const scoreMarkup = p.score !== null 
+                        ? `<div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
+                                <span class="text-xs font-black">${p.score}</span>
+                                <div class="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500" style="width: ${p.score}%"></div>
+                                </div>
+                           </div>`
+                        : `<span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Running</span>`;
+                    
+                    const statusMarkup = p.score !== null
+                        ? `<span class="text-[10px] font-black uppercase tracking-[0.2em] ${p.is_passing ? 'text-emerald-500' : 'text-rose-500'}">
+                                ${p.is_passing ? 'Qualified' : 'Failed'}
+                           </span>`
+                        : `<span class="text-slate-300 italic text-[10px] font-bold">Synchronizing...</span>`;
+
+                    const ansUrl = `/admin/quiz/${'{{$quiz->slug}}'}/participant/${p.id}/answers`;
+                    const delUrl = `/admin/quiz/${'{{$quiz->slug}}'}/participant/${p.id}`;
+                    const csrf = '{{ csrf_token() }}';
+
+                    return `
+                    <tr class="block lg:table-row bg-white hover:bg-indigo-50/30 transition-all duration-300 p-5 lg:p-0 my-4 lg:my-0 border border-slate-100 lg:border-none rounded-2xl lg:rounded-none shadow-sm lg:shadow-none group">
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Rank</span>
+                                ${rankBadge}
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex lg:block items-center justify-between">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Identity</span>
+                                <div class="text-right lg:text-left">
+                                    <p class="text-slate-800 font-black tracking-tight">${p.name}</p>
+                                    <p class="text-slate-400 text-xs font-bold">${p.nim}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Score</span>
+                                ${scoreMarkup}
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
+                                ${statusMarkup}
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 pt-4 pb-2 lg:py-6 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="${ansUrl}" class="text-slate-400 hover:text-indigo-600 transition-all p-2 hover:bg-indigo-50 rounded-lg">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </a>
+                                <form action="${delUrl}" method="POST" onsubmit="return confirm('Hapus data peserta ini?')">
+                                    <input type="hidden" name="_token" value="${csrf}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="text-rose-400 hover:text-rose-600 transition-all p-2 hover:bg-rose-50 rounded-lg">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+                if (data.participants.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-10 py-20 text-center"><p class="text-slate-400 font-bold text-sm tracking-tight italic">No participant telemetry found.</p></td></tr>`;
+                }
+            }
+
+            // Remove Shimmer
+            targets.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('opacity-50', 'animate-pulse');
+            });
+        }, 500);
+    }
+</script>
 
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
