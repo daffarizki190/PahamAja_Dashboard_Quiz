@@ -172,6 +172,24 @@
                 </div>
             </header>
 
+            <!-- Update Notification Banner -->
+            <div class="bg-indigo-600 rounded-[2rem] p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between shadow-xl shadow-indigo-600/20 border border-indigo-500 animate-slide-up relative overflow-hidden group">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                <div class="flex items-center gap-5 z-10 relative">
+                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/20">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black tracking-[0.3em] text-indigo-200 uppercase mb-1">System Update Deployed</p>
+                        <h3 class="text-xl font-bold tracking-tight">PahamAja Dashboard UI Update 🚀</h3>
+                        <p class="text-sm font-medium text-indigo-100 mt-1 max-w-2xl">Desain baru (Glassmorphism & animasi premium) serta perlindungan pencegahan double-submit (Error 419) telah berhasil diterapkan secara global.</p>
+                    </div>
+                </div>
+                <button onclick="this.parentElement.style.display='none'" class="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl text-sm font-black transition-all border border-white/10 z-10 relative active:scale-95">
+                    Tutup
+                </button>
+            </div>
+
             @if(session('success'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-8 flex items-center justify-between animate-fade-in">
                 <div class="flex items-center gap-3">
