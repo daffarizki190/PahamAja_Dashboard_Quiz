@@ -7,8 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -25,18 +33,32 @@
         }
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
-        .card-enterprise { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
-        .btn-primary { background: #4f46e5; transition: all 0.2s ease; }
-        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+        .card-enterprise {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 24px 40px -12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.23);
+            transform: translateY(-2px) scale(1.02);
+        }
         .field { background: #ffffff; border: 1px solid #e2e8f0; transition: all 0.2s ease; }
         .field:focus { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); outline: none; }
-        .step-on { background: #4f46e5; color: #ffffff; }
+        .step-on { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; }
         .step-off { background: #e2e8f0; color: #475569; }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50/50">
+<body class="min-h-screen">
     <div class="flex">
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block z-50">
+        <aside class="w-64 sidebar sticky top-4 text-white p-6 hidden md:block z-50">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -340,5 +362,6 @@
             }
         }
     </script>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>

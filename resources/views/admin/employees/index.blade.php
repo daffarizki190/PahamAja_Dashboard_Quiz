@@ -336,5 +336,6 @@
             }
         }
     </script>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>

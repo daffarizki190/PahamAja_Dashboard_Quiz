@@ -175,5 +175,6 @@
         btnCard?.addEventListener('click', () => setMode('card'));
         setMode('table');
     </script>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>

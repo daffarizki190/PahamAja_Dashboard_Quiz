@@ -7,8 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -24,12 +32,23 @@
             to { opacity: 1; }
         }
         .delay-100 { animation-delay: 100ms; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.23);
+            transform: translateY(-2px) scale(1.02);
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block">
+        <aside class="w-64 sidebar sticky top-4 text-white p-6 hidden md:block">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -132,7 +151,7 @@
                         <span>Tambah Pertanyaan Baru</span>
                     </button>
 
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 transition-all flex items-center justify-center space-x-2">
+                    <button type="submit" class="btn-primary text-white px-8 py-4 rounded-2xl font-bold transition-all flex items-center justify-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         <span>Simpan Kuis Sekarang</span>
                     </button>
@@ -181,5 +200,6 @@
             questionCount++;
         });
     </script>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>

@@ -7,11 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f7f7f5; color: #0f172a; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
         .font-serif { font-family: 'Fraunces', serif; }
         .sidebar {
-            background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-            border-right: 1px solid #1e293b;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
         }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -33,39 +38,45 @@
         .delay-400 { animation-delay: 400ms; }
         
         .card-enterprise {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 12px 30px -20px rgb(15 23 42 / 0.18);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 24px 40px -12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .card-enterprise:hover {
-            border-color: #cbd5e1;
-            box-shadow: 0 2px 6px 0 rgb(15 23 42 / 0.08), 0 18px 40px -22px rgb(15 23 42 / 0.22);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 32px 50px -12px rgba(99, 102, 241, 0.15);
+            transform: translateY(-2px);
         }
         .btn-primary {
-            background: #4f46e5;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+            transition: all 0.3s ease;
         }
         .btn-primary:hover {
-            background: #4338ca;
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.23);
+            transform: translateY(-2px) scale(1.02);
         }
         .btn-ghost {
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.10);
+            transition: all 0.3s ease;
         }
         .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
         }
         .chip { background: #f8fafc; border: 1px solid #e2e8f0; }
-        .kpi { background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%); }
+        .kpi { background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%); }
         summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body class="min-h-screen">
-    <div class="flex">
+    <div class="flex min-h-screen">
         <!-- Enterprise Sidebar -->
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block z-50">
+        <aside class="w-64 sidebar sticky top-4 text-white p-6 hidden md:flex flex-col z-50">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -110,20 +121,20 @@
                             <span>/</span>
                             <span class="text-slate-600">Dashboard</span>
                         </div>
-                        <h2 class="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight mt-3">Dashboard</h2>
-                        <p class="text-slate-500 mt-3 font-medium text-sm max-w-2xl">Kelola kuis dan laporan.</p>
+                        <h2 class="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tighter mt-3">Dashboard</h2>
+                        <p class="text-slate-500 mt-3 font-medium text-sm max-w-2xl">Kelola kuis dan laporan dengan UI premium.</p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-3 animate-fade-in opacity-0 delay-100">
-                        <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-indigo-50 transition-all flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white/80 backdrop-blur-md border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>AI Generator</span>
                         </a>
-                        <a href="{{ route('admin.quizzes.import') }}" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.import') }}" class="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l4 4m0 0l4-4m-4 4V4"></path></svg>
                             <span>Import Soal</span>
                         </a>
-                        <a href="{{ route('admin.quizzes.create') }}" class="btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.create') }}" class="btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>Buat Kuis</span>
                         </a>
@@ -292,5 +303,6 @@
         </footer>
     </main>
 </div>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>

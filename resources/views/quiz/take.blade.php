@@ -311,5 +311,6 @@
             window.onpopstate = () => history.pushState(null, null, location.href);
         })();
     </script>
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>
