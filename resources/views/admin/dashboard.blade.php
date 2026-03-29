@@ -467,8 +467,8 @@
                 labels: labels,
                 datasets: [{
                     data: scores,
-                    backgroundColor: colors.map(c => c + 'cc'),
-                    borderColor: colors,
+                    backgroundColor: colors,
+                    borderColor: ['#fff', '#fff', '#fff'],
                     borderWidth: 2,
                     hoverOffset: 4,
                 }]
