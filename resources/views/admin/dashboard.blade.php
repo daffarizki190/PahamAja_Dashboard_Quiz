@@ -178,7 +178,12 @@
             </div>
             <div class="flex justify-center items-center flex-1 py-4">
                 <div style="position:relative;width:240px;height:240px;overflow:visible;">
-                    <canvas id="scoreChart" width="240" height="240" style="overflow:visible;"></canvas>
+                    <canvas id="scoreChart" width="240" height="240"></canvas>
+                    {{-- Center text overlay --}}
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                        <div style="font-size:28px;font-weight:900;color:#0f172a;line-height:1;">{{ $participants->count() }}</div>
+                        <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:2px;margin-top:4px;">PESERTA</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -456,30 +461,8 @@
         });
         ctx.parentElement.insertAdjacentElement('afterend', legendEl);
 
-        // Center text plugin
-        const centerTextPlugin = {
-            id: 'centerText',
-            afterDraw(chart) {
-                const { ctx: c, chartArea: { top, left, width, height } } = chart;
-                const cx = left + width / 2;
-                const cy = top + height / 2;
-                c.save();
-                c.textAlign = 'center';
-                c.textBaseline = 'middle';
-                c.font = `900 32px 'Plus Jakarta Sans', sans-serif`;
-                c.fillStyle = '#0f172a';
-                c.fillText(total, cx, cy - 10);
-                c.font = `700 11px 'Plus Jakarta Sans', sans-serif`;
-                c.fillStyle = '#94a3b8';
-                c.letterSpacing = '2px';
-                c.fillText('PESERTA', cx, cy + 16);
-                c.restore();
-            }
-        };
-
         new Chart(ctx, {
             type: 'doughnut',
-            plugins: [centerTextPlugin],
             data: {
                 labels: labels,
                 datasets: [{
