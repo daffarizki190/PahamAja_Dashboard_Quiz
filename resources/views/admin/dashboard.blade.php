@@ -176,9 +176,9 @@
                     <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-rose-500"></div><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Low</span></div>
                 </div>
             </div>
-            <div class="flex justify-center items-center flex-1 py-6">
-                <div style="position:relative;width:220px;height:220px;">
-                    <canvas id="scoreChart" width="220" height="220"></canvas>
+            <div class="flex justify-center items-center flex-1 py-4">
+                <div style="position:relative;width:240px;height:240px;overflow:visible;">
+                    <canvas id="scoreChart" width="240" height="240" style="overflow:visible;"></canvas>
                 </div>
             </div>
         </div>
@@ -487,13 +487,14 @@
                     backgroundColor: colors.map(c => c + 'cc'),
                     borderColor: colors,
                     borderWidth: 2,
-                    hoverOffset: 10,
+                    hoverOffset: 4,
                 }]
             },
             options: {
                 responsive: false,
                 maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '68%',
+                layout: { padding: 12 },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
