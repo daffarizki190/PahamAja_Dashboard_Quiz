@@ -176,9 +176,9 @@
                     <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-rose-500"></div><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Low</span></div>
                 </div>
             </div>
-            <div class="flex justify-center items-center flex-1">
-                <div style="position:relative;width:260px;height:260px;">
-                    <canvas id="scoreChart" width="260" height="260"></canvas>
+            <div class="flex justify-center items-center flex-1 py-6">
+                <div style="position:relative;width:220px;height:220px;">
+                    <canvas id="scoreChart" width="220" height="220"></canvas>
                 </div>
             </div>
         </div>
