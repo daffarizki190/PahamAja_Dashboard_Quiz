@@ -18,70 +18,45 @@ use Maatwebsite\Excel\Facades\Excel;
 class AdminController extends Controller
 {
     /**
-     * Display a listing of all quizzes.
+     * Menampilkan daftar semua kuis beserta statistik peserta dan jumlah soal.
      */
     public function index()
     {
         $quizzes = Quiz::query()->latest()->get();
 
         $quizIds = $quizzes->pluck('id')->all();
-        $driver = $quizzes->first()?->getConnection()->getDriverName();
 
         if (count($quizIds) > 0) {
-            if ($driver === 'mongodb') {
-                $participantCounts = collect(Participant::raw(function ($collection) use ($quizIds) {
-                    return $collection->aggregate([
-                        ['$match' => ['quiz_id' => ['$in' => $quizIds]]],
-                        ['$group' => ['_id' => '$quiz_id', 'count' => ['$sum' => 1]]],
-                    ]);
-                }))->mapWithKeys(function ($row) {
-                    return [(string) $row->_id => (int) $row->count];
-                });
+            $participantCounts = Participant::query()
+                ->whereIn('quiz_id', $quizIds)
+                ->select('quiz_id', DB::raw('count(*) as total'))
+                ->groupBy('quiz_id')
+                ->pluck('total', 'quiz_id')
+                ->map(fn($c) => (int) $c);
 
-                $questionCounts = collect(Question::raw(function ($collection) use ($quizIds) {
-                    return $collection->aggregate([
-                        ['$match' => ['quiz_id' => ['$in' => $quizIds]]],
-                        ['$group' => ['_id' => '$quiz_id', 'count' => ['$sum' => 1]]],
-                    ]);
-                }))->mapWithKeys(function ($row) {
-                    return [(string) $row->_id => (int) $row->count];
-                });
-            } else {
-                $participantCounts = Participant::query()
-                    ->whereIn('quiz_id', $quizIds)
-                    ->select('quiz_id', DB::raw('count(*) as aggregate_count'))
-                    ->groupBy('quiz_id')
-                    ->pluck('aggregate_count', 'quiz_id')
-                    ->map(function ($c) {
-                        return (int) $c;
-                    });
-
-                $questionCounts = Question::query()
-                    ->whereIn('quiz_id', $quizIds)
-                    ->select('quiz_id', DB::raw('count(*) as aggregate_count'))
-                    ->groupBy('quiz_id')
-                    ->pluck('aggregate_count', 'quiz_id')
-                    ->map(function ($c) {
-                        return (int) $c;
-                    });
-            }
+            $questionCounts = Question::query()
+                ->whereIn('quiz_id', $quizIds)
+                ->select('quiz_id', DB::raw('count(*) as total'))
+                ->groupBy('quiz_id')
+                ->pluck('total', 'quiz_id')
+                ->map(fn($c) => (int) $c);
 
             $quizzes->each(function (Quiz $quiz) use ($participantCounts, $questionCounts) {
-                $id = (string) $quiz->id;
-                $quiz->setAttribute('participants_count', (int) ($participantCounts[$id] ?? 0));
-                $quiz->setAttribute('questions_count', (int) ($questionCounts[$id] ?? 0));
+                $quiz->setAttribute('participants_count', $participantCounts[$quiz->id] ?? 0);
+                $quiz->setAttribute('questions_count', $questionCounts[$quiz->id] ?? 0);
             });
         }
 
         $stats = [
-            'quizzes' => $quizzes->count(),
-            'questions' => Question::count(),
-            'employees' => Employee::count(),
+            'quizzes'      => $quizzes->count(),
+            'questions'    => Question::count(),
+            'employees'    => Employee::count(),
             'participants' => Participant::whereHas('quiz')->whereHas('employee')->count(),
         ];
 
         return view('admin.quizzes.index', compact('quizzes', 'stats'));
     }
+
 
     public function employeeStore(Request $request)
     {
@@ -352,7 +327,14 @@ class AdminController extends Controller
             ->get();
 
         $chartData = [
-            'labels' => $participations->pluck('quiz.title')->toArray(),
+            'labels' => $participations->pluck('quiz.title')->map(function($title) {
+                // Buat kode singkat: ambil huruf pertama tiap kata (maks 4 kata), uppercase
+                $words = preg_split('/[\s\-]+/', $title);
+                $words = array_filter($words); // hapus kosong
+                $initials = array_map(fn($w) => strtoupper(substr($w, 0, 1)), array_slice($words, 0, 4));
+                return implode('', $initials);
+            })->toArray(),
+            'fullLabels' => $participations->pluck('quiz.title')->toArray(),
             'scores' => $participations->pluck('score')->toArray(),
         ];
 

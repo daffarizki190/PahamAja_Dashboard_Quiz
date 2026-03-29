@@ -133,4 +133,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
 
         return 'SEED_COMPLETED';
     })->name('force-seed');
+
 });
+
+

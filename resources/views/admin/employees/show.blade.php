@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $employee->name }} - Growth Analysis</title>
+    <title>{{ $employee->name }} - Analisis Performa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -55,12 +55,12 @@
         <main class="flex-1 p-10 max-w-6xl mx-auto">
             <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-indigo-600 transition-all mb-8">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                <span>Back to Directory</span>
+                <span>Kembali ke Daftar Karyawan</span>
             </a>
 
             <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8 animate-fade-in opacity-0">
                 <div>
-                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Security Cleared • Corporate Analyst</p>
+                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Karyawan Aktif • Analis Korporat</p>
                     <h2 class="text-5xl font-black text-slate-900 tracking-tight leading-none">{{ $employee->name }}</h2>
                     <p class="text-slate-500 mt-5 font-medium flex items-center gap-3">
                         <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black shadow-lg shadow-indigo-600/20">{{ $employee->nim }}</span>
@@ -79,7 +79,7 @@
                 <!-- Assessment History -->
                 <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden self-start">
                     <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50">
-                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Assessment History</h3>
+                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Riwayat Kuis</h3>
                     </div>
                     <div class="divide-y divide-slate-100">
                         @forelse($participations as $participation)
@@ -97,14 +97,14 @@
                             </div>
                         </a>
                         @empty
-                        <div class="px-8 py-20 text-center text-slate-400 font-bold italic">No completed assessments recorded.</div>
+                        <div class="px-8 py-20 text-center text-slate-400 font-bold italic">Belum ada kuis yang diselesaikan.</div>
                         @endforelse
                     </div>
                 </div>
 
                 <!-- Growth Chart -->
                 <div class="bg-white border border-slate-200 p-8 rounded-3xl flex flex-col min-h-[400px]">
-                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-10">Performance Growth Radar</h3>
+                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-10">Grafik Perkembangan Nilai</h3>
                     <div class="flex-1 w-full relative">
                         <canvas id="growthChart"></canvas>
                     </div>
@@ -123,7 +123,7 @@
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Score',
+                        label: 'Nilai',
                         data: data.scores,
                         borderColor: '#4f46e5',
                         backgroundColor: (context) => {
@@ -155,7 +155,17 @@
                             padding: 12,
                             titleFont: { family: 'Outfit', size: 12, weight: 'bold' },
                             bodyFont: { family: 'Outfit', size: 12 },
-                            displayColors: false
+                            displayColors: false,
+                            callbacks: {
+                                title: function(items) {
+                                    // Tampilkan judul lengkap dari fullLabels
+                                    const idx = items[0].dataIndex;
+                                    return data.fullLabels ? data.fullLabels[idx] : items[0].label;
+                                },
+                                label: function(item) {
+                                    return 'Nilai: ' + item.raw;
+                                }
+                            }
                         }
                     },
                     scales: {

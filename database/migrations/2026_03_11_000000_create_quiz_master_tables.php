@@ -11,6 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Table: employees
+        Schema::create('employees', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('nim')->unique();
+            $table->string('department');
+            $table->string('position');
+            $table->string('status')->default('Active');
+            $table->timestamps();
+        });
+
         // Table: quizzes
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
@@ -41,9 +52,11 @@ return new class extends Migration
         Schema::create('participants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quiz_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('employee_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('nim');
             $table->integer('score')->nullable()->comment('Null means not finished or not scored yet');
+            $table->integer('attempt')->default(1);
             $table->timestamps();
         });
 
@@ -67,5 +80,6 @@ return new class extends Migration
         Schema::dropIfExists('options');
         Schema::dropIfExists('questions');
         Schema::dropIfExists('quizzes');
+        Schema::dropIfExists('employees');
     }
 };

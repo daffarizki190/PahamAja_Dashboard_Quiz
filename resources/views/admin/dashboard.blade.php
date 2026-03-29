@@ -97,7 +97,7 @@
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-50 text-indigo-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
-                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Performance</p>
+                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Rata-rata Nilai</p>
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statAvgScore">{{ number_format($avgScore, 1) }}%</h3>
         </div>
@@ -106,7 +106,7 @@
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-violet-50 text-violet-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Active Now</p>
+                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sedang Mengerjakan</p>
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statInProgress">{{ $inProgressCount }}</h3>
         </div>
@@ -115,7 +115,7 @@
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.158-2.046-.452-2.992z"></path></svg>
                 </div>
-                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Quality Gate</p>
+                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Nilai Kelulusan</p>
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight">{{ $quiz->passing_score }}</h3>
         </div>
@@ -124,7 +124,7 @@
                 <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-50 text-emerald-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                 </div>
-                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Completed</p>
+                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Sudah Selesai</p>
             </div>
             <h3 class="text-3xl font-black text-slate-800 tracking-tight transition-opacity duration-300" id="statCompleted">{{ $participants->whereNotNull('score')->count() }}</h3>
         </div>
@@ -133,7 +133,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         <!-- Premium Share -->
         <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center animate-slide-up" style="animation-delay: 0.5s">
-            <p class="text-xs font-black text-indigo-500 uppercase tracking-[0.3em] mb-8 leading-none">Access Point</p>
+            <p class="text-slate-400 text-sm font-medium mb-10 leading-relaxed max-w-[200px]">Bagikan kuis via link atau scan QR Code.</p>
             
             <div class="relative mb-10 group">
                 <div class="absolute -inset-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] blur-xl opacity-10 group-hover:opacity-20 transition-all duration-500"></div>
@@ -169,7 +169,7 @@
         <!-- Professional Chart -->
         <div class="glass-card p-10 rounded-[2.5rem] lg:col-span-2 flex flex-col animate-slide-up" style="animation-delay: 0.6s">
             <div class="flex justify-between items-center mb-10">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Success Distribution</h2>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Sebaran Nilai</h2>
                 <div class="flex gap-4">
                     <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-500"></div><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">High</span></div>
                     <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-amber-500"></div><span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mid</span></div>
@@ -184,17 +184,17 @@
 
     <div class="glass-card rounded-[2.5rem] overflow-hidden mb-12 animate-slide-up" style="animation-delay: 0.65s">
         <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Item Analysis</h2>
-            <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">Per Question</span>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Analisis Soal</h2>
+            <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">Per Soal</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
                     <tr>
-                        <th class="px-10 py-6">Question</th>
-                        <th class="px-10 py-6">Answered</th>
-                        <th class="px-10 py-6">Correct Rate</th>
-                        <th class="px-10 py-6">Top Choice</th>
+                        <th class="px-10 py-6">Soal</th>
+                        <th class="px-10 py-6">Dijawab</th>
+                        <th class="px-10 py-6">Tingkat Benar</th>
+                        <th class="px-10 py-6">Jawaban Terbanyak</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -216,7 +216,7 @@
                                         </div>
                                     </div>
                                 @else
-                                    <span class="text-slate-300 italic text-xs font-bold">No data</span>
+                                    <span class="text-slate-300 italic text-xs font-bold">Belum ada data</span>
                                 @endif
                             </td>
                             <td class="px-10 py-6">
@@ -230,7 +230,7 @@
                     @empty
                         <tr>
                             <td colspan="4" class="px-10 py-20 text-center">
-                                <p class="text-slate-400 font-bold text-sm tracking-tight italic">No item data found.</p>
+                                <p class="text-slate-400 font-bold text-sm tracking-tight italic">Belum ada data soal.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -242,20 +242,20 @@
     <!-- Leaderboard -->
     <div class="glass-card rounded-[2.5rem] overflow-hidden animate-slide-up" style="animation-delay: 0.7s">
         <div class="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">System Logs & Top Rankings</h2>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Catatan & Peringkat Tertinggi</h2>
             <div class="flex gap-2">
-                <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">Real-time Feed</span>
+                <span class="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">Data Terkini</span>
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left block lg:table">
                 <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hidden lg:table-header-group">
                     <tr>
-                        <th class="px-10 py-6">Rank</th>
-                        <th class="px-10 py-6">Identity</th>
-                        <th class="px-10 py-6">Performance</th>
+                        <th class="px-10 py-6">Peringkat</th>
+                        <th class="px-10 py-6">Identitas</th>
+                        <th class="px-10 py-6">Nilai</th>
                         <th class="px-10 py-6">Status</th>
-                        <th class="px-10 py-6 text-right">Actions</th>
+                        <th class="px-10 py-6 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50 transition-opacity duration-300 block lg:table-row-group" id="liveLeaderboard">
@@ -263,7 +263,7 @@
                     <tr class="block lg:table-row bg-white hover:bg-indigo-50/30 transition-all duration-300 p-5 lg:p-0 my-4 lg:my-0 border border-slate-100 lg:border-none rounded-2xl lg:rounded-none shadow-sm lg:shadow-none group">
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
-                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Rank</span>
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Peringkat</span>
                                 @if($index == 0 && !is_null($participant->score)) <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-black">1</div>
                                 @elseif($index == 1 && !is_null($participant->score)) <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center font-black">2</div>
                                 @elseif($index == 2 && !is_null($participant->score)) <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center font-black">3</div>
@@ -273,7 +273,7 @@
                         </td>
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex lg:block items-center justify-between">
-                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Identity</span>
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Identitas</span>
                                 <div class="text-right lg:text-left">
                                     <p class="text-slate-800 font-black tracking-tight">{{ $participant->name }}</p>
                                     <p class="text-slate-400 text-xs font-bold">{{ $participant->nim }}</p>
@@ -282,7 +282,7 @@
                         </td>
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
-                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Score</span>
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Nilai</span>
                                 @if(!is_null($participant->score))
                                     <div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
                                         <span class="text-xs font-black">{{ $participant->score }}</span>
@@ -291,7 +291,7 @@
                                         </div>
                                     </div>
                                 @else
-                                    <span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Running</span>
+                                    <span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Mengerjakan</span>
                                 @endif
                             </div>
                         </td>
@@ -300,10 +300,10 @@
                                 <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
                                 @if(!is_null($participant->score))
                                     <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
-                                        {{ $participant->score >= $quiz->passing_score ? 'Qualified' : 'Failed' }}
+                                        {{ $participant->score >= $quiz->passing_score ? 'Lulus' : 'Tidak Lulus' }}
                                     </span>
                                 @else
-                                    <span class="text-slate-300 italic text-[10px] font-bold">Synchronizing...</span>
+                                    <span class="text-slate-300 italic text-[10px] font-bold">Sedang Sinkronisasi...</span>
                                 @endif
                             </div>
                         </td>
@@ -328,7 +328,7 @@
                             <div class="bg-slate-50 w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
                                 <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             </div>
-                            <p class="text-slate-400 font-bold text-sm tracking-tight italic">No participant telemetry found.</p>
+                            <p class="text-slate-400 font-bold text-sm tracking-tight italic">Belum ada peserta.</p>
                         </td>
                     </tr>
                     @endforelse
@@ -521,13 +521,13 @@
                                     <div class="h-full bg-indigo-500" style="width: ${p.score}%"></div>
                                 </div>
                            </div>`
-                        : `<span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Running</span>`;
+                        : `<span class="px-4 py-2 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">Mengerjakan</span>`;
                     
                     const statusMarkup = p.score !== null
                         ? `<span class="text-[10px] font-black uppercase tracking-[0.2em] ${p.is_passing ? 'text-emerald-500' : 'text-rose-500'}">
-                                ${p.is_passing ? 'Qualified' : 'Failed'}
+                                ${p.is_passing ? 'Lulus' : 'Tidak Lulus'}
                            </span>`
-                        : `<span class="text-slate-300 italic text-[10px] font-bold">Synchronizing...</span>`;
+                        : `<span class="text-slate-300 italic text-[10px] font-bold">Sedang Sinkronisasi...</span>`;
 
                     const ansUrl = `/admin/quiz/${'{{$quiz->slug}}'}/participant/${p.id}/answers`;
                     const delUrl = `/admin/quiz/${'{{$quiz->slug}}'}/participant/${p.id}`;
@@ -579,7 +579,7 @@
                     </tr>`;
                 }).join('');
                 if (data.participants.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="px-10 py-20 text-center"><p class="text-slate-400 font-bold text-sm tracking-tight italic">No participant telemetry found.</p></td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-10 py-20 text-center"><p class="text-slate-400 font-bold text-sm tracking-tight italic">Belum ada peserta.</p></td></tr>`;
                 }
             }
 
