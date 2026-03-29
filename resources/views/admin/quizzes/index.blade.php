@@ -294,9 +294,28 @@
                     const q = (search.value || '').toLowerCase().trim();
                     rows.forEach((row) => {
                         const title = row.getAttribute('data-title') || '';
-                        row.classList.toggle('hidden', q !== '' && !title.includes(q));
+                        if (q === '') {
+                            row.classList.remove('hidden');
+                            row.classList.add('lg:table-row');
+                            row.classList.add('block');
+                        } else {
+                            const isMatch = title.includes(q);
+                            if (isMatch) {
+                                row.classList.remove('hidden');
+                                row.classList.add('lg:table-row');
+                                row.classList.add('block');
+                            } else {
+                                row.classList.add('hidden');
+                                row.classList.remove('lg:table-row');
+                                row.classList.remove('block');
+                            }
+                        }
                     });
                 };
+                
+                if (search) {
+                    search.addEventListener('input', applySearch);
+                }
 
             </script>
         </div>
