@@ -427,6 +427,75 @@
     };
 </script>
 
+<script>
+    // Initialize Sebaran Nilai Chart
+    (function () {
+        const ctx = document.getElementById('scoreChart');
+        if (!ctx) return;
+
+        const chartData = @json($chartData);
+
+        const backgroundColors = [
+            'rgba(239, 68, 68, 0.85)',   // Low  - rose
+            'rgba(245, 158, 11, 0.85)',  // Mid  - amber
+            'rgba(16, 185, 129, 0.85)',  // High - emerald
+        ];
+
+        const borderColors = [
+            'rgba(239, 68, 68, 1)',
+            'rgba(245, 158, 11, 1)',
+            'rgba(16, 185, 129, 1)',
+        ];
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Jumlah Peserta',
+                    data: chartData.scores,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 2,
+                    borderRadius: 12,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y} peserta`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                            color: '#94a3b8',
+                            font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }
+                        },
+                        grid: { color: 'rgba(148,163,184,0.1)' }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    })();
+</script>
+
 <footer class="py-12 border-t border-slate-200 bg-white">
     <div class="container mx-auto px-6 max-w-[1500px]">
         <div class="flex flex-col md:flex-row justify-between items-center gap-8">
