@@ -428,72 +428,86 @@
 </script>
 
 <script>
-    // Initialize Sebaran Nilai Chart
+    // Initialize Sebaran Nilai Chart — Donut
     (function () {
         const ctx = document.getElementById('scoreChart');
         if (!ctx) return;
 
         const chartData = @json($chartData);
+        const scores    = chartData.scores;   // [low, mid, high]
+        const total     = scores.reduce((a, b) => a + b, 0);
 
-        const backgroundColors = [
-            'rgba(239, 68, 68, 0.85)',   // Low  - rose
-            'rgba(245, 158, 11, 0.85)',  // Mid  - amber
-            'rgba(16, 185, 129, 0.85)',  // High - emerald
-        ];
+        const labels = ['0–50 (Low)', '51–75 (Mid)', '76–100 (High)'];
+        const colors = ['#f43f5e', '#f59e0b', '#10b981'];
 
-        const borderColors = [
-            'rgba(239, 68, 68, 1)',
-            'rgba(245, 158, 11, 1)',
-            'rgba(16, 185, 129, 1)',
-        ];
+        // Build legend HTML below the canvas
+        const legendEl = document.createElement('div');
+        legendEl.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:20px;';
+        labels.forEach((label, i) => {
+            const pct = total > 0 ? Math.round((scores[i] / total) * 100) : 0;
+            legendEl.innerHTML += `
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:${colors[i]};flex-shrink:0;"></div>
+                    <span style="font-size:12px;font-weight:700;color:#64748b;">${label}</span>
+                    <span style="font-size:12px;font-weight:900;color:#0f172a;">${scores[i]} <span style="color:#94a3b8;font-weight:600;">(${pct}%)</span></span>
+                </div>`;
+        });
+        ctx.parentElement.insertAdjacentElement('afterend', legendEl);
+
+        // Center text plugin
+        const centerTextPlugin = {
+            id: 'centerText',
+            afterDraw(chart) {
+                const { ctx: c, chartArea: { top, left, width, height } } = chart;
+                const cx = left + width / 2;
+                const cy = top + height / 2;
+                c.save();
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                c.font = `900 32px 'Plus Jakarta Sans', sans-serif`;
+                c.fillStyle = '#0f172a';
+                c.fillText(total, cx, cy - 10);
+                c.font = `700 11px 'Plus Jakarta Sans', sans-serif`;
+                c.fillStyle = '#94a3b8';
+                c.letterSpacing = '2px';
+                c.fillText('PESERTA', cx, cy + 16);
+                c.restore();
+            }
+        };
 
         new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
+            plugins: [centerTextPlugin],
             data: {
-                labels: chartData.labels,
+                labels: labels,
                 datasets: [{
-                    label: 'Jumlah Peserta',
-                    data: chartData.scores,
-                    backgroundColor: backgroundColors,
-                    borderColor: borderColors,
+                    data: scores,
+                    backgroundColor: colors.map(c => c + 'cc'),
+                    borderColor: colors,
                     borderWidth: 2,
-                    borderRadius: 12,
-                    borderSkipped: false,
+                    hoverOffset: 10,
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                cutout: '70%',
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: ctx => ` ${ctx.parsed.y} peserta`
+                            label: (item) => {
+                                const v = item.raw;
+                                const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                                return ` ${v} peserta (${pct}%)`;
+                            }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            precision: 0,
-                            color: '#94a3b8',
-                            font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }
-                        },
-                        grid: { color: 'rgba(148,163,184,0.1)' }
-                    },
-                    x: {
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { family: 'Plus Jakarta Sans', weight: '700', size: 11 }
-                        },
-                        grid: { display: false }
                     }
                 }
             }
         });
     })();
+
 </script>
 
 <footer class="py-12 border-t border-slate-200 bg-white">
