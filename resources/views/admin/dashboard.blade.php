@@ -177,11 +177,11 @@
                 </div>
             </div>
             <div class="flex justify-center items-center flex-1 py-4">
-                <div style="position:relative;width:240px;height:240px;overflow:visible;">
-                    <canvas id="scoreChart" width="240" height="240"></canvas>
+                <div style="position:relative;width:290px;height:290px;overflow:visible;">
+                    <canvas id="scoreChart" width="290" height="290"></canvas>
                     {{-- Center text overlay --}}
                     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-                        <div style="font-size:28px;font-weight:900;color:#0f172a;line-height:1;">{{ $participants->count() }}</div>
+                        <div style="font-size:32px;font-weight:900;color:#0f172a;line-height:1;">{{ $participants->count() }}</div>
                         <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:2px;margin-top:4px;">PESERTA</div>
                     </div>
                 </div>
