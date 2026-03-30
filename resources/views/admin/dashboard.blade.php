@@ -449,13 +449,15 @@
 
         // Build legend HTML below the canvas
         const legendEl = document.createElement('div');
-        legendEl.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:20px;';
+        legendEl.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-top:20px;width:100%;max-width:240px;margin-left:auto;margin-right:auto;';
         labels.forEach((label, i) => {
             const pct = total > 0 ? Math.round((scores[i] / total) * 100) : 0;
             legendEl.innerHTML += `
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:12px;height:12px;border-radius:50%;background:${colors[i]};flex-shrink:0;"></div>
-                    <span style="font-size:12px;font-weight:700;color:#64748b;">${label}</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:${colors[i]};flex-shrink:0;"></div>
+                        <span style="font-size:12px;font-weight:700;color:#64748b;">${label}</span>
+                    </div>
                     <span style="font-size:12px;font-weight:900;color:#0f172a;">${scores[i]} <span style="color:#94a3b8;font-weight:600;">(${pct}%)</span></span>
                 </div>`;
         });
