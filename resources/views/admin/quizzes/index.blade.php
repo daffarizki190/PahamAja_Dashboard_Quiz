@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Dashboard PahamAja - Platform Assessment Karyawan">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     <title>Dashboard - PahamAja</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -126,21 +128,21 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-3 animate-fade-in opacity-0 delay-100">
-                        <a href="{{ route('admin.quizzes.ai-create') }}" class="bg-white/80 backdrop-blur-md border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.ai-create') }}" class="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>AI Generator</span>
                         </a>
-                        <a href="{{ route('admin.quizzes.import') }}" class="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.import') }}" class="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l4 4m0 0l4-4m-4 4V4"></path></svg>
                             <span>Import Soal</span>
                         </a>
-                        <a href="{{ route('admin.quizzes.create') }}" class="btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm flex items-center gap-2">
+                        <a href="{{ route('admin.quizzes.create') }}" class="w-full sm:w-auto btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>Buat Kuis</span>
                         </a>
-                        <form action="{{ route('admin.logout') }}" method="POST" class="md:hidden">
+                        <form action="{{ route('admin.logout') }}" method="POST" class="w-full md:hidden">
                             @csrf
-                            <button type="submit" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm">
+                            <button type="submit" class="w-full bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center">
                                 Logout
                             </button>
                         </form>
@@ -258,12 +260,12 @@
                                             <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all">
                                                 Analytics
                                             </a>
-                                            <details class="relative">
+                                            <details class="relative group/dropdown">
                                                 <summary class="list-none cursor-pointer bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
                                                     <span>Actions</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                    <svg class="w-4 h-4 transition-transform group-open/dropdown:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                                 </summary>
-                                                <div class="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-10">
+                                                <div class="absolute right-0 bottom-full lg:bottom-auto lg:top-full mb-2 lg:mb-0 lg:mt-2 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-[9999]">
                                                     <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Manage</a>
                                                     <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Export</a>
                                                     <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" onsubmit="return confirm('Hapus kuis ini?')" class="px-1">
@@ -342,5 +344,12 @@
     </main>
 </div>
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        });
+    }
+</script>
 </body>
 </html>

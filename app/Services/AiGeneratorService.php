@@ -76,6 +76,46 @@ class AiGeneratorService
         }
     }
 
+    public function generateInsight(string $prompt, int $maxOutputTokens = 512): string
+    {
+        $response = $this->requestGenerateTextContent($this->model, $prompt, $maxOutputTokens);
+
+        if (! $response->successful()) {
+            $message = $response->json('error.message') ?: 'Gemini request failed.';
+
+            if ($response->status() === 404) {
+                $fallbackModel = $this->pickFallbackModel();
+                if ($fallbackModel) {
+                    $retry = $this->requestGenerateTextContent($fallbackModel, $prompt, $maxOutputTokens);
+                    if ($retry->successful()) {
+                        return trim($this->extractTextFromResponse($retry));
+                    }
+                }
+
+                $models = $this->listAvailableModels();
+                if (count($models) === 0) {
+                    throw new Exception('Gemini API Key tidak memiliki akses model text. Pastikan Generative Language API aktif dan billing/akses Gemini sudah tersedia.');
+                }
+
+                $modelNames = collect($models)->pluck('name')->take(10)->implode(', ');
+                throw new Exception('Model Gemini tidak tersedia untuk API key ini. Model tersedia (contoh): '.$modelNames);
+            }
+
+            throw new Exception($message.' (HTTP '.$response->status().')');
+        }
+
+        $finishReason = (string) ($response->json('candidates.0.finishReason') ?? '');
+        if ($finishReason === 'MAX_TOKENS' && $maxOutputTokens < 4096) {
+            $retryTokens = min(4096, max($maxOutputTokens * 2, 768));
+            $retry = $this->requestGenerateTextContent($this->model, $prompt, $retryTokens);
+            if ($retry->successful()) {
+                return trim($this->extractTextFromResponse($retry));
+            }
+        }
+
+        return trim($this->extractTextFromResponse($response));
+    }
+
     public function listAvailableModels(): array
     {
         $response = Http::timeout(30)
@@ -189,6 +229,27 @@ class AiGeneratorService
                     'temperature' => 0.2,
                     'maxOutputTokens' => $maxOutputTokens,
                     'responseMimeType' => 'application/json',
+                ],
+            ]);
+    }
+
+    private function requestGenerateTextContent(string $model, string $prompt, int $maxOutputTokens)
+    {
+        return Http::timeout(90)
+            ->withQueryParameters(['key' => $this->apiKey])
+            ->acceptJson()
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.3,
+                    'maxOutputTokens' => $maxOutputTokens,
                 ],
             ]);
     }

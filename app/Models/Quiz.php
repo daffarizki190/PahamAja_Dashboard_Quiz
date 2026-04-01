@@ -21,13 +21,15 @@ class Quiz extends Model
         'passing_score',
     ];
 
-    protected $appends = ['participants_count'];
-
     /**
-     * Get the count of participants for the quiz.
+     * Get the count of participants — uses pre-loaded value if available (avoids N+1).
      */
     public function getParticipantsCountAttribute(): int
     {
+        if (array_key_exists('participants_count', $this->attributes)) {
+            return (int) $this->attributes['participants_count'];
+        }
+
         return $this->participants()->count();
     }
 

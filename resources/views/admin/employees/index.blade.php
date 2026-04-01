@@ -7,8 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -30,7 +38,7 @@
 <body class="min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block">
+        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -102,15 +110,15 @@
                             </td>
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-3">
-                                    @php($avg = $statsByNim[$employee->nim]['avg'] ?? 0)
+                                    @php($avg = min(100, max(0, $statsByNim[$employee->nim]['avg'] ?? 0)))
                                     <span class="text-sm font-black text-slate-700">{{ number_format($avg, 1) }}%</span>
                                     <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-emerald-500" style="width: {{ $avg }}%"></div>
+                                        <div class="h-full bg-emerald-500 avg-bar" data-avg="{{ $avg }}"></div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-8 py-6 text-right flex items-center justify-end gap-2">
-                                <button onclick="openEditModal({{ json_encode($employee) }})" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition-all">
+                                <button type="button" onclick="openEditModalFromButton(this)" data-employee='@json($employee)' class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
                                 <form action="{{ route('admin.employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus karyawan ini dari database?')">
@@ -211,7 +219,7 @@
     </div>
 
     <!-- Edit Employee Modal -->
-    <div id="editModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="editModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
             <div class="p-8 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="text-xl font-black text-slate-800 tracking-tight">Edit Employee</h3>
@@ -251,7 +259,7 @@
     </div>
 
     <!-- Register Employee Modal -->
-    <div id="registerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="registerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
             <div class="p-8 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="text-xl font-black text-slate-800 tracking-tight">New Employee</h3>
@@ -287,6 +295,15 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.avg-bar[data-avg]').forEach((el) => {
+                const raw = el.dataset.avg;
+                const value = Number.parseFloat(raw ?? '0');
+                const clamped = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+                el.style.width = `${clamped}%`;
+            });
+        });
+
         function openRegisterModal() {
             const modal = document.getElementById('registerModal');
             modal.classList.remove('hidden');
@@ -302,7 +319,6 @@
         }
 
         function openEditModal(employee) {
-            // ... (keep existing openEditModal)
             const modal = document.getElementById('editModal');
             const form = document.getElementById('editForm');
             
@@ -321,6 +337,13 @@
             document.body.style.overflow = 'hidden';
         }
 
+        function openEditModalFromButton(buttonEl) {
+            const raw = buttonEl?.dataset?.employee;
+            if (!raw) return;
+            const employee = JSON.parse(raw);
+            openEditModal(employee);
+        }
+
         function closeEditModal() {
             const modal = document.getElementById('editModal');
             modal.classList.add('hidden');
@@ -328,7 +351,6 @@
             document.body.style.overflow = 'auto';
         }
 
-        // Close on backdrop click
         window.onclick = function(event) {
             const modal = document.getElementById('editModal');
             if (event.target == modal) {

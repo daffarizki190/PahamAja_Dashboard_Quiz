@@ -62,7 +62,7 @@
                 
                 <div class="h-3 w-full bg-[#F2F2F7] rounded-full mt-10 mb-4 overflow-hidden p-0.5">
                     <div class="h-full {{ $participant->score >= 70 ? 'bg-emerald-500' : ($participant->score >= 50 ? 'bg-amber-500' : 'bg-rose-500') }} rounded-full transition-all duration-1000 ease-out shadow-sm" 
-                         style="width: {{ $participant->score ?? 0 }}%"></div>
+                         data-score="{{ $participant->score ?? 0 }}"></div>
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-[#F2F2F7] grid grid-cols-2 gap-6 text-left">
@@ -114,6 +114,17 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-score]').forEach((el) => {
+                if (!el.classList.contains('rounded-full')) return;
+                const value = Number.parseFloat(el.dataset.score ?? '0');
+                const clamped = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+                el.style.width = `${clamped}%`;
+            });
+        });
+    </script>
 
     @if($participant->score !== null && $participant->score >= 70)
     <script>

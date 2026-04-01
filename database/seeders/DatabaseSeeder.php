@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Employee;
 use App\Models\Answer;
 use App\Models\Option;
 use App\Models\Participant;
@@ -91,8 +92,17 @@ class DatabaseSeeder extends Seeder
             // Randomly determine if participant has finished the quiz (80% chance)
             $isFinished = rand(1, 100) <= 80;
 
+            $employee = Employee::create([
+                'name' => $name,
+                'nim' => $nim,
+                'department' => ['Engineering', 'Product', 'Marketing', 'Sales'][rand(0, 3)],
+                'position' => ['Staff', 'Lead', 'Senior', 'Junior'][rand(0, 3)],
+                'status' => 'Active',
+            ]);
+
             $participant = Participant::create([
                 'quiz_id' => $quiz->id,
+                'employee_id' => $employee->id,
                 'name' => $name,
                 'nim' => $nim,
                 'score' => null, // Intentionally null for unfinished, will be updated below if finished

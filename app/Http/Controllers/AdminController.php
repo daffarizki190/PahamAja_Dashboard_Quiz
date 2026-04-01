@@ -32,14 +32,14 @@ class AdminController extends Controller
                 ->select('quiz_id', DB::raw('count(*) as total'))
                 ->groupBy('quiz_id')
                 ->pluck('total', 'quiz_id')
-                ->map(fn($c) => (int) $c);
+                ->map(fn ($c) => (int) $c);
 
             $questionCounts = Question::query()
                 ->whereIn('quiz_id', $quizIds)
                 ->select('quiz_id', DB::raw('count(*) as total'))
                 ->groupBy('quiz_id')
                 ->pluck('total', 'quiz_id')
-                ->map(fn($c) => (int) $c);
+                ->map(fn ($c) => (int) $c);
 
             $quizzes->each(function (Quiz $quiz) use ($participantCounts, $questionCounts) {
                 $quiz->setAttribute('participants_count', $participantCounts[$quiz->id] ?? 0);
@@ -48,15 +48,14 @@ class AdminController extends Controller
         }
 
         $stats = [
-            'quizzes'      => $quizzes->count(),
-            'questions'    => Question::count(),
-            'employees'    => Employee::count(),
-            'participants' => Participant::whereHas('quiz')->whereHas('employee')->count(),
+            'quizzes' => $quizzes->count(),
+            'questions' => Question::count(),
+            'employees' => Employee::count(),
+            'participants' => Participant::whereHas('quiz')->count(),
         ];
 
         return view('admin.quizzes.index', compact('quizzes', 'stats'));
     }
-
 
     public function employeeStore(Request $request)
     {
@@ -198,31 +197,36 @@ class AdminController extends Controller
             'questions.*.correct_option' => 'required|integer',
         ]);
 
-        $quiz->update([
-            'title' => $request->title,
-            'time_limit' => $request->time_limit,
-            'passing_score' => $request->passing_score,
-        ]);
-
-        // Simple update: delete existing questions and recreate
-        // In a production app, you might want to match IDs to prevent data loss for participants
-        $quiz->questions()->each(function ($question) {
-            $question->options()->delete();
-            $question->delete();
-        });
-
-        foreach ($request->questions as $qData) {
-            $question = $quiz->questions()->create([
-                'text' => $qData['text'],
+        DB::transaction(function () use ($request, $quiz) {
+            $quiz->update([
+                'title' => $request->title,
+                'time_limit' => $request->time_limit,
+                'passing_score' => $request->passing_score,
             ]);
 
-            foreach ($qData['options'] as $oIndex => $oData) {
-                $question->options()->create([
-                    'text' => $oData['text'],
-                    'is_correct' => ($oIndex == $qData['correct_option']),
+            $quiz->participants()->each(function ($participant) {
+                $participant->answers()->delete();
+                $participant->delete();
+            });
+
+            $quiz->questions()->each(function ($question) {
+                $question->options()->delete();
+                $question->delete();
+            });
+
+            foreach ($request->questions as $qData) {
+                $question = $quiz->questions()->create([
+                    'text' => $qData['text'],
                 ]);
+
+                foreach ($qData['options'] as $oIndex => $oData) {
+                    $question->options()->create([
+                        'text' => $oData['text'],
+                        'is_correct' => ($oIndex == $qData['correct_option']),
+                    ]);
+                }
             }
-        }
+        });
 
         return redirect()->route('admin.quizzes.show', $quiz->slug)->with('success', 'Quiz updated successfully!');
     }
@@ -327,11 +331,12 @@ class AdminController extends Controller
             ->get();
 
         $chartData = [
-            'labels' => $participations->pluck('quiz.title')->map(function($title) {
+            'labels' => $participations->pluck('quiz.title')->map(function ($title) {
                 // Buat kode singkat: ambil huruf pertama tiap kata (maks 4 kata), uppercase
                 $words = preg_split('/[\s\-]+/', $title);
                 $words = array_filter($words); // hapus kosong
-                $initials = array_map(fn($w) => strtoupper(substr($w, 0, 1)), array_slice($words, 0, 4));
+                $initials = array_map(fn ($w) => strtoupper(substr($w, 0, 1)), array_slice($words, 0, 4));
+
                 return implode('', $initials);
             })->toArray(),
             'fullLabels' => $participations->pluck('quiz.title')->toArray(),

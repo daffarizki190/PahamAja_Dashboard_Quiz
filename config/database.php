@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Str;
+use MongoDB\Client;
+use MongoDB\Laravel\MongoDBServiceProvider;
 use Pdo\Mysql;
 
 return [
@@ -30,7 +32,7 @@ return [
     |
     */
 
-    'connections' => [
+    'connections' => array_filter([
 
         'sqlite' => [
             'driver' => 'sqlite',
@@ -44,11 +46,11 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
-        'mongodb' => [
+        'mongodb' => (class_exists(Client::class) && class_exists(MongoDBServiceProvider::class)) ? [
             'driver' => 'mongodb',
             'dsn' => env('MONGODB_URI'),
             'database' => env('MONGODB_DATABASE', 'dashboard_quis'),
-        ],
+        ] : null,
 
         'mysql' => [
             'driver' => 'mysql',
@@ -124,7 +126,7 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-    ],
+    ]),
 
     /*
     |--------------------------------------------------------------------------
