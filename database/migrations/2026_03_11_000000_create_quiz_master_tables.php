@@ -44,7 +44,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('question_id')->constrained()->cascadeOnDelete();
             $table->text('text');
-            $table->boolean('is_correct')->default(false);
+            $table->integer('is_correct')->default(0);
             $table->timestamps();
         });
 

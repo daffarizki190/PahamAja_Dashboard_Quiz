@@ -8,8 +8,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -30,7 +38,7 @@
 <body class="min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block">
+        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -92,7 +100,7 @@
                             <div class="flex justify-between items-center">
                                 <p class="text-xs text-slate-400 font-bold">{{ $participation->updated_at->format('M d, Y') }}</p>
                                 <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-500" style="width: {{ $participation->score }}%"></div>
+                                    <div class="h-full bg-indigo-500 score-bar" data-score="{{ $participation->score ?? 0 }}"></div>
                                 </div>
                             </div>
                         </a>
@@ -115,8 +123,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.score-bar[data-score]').forEach((el) => {
+                const value = Number.parseFloat(el.dataset.score ?? '0');
+                const clamped = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+                el.style.width = `${clamped}%`;
+            });
+
             const ctx = document.getElementById('growthChart').getContext('2d');
-            const data = @json($chartData);
+            const data = <?php echo json_encode($chartData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
             
             new Chart(ctx, {
                 type: 'line',

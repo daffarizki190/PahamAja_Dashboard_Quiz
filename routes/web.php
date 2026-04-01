@@ -2,12 +2,13 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\AiQuizController;
+use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\QuizController;
 use App\Models\Quiz;
 use Database\Seeders\EmployeeSeeder;
 use Illuminate\Support\Facades\Route;
-use MongoDB\Driver\Manager;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,6 +110,14 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     // Export Excel Route
     Route::get('quiz/{quiz:slug}/export', [QuizController::class, 'exportExcel'])
         ->name('quiz.export');
+
+    // Export PDF Route
+    Route::get('quiz/{quiz:slug}/export-pdf', [PdfExportController::class, 'export'])
+        ->name('quiz.export-pdf');
+
+    // AI Insight Route
+    Route::post('quiz/{quiz:slug}/ai-insights', [AiInsightController::class, 'generate'])
+        ->name('quiz.ai-insights');
 
     // Employee Master Data & Growth Analysis
     Route::get('employees', [AdminController::class, 'employeeIndex'])->name('employees.index');

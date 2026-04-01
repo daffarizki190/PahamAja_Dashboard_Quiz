@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Analytics dashboard untuk kuis {{ $quiz->title }} - PahamAja">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     <title>{{ $quiz->title }} - Professional Insights</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -67,12 +71,31 @@
             </div>
         </div>
         
-        <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-wrap lg:flex-nowrap items-center gap-4">
+            <a href="{{ route('admin.quizzes.show', $quiz->slug) }}"
+               class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Manage Quiz</span>
+            </a>
             <a href="{{ route('admin.quiz.export', $quiz->slug) }}" 
                class="bg-slate-900 hover:bg-indigo-600 text-white px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span>Export Analysis</span>
+                <span>Export Excel</span>
             </a>
+            <a href="{{ route('admin.quiz.export-pdf', $quiz->slug) }}" 
+               class="bg-rose-600 hover:bg-rose-700 text-white px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-rose-100 transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                <span>Export PDF</span>
+            </a>
+            <button
+                type="button"
+                id="btnAiInsight"
+                onclick="(function(e){try{if(window.pahamajaOpenAiInsight){return window.pahamajaOpenAiInsight(e);}var m=document.getElementById('aiInsightModal');if(m){m.classList.remove('hidden');m.style.display='';m.setAttribute('aria-hidden','false');document.body.classList.add('overflow-hidden');}var err=document.getElementById('aiInsightModalError');if(err){err.textContent='Script AI Insight belum siap. Refresh halaman lalu coba lagi.';err.classList.remove('hidden');}var loading=document.getElementById('aiInsightModalLoading');if(loading){loading.classList.add('hidden');}}catch(_){}})(event)"
+                class="bg-violet-600 hover:bg-violet-700 text-white px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-violet-100 transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto cursor-pointer relative z-10"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>✨ AI Insight</span>
+            </button>
             <form action="{{ route('admin.logout') }}" method="POST" class="w-full sm:w-auto">
                 @csrf
                 <button type="submit" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full">
@@ -89,6 +112,50 @@
             </div>
         </div>
     </header>
+
+    <div id="aiInsightModal" class="hidden fixed inset-0 z-[9999]" style="display:none" aria-hidden="true">
+        <div id="aiInsightBackdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div class="relative h-full w-full overflow-y-auto p-6 md:p-10">
+            <div class="max-w-4xl mx-auto">
+                <div class="glass-card p-8 md:p-10 rounded-[2rem] border-l-4 border-violet-500">
+                    <div class="flex items-start gap-4 mb-6">
+                        <div class="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-black text-slate-800 tracking-tight">✨ AI Insight</h3>
+                            <p class="text-sm text-slate-500 font-semibold mt-1">Analisis detail dari Gemini AI (format diagnosa + rekomendasi)</p>
+                        </div>
+                        <button type="button" id="btnCloseAiInsightModal" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div id="aiInsightModalLoading" class="flex items-center gap-3 text-slate-500">
+                        <svg class="animate-spin w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span class="text-sm font-medium">Menganalisis data kuis (detail)...</span>
+                    </div>
+                    <div id="aiInsightModalMeta" class="hidden mt-6"></div>
+                    <div id="aiInsightTabs" class="hidden mt-6">
+                        <div class="inline-flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                            <button type="button" data-ai-tab="analysis" class="ai-tab px-4 py-2 rounded-xl text-xs font-black transition-all">Analisis</button>
+                            <button type="button" data-ai-tab="reco" class="ai-tab px-4 py-2 rounded-xl text-xs font-black transition-all">Rekomendasi</button>
+                            <button type="button" data-ai-tab="questions" class="ai-tab px-4 py-2 rounded-xl text-xs font-black transition-all">Soal</button>
+                            <button type="button" data-ai-tab="raw" class="ai-tab px-4 py-2 rounded-xl text-xs font-black transition-all">Raw</button>
+                        </div>
+                    </div>
+                    <div id="aiInsightViews" class="hidden mt-6 space-y-4">
+                        <div id="aiInsightViewAnalysis" class="space-y-4"></div>
+                        <div id="aiInsightViewReco" class="space-y-4 hidden"></div>
+                        <div id="aiInsightViewQuestions" class="space-y-4 hidden"></div>
+                        <div id="aiInsightViewRaw" class="space-y-4 hidden"></div>
+                    </div>
+                    <div id="aiInsightModalText" class="text-slate-800 leading-relaxed text-sm font-medium hidden"></div>
+                    <p id="aiInsightModalError" class="text-rose-600 text-sm font-medium hidden"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Professional Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -177,14 +244,7 @@
                 </div>
             </div>
             <div class="flex justify-center items-center flex-1 py-4">
-                <div style="position:relative;width:290px;height:290px;overflow:visible;">
-                    <canvas id="scoreChart" width="290" height="290"></canvas>
-                    {{-- Center text overlay --}}
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-                        <div style="font-size:32px;font-weight:900;color:#0f172a;line-height:1;">{{ $participants->count() }}</div>
-                        <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:2px;margin-top:4px;">PESERTA</div>
-                    </div>
-                </div>
+                <div id="scoreChart" class="w-full max-w-[320px] min-h-[320px] flex items-center justify-center"></div>
             </div>
         </div>
     </div>
@@ -219,7 +279,7 @@
                                     <div class="inline-flex items-center gap-3">
                                         <span class="text-slate-800 font-black">{{ $row['correct_rate'] }}%</span>
                                         <div class="w-28 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                            <div class="h-full bg-indigo-600" style="width: {{ $row['correct_rate'] }}%"></div>
+                                            <div class="h-full bg-indigo-600 progress-bar" data-width="{{ $row['correct_rate'] }}"></div>
                                         </div>
                                     </div>
                                 @else
@@ -294,7 +354,7 @@
                                     <div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
                                         <span class="text-xs font-black">{{ $participant->score }}</span>
                                         <div class="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div class="h-full bg-indigo-500" style="width: {{ $participant->score }}%"></div>
+                                            <div class="h-full bg-indigo-500 progress-bar" data-width="{{ $participant->score }}"></div>
                                         </div>
                                     </div>
                                 @else
@@ -432,70 +492,440 @@
 
         await downloadQr();
     };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.progress-bar[data-width]').forEach((el) => {
+            const value = Number.parseFloat(el.dataset.width ?? '0');
+            const clamped = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
+            el.style.width = `${clamped}%`;
+        });
+    });
 </script>
 
 <script>
-    // Initialize Sebaran Nilai Chart — Donut
-    (function () {
-        const ctx = document.getElementById('scoreChart');
-        if (!ctx) return;
+    // Initialize Sebaran Nilai Chart — ApexCharts Donut
+    function initScoreChart() {
+        const chartEl = document.querySelector("#scoreChart");
+        if (!chartEl) return;
 
-        const chartData = @json($chartData);
-        const scores    = chartData.scores;   // [low, mid, high]
-        const total     = scores.reduce((a, b) => a + b, 0);
+        try {
+            const chartData = {!! json_encode($chartData) !!};
+            if (!chartData || !chartData.scores) return;
 
-        const labels = ['0–50 (Low)', '51–75 (Mid)', '76–100 (High)'];
-        const colors = ['#f43f5e', '#f59e0b', '#10b981'];
-
-        // Build legend HTML below the canvas
-        const legendEl = document.createElement('div');
-        legendEl.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-top:20px;width:100%;max-width:240px;margin-left:auto;margin-right:auto;';
-        labels.forEach((label, i) => {
-            const pct = total > 0 ? Math.round((scores[i] / total) * 100) : 0;
-            legendEl.innerHTML += `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:8px;flex:1;">
-                        <div style="width:10px;height:10px;border-radius:50%;background:${colors[i]};flex-shrink:0;"></div>
-                        <span style="font-size:12px;font-weight:700;color:#64748b;">${label}</span>
-                    </div>
-                    <span style="font-size:12px;font-weight:900;color:#0f172a;">${scores[i]} <span style="color:#94a3b8;font-weight:600;">(${pct}%)</span></span>
-                </div>`;
-        });
-        ctx.parentElement.insertAdjacentElement('afterend', legendEl);
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: scores,
-                    backgroundColor: colors,
-                    borderColor: ['#fff', '#fff', '#fff'],
-                    borderWidth: 2,
-                    hoverOffset: 4,
-                }]
-            },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                layout: { padding: 12 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (item) => {
-                                const v = item.raw;
-                                const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-                                return ` ${v} peserta (${pct}%)`;
+            const scores = chartData.scores.map(s => parseInt(s) || 0);
+            const total = scores.reduce((a, b) => a + b, 0);
+            
+            const options = {
+                series: scores,
+                chart: {
+                    type: 'donut',
+                    height: 320,
+                    fontFamily: 'Plus Jakarta Sans, sans-serif',
+                    animations: { enabled: true }
+                },
+                labels: ['0–50 (Low)', '51–75 (Mid)', '76–100 (High)'],
+                colors: ['#f43f5e', '#f59e0b', '#10b981'],
+                stroke: { show: false },
+                dataLabels: { enabled: false },
+                legend: {
+                    position: 'bottom',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    offsetY: 8,
+                    markers: { radius: 12 },
+                    formatter: function(val, opts) {
+                        const v = opts.w.globals.series[opts.seriesIndex];
+                        const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                        return val + ": " + v + " (" + pct + "%)";
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'PESERTA',
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    color: '#94a3b8',
+                                    formatter: () => total
+                                },
+                                value: {
+                                    show: true,
+                                    fontSize: '32px',
+                                    fontWeight: 900,
+                                    color: '#0f172a',
+                                    offsetY: 2,
+                                    formatter: (val) => val
+                                }
                             }
                         }
                     }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => val + " peserta"
+                    }
                 }
-            }
-        });
-    })();
+            };
 
+            const chart = new ApexCharts(chartEl, options);
+            chart.render();
+            window.scoreDonutChart = chart;
+        } catch (err) {
+            console.error('ApexCharts init error:', err);
+            chartEl.innerHTML = '<p class="text-xs text-slate-400 font-bold italic">Gagal memuat grafik</p>';
+        }
+    }
+
+    // Run on load
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initScoreChart);
+    } else {
+        initScoreChart();
+    }
+</script>
+
+<script>
+// AI Insight Button Logic
+    window.pahamajaOpenAiInsight = async function (e) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        const modal = document.getElementById('aiInsightModal');
+        const loading = document.getElementById('aiInsightModalLoading');
+        const meta = document.getElementById('aiInsightModalMeta');
+        const tabs = document.getElementById('aiInsightTabs');
+        const views = document.getElementById('aiInsightViews');
+        const viewAnalysis = document.getElementById('aiInsightViewAnalysis');
+        const viewReco = document.getElementById('aiInsightViewReco');
+        const viewQuestions = document.getElementById('aiInsightViewQuestions');
+        const viewRaw = document.getElementById('aiInsightViewRaw');
+        const error = document.getElementById('aiInsightModalError');
+
+        if (!modal || !loading || !tabs || !views || !viewAnalysis || !viewReco || !viewQuestions || !viewRaw || !error) {
+            return;
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = '';
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+        const scrollContainer = modal.querySelector('.overflow-y-auto');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+        loading.classList.remove('hidden');
+        if (meta) meta.classList.add('hidden');
+        tabs.classList.add('hidden');
+        views.classList.add('hidden');
+        viewAnalysis.innerHTML = '';
+        viewReco.innerHTML = '';
+        viewQuestions.innerHTML = '';
+        viewRaw.innerHTML = '';
+        error.classList.add('hidden');
+
+        const escapeHtml = (s) => String(s)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+
+        const parseInsight = (raw) => {
+            const cleaned = String(raw || '').replace(/\r\n/g, '\n');
+            const stopIdx = cleaned.indexOf('AKHIR_INSIGHT');
+            const textOnly = stopIdx >= 0 ? cleaned.slice(0, stopIdx).trim() : cleaned.trim();
+
+            const headings = [
+                'Ringkasan:',
+                'Diagnosis Utama:',
+                'Area Perhatian:',
+                'Temuan Data:',
+                'Rekomendasi Peserta:',
+                'Rekomendasi Trainer/Materi:',
+                'Rekomendasi Assessment/Soal:',
+                'Rencana 7 Hari:',
+            ];
+
+            const idxs = headings
+                .map(h => ({ h, i: textOnly.indexOf(h) }))
+                .filter(x => x.i >= 0)
+                .sort((a, b) => a.i - b.i);
+
+            if (idxs.length === 0) {
+                return { sections: [], raw: textOnly };
+            }
+
+            const sections = [];
+
+            for (let k = 0; k < idxs.length; k++) {
+                const start = idxs[k];
+                const end = idxs[k + 1];
+                const bodyStart = start.i + start.h.length;
+                const bodyEnd = end ? end.i : textOnly.length;
+                const body = textOnly.slice(bodyStart, bodyEnd).trim();
+                sections.push({ title: start.h.replace(':', ''), body });
+            }
+
+            return { sections, raw: textOnly };
+        };
+
+        const renderSection = (title, body) => {
+            const lines = String(body || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const bullets = lines.filter(l => l.startsWith('-'));
+            const plain = bullets.length > 0 ? lines.filter(l => !l.startsWith('-')) : lines;
+
+            const chips = title === 'Area Perhatian'
+                ? String(body || '').split(';').map(s => s.trim()).filter(Boolean)
+                : [];
+
+            const titleHtml = `<h4 class="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3">${escapeHtml(title)}</h4>`;
+
+            const chipsHtml = chips.length > 0
+                ? `<div class="flex flex-wrap gap-2 mb-3">${chips.map(c => `<span class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1 rounded-xl text-[11px] font-bold">${escapeHtml(c)}</span>`).join('')}</div>`
+                : '';
+
+            const plainHtml = plain.length > 0
+                ? `<p class="text-slate-800 text-sm font-medium leading-relaxed whitespace-pre-line">${escapeHtml(plain.join('\n'))}</p>`
+                : '';
+
+            const bulletsHtml = bullets.length > 0
+                ? `<ul class="list-disc pl-5 space-y-2 text-sm font-medium text-slate-800">${bullets.map(b => `<li>${escapeHtml(b.replace(/^-\s*/, ''))}</li>`).join('')}</ul>`
+                : '';
+
+            return `<section class="bg-white/70 border border-slate-200 rounded-2xl p-6">${titleHtml}${chipsHtml}${plainHtml}${bulletsHtml}</section>`;
+        };
+
+        const renderMeta = (m) => {
+            if (!m || !m.participants || !m.quiz) return '';
+
+            const p = m.participants;
+            const q = m.quiz;
+            const distribution = p.distribution || {};
+
+            const chip = (label, value, tone) => {
+                const classes = tone === 'violet'
+                    ? 'bg-violet-50 border-violet-200 text-violet-700'
+                    : tone === 'emerald'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : tone === 'rose'
+                            ? 'bg-rose-50 border-rose-200 text-rose-700'
+                            : 'bg-slate-100 border-slate-200 text-slate-700';
+
+                return `<span class="${classes} border px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-widest">${escapeHtml(label)} ${escapeHtml(value)}</span>`;
+            };
+
+            const row = (label, value) => `<div class="flex items-start justify-between gap-4"><span class="text-xs font-bold text-slate-500">${escapeHtml(label)}</span><span class="text-xs font-black text-slate-800 text-right">${escapeHtml(value)}</span></div>`;
+
+            return `
+                <section class="bg-white/70 border border-slate-200 rounded-2xl p-6">
+                    <h4 class="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3">Ringkasan Data</h4>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${chip('PASS', String(q.passing_score ?? '-'), 'slate')}
+                        ${chip('COMPLETION', `${p.completion_rate ?? 0}%`, 'violet')}
+                        ${chip('AVG', `${p.avg_score ?? 0}%`, 'slate')}
+                        ${chip('LULUS', String(p.passed ?? 0), 'emerald')}
+                        ${chip('TIDAK LULUS', String(p.failed ?? 0), 'rose')}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+                            ${row('Total peserta', String(p.total ?? 0))}
+                            ${row('Selesai', String(p.finished ?? 0))}
+                            ${row('Tertinggi', String(p.highest ?? 0))}
+                            ${row('Terendah', String(p.lowest ?? 0))}
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+                            ${row('Distribusi Low (0-50)', String(distribution.low ?? 0))}
+                            ${row('Distribusi Mid (51-75)', String(distribution.mid ?? 0))}
+                            ${row('Distribusi High (76-100)', String(distribution.high ?? 0))}
+                        </div>
+                    </div>
+                </section>
+            `;
+        };
+
+        const renderQuestions = (m) => {
+            const hardest = (m && m.questions && m.questions.hardest) ? m.questions.hardest : [];
+            const easiest = (m && m.questions && m.questions.easiest) ? m.questions.easiest : [];
+
+            const chip = (label, value, tone) => {
+                const classes = tone === 'emerald'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : tone === 'rose'
+                        ? 'bg-rose-50 border-rose-200 text-rose-700'
+                        : 'bg-slate-100 border-slate-200 text-slate-700';
+
+                return `<span class="${classes} border px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-widest">${escapeHtml(label)} ${escapeHtml(value)}</span>`;
+            };
+
+            const item = (it) => `<div class="bg-white border border-slate-200 rounded-xl p-4">
+                <p class="text-xs font-black text-slate-900 mb-2">${escapeHtml(it.text || '-')}</p>
+                <div class="flex flex-wrap gap-2">
+                    ${chip('BENAR', `${it.correct_rate ?? 0}%`, 'emerald')}
+                    ${chip('DIJAWAB', `${it.answered ?? 0}`, 'slate')}
+                </div>
+            </div>`;
+
+            return `
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white/70 border border-slate-200 rounded-2xl p-6">
+                        <h4 class="text-[11px] font-black uppercase tracking-widest text-rose-600 mb-3">3 Soal Tersulit</h4>
+                        <div class="space-y-3">${hardest.map(item).join('')}</div>
+                    </div>
+                    <div class="bg-white/70 border border-slate-200 rounded-2xl p-6">
+                        <h4 class="text-[11px] font-black uppercase tracking-widest text-emerald-600 mb-3">3 Soal Termudah</h4>
+                        <div class="space-y-3">${easiest.map(item).join('')}</div>
+                    </div>
+                </section>
+            `;
+        };
+
+        const setActiveTab = (name) => {
+            const allTabs = Array.from(document.querySelectorAll('#aiInsightTabs .ai-tab'));
+            allTabs.forEach(btn => {
+                const isActive = btn.dataset.aiTab === name;
+                btn.classList.toggle('bg-white', isActive);
+                btn.classList.toggle('text-violet-700', isActive);
+                btn.classList.toggle('shadow-sm', isActive);
+                btn.classList.toggle('text-slate-500', !isActive);
+            });
+
+            viewAnalysis.classList.toggle('hidden', name !== 'analysis');
+            viewReco.classList.toggle('hidden', name !== 'reco');
+            viewQuestions.classList.toggle('hidden', name !== 'questions');
+            viewRaw.classList.toggle('hidden', name !== 'raw');
+        };
+
+        const bindTabClicks = () => {
+            document.querySelectorAll('#aiInsightTabs .ai-tab').forEach(btn => {
+                if (btn.dataset.bound === '1') return;
+                btn.dataset.bound = '1';
+                btn.addEventListener('click', () => setActiveTab(btn.dataset.aiTab));
+            });
+        };
+
+        try {
+            const res = await fetch('{{ route('admin.quiz.ai-insights', $quiz->slug) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!res.ok) {
+                if (res.status === 419) {
+                    throw new Error('Sesi habis. Refresh halaman lalu coba lagi.');
+                }
+
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    const j = await res.json();
+                    throw new Error(j.error || ('Gagal memuat insight. (HTTP ' + res.status + ')'));
+                }
+
+                const t = await res.text();
+                const snippet = String(t || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+                throw new Error('Gagal memuat insight. (HTTP ' + res.status + ') ' + snippet);
+            }
+
+            const ct = res.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) {
+                throw new Error('Respons bukan JSON. Silakan refresh halaman lalu coba lagi.');
+            }
+
+            const data = await res.json();
+            
+            if (data.error) {
+                error.textContent = data.error;
+                error.classList.remove('hidden');
+            } else {
+                const parsed = parseInsight(data.insight);
+                const metaHtml = renderMeta(data.meta);
+                if (meta) {
+                    meta.innerHTML = metaHtml;
+                    if (metaHtml) meta.classList.remove('hidden');
+                }
+
+                const analysisTitles = new Set(['Ringkasan', 'Diagnosis Utama', 'Area Perhatian', 'Temuan Data']);
+                const recoTitles = new Set(['Rekomendasi Peserta', 'Rekomendasi Trainer/Materi', 'Rekomendasi Assessment/Soal', 'Rencana 7 Hari']);
+
+                const analysisSections = parsed.sections.filter(s => analysisTitles.has(s.title));
+                const recoSections = parsed.sections.filter(s => recoTitles.has(s.title));
+                const otherSections = parsed.sections.filter(s => !analysisTitles.has(s.title) && !recoTitles.has(s.title));
+
+                const renderSectionsBlock = (sections) => {
+                    if (sections.length === 0) return '';
+                    return `<div class="space-y-4">${sections.map(s => renderSection(s.title, s.body)).join('')}</div>`;
+                };
+
+                viewAnalysis.innerHTML = renderSectionsBlock(analysisSections) || `<section class="bg-white/70 border border-slate-200 rounded-2xl p-6"><p class="text-slate-800 text-sm font-medium leading-relaxed">Insight belum memiliki bagian Analisis.</p></section>`;
+                viewReco.innerHTML = renderSectionsBlock(recoSections) || `<section class="bg-white/70 border border-slate-200 rounded-2xl p-6"><p class="text-slate-800 text-sm font-medium leading-relaxed">Insight belum memiliki bagian Rekomendasi.</p></section>`;
+                viewQuestions.innerHTML = renderQuestions(data.meta);
+
+                const rawBlocks = [];
+                if (otherSections.length > 0) {
+                    rawBlocks.push(renderSectionsBlock(otherSections));
+                }
+                rawBlocks.push(`<section class="bg-white/70 border border-slate-200 rounded-2xl p-6"><h4 class="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-3">Teks Lengkap</h4><p class="text-slate-800 text-sm font-medium leading-relaxed whitespace-pre-line">${escapeHtml(parsed.raw)}</p></section>`);
+                viewRaw.innerHTML = rawBlocks.join('');
+
+                tabs.classList.remove('hidden');
+                views.classList.remove('hidden');
+                bindTabClicks();
+                setActiveTab('analysis');
+                if (scrollContainer) scrollContainer.scrollTop = 0;
+            }
+        } catch (e) {
+            error.textContent = e?.message || "Gagal memuat insight. Coba lagi.";
+            error.classList.remove('hidden');
+        } finally {
+            loading.classList.add('hidden');
+        }
+    };
+
+    const bindAiInsightButton = () => {
+        const btnAiInsight = document.getElementById('btnAiInsight');
+        if (!btnAiInsight) return;
+        if (btnAiInsight.dataset.bound === '1') return;
+        btnAiInsight.dataset.bound = '1';
+        btnAiInsight.addEventListener('click', window.pahamajaOpenAiInsight);
+    };
+
+    const closeAiInsightModal = () => {
+        const m = document.getElementById('aiInsightModal');
+        if (m) {
+            m.classList.add('hidden');
+            m.style.display = 'none';
+            m.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    const closeBtn = document.getElementById('btnCloseAiInsightModal');
+    if (closeBtn) closeBtn.addEventListener('click', closeAiInsightModal);
+
+    const backdrop = document.getElementById('aiInsightBackdrop');
+    if (backdrop) backdrop.addEventListener('click', closeAiInsightModal);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeAiInsightModal();
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindAiInsightButton);
+    } else {
+        bindAiInsightButton();
+    }
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        });
+    }
 </script>
 
 <footer class="py-12 border-t border-slate-200 bg-white">
@@ -555,6 +985,8 @@
                 }
             });
             if (!res.ok) return;
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) return;
             const data = await res.json();
             updateDashboard(data);
         } catch (e) {

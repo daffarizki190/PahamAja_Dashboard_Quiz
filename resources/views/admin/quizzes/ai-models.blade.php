@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -25,7 +25,7 @@
         .delay-100 { animation-delay: 100ms; }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50">
+<body class="min-h-screen">
     <div class="max-w-6xl mx-auto p-10">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 animate-fade-in opacity-0">
             <div class="flex-1">
@@ -87,4 +87,3 @@
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>
 </html>
-

@@ -7,8 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -33,9 +41,9 @@
         .step-off { background: #e2e8f0; color: #475569; }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50/50">
+<body class="min-h-screen">
     <div class="flex">
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block z-50">
+        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start z-50">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>

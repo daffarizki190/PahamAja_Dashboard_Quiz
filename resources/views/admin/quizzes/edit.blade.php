@@ -7,8 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; }
-        .sidebar { background: #0b1220; border-right: 1px solid #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
+        .sidebar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 16px;
+            height: calc(100vh - 32px);
+        }
         .animate-slide-up {
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -26,10 +34,10 @@
         .delay-100 { animation-delay: 100ms; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 sidebar min-h-screen sticky top-0 text-white p-6 hidden md:block">
+        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -51,9 +59,10 @@
         </aside>
 
         <!-- Main -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-10">
             <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-fade-in opacity-0">
                 <div>
+                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Assessment • Editor</p>
                     <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">Edit Assessment</h2>
                     <p class="text-slate-500 mt-4 font-medium">Refine your evaluation criteria and scoring rules.</p>
                 </div>

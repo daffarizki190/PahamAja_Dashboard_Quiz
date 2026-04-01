@@ -48,7 +48,7 @@
 <body class="min-h-screen">
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 sidebar sticky top-4 text-white p-6 hidden md:block">
+        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
             <div class="flex items-center gap-3 mb-10">
                 <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
                 <div>
@@ -70,9 +70,10 @@
         </aside>
 
         <!-- Main -->
-        <main class="flex-1 p-8">
+        <main class="flex-1 p-10">
             <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-fade-in opacity-0">
                 <div>
+                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Assessment • Builder</p>
                     <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">Create New Assessment</h2>
                     <p class="text-slate-500 mt-4 font-medium">Design your evaluation criteria and scoring rules.</p>
                 </div>
