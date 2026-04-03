@@ -191,8 +191,10 @@ class AdminController extends Controller
             'time_limit' => 'required|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
             'questions' => 'required|array|min:1',
+            'questions.*.id' => 'nullable|integer',
             'questions.*.text' => 'required|string',
             'questions.*.options' => 'required|array|min:2',
+            'questions.*.options.*.id' => 'nullable|integer',
             'questions.*.options.*.text' => 'required|string',
             'questions.*.correct_option' => 'required|integer',
         ]);
@@ -204,26 +206,50 @@ class AdminController extends Controller
                 'passing_score' => $request->passing_score,
             ]);
 
-            $quiz->participants()->each(function ($participant) {
-                $participant->answers()->delete();
-                $participant->delete();
-            });
+            $quiz->participants()->delete();
 
-            $quiz->questions()->each(function ($question) {
-                $question->options()->delete();
-                $question->delete();
-            });
+            // Sync Questions
+            $submittedQuestionIds = collect($request->questions)->pluck('id')->filter()->all();
+
+            // Delete questions not in request (database cascade will handle options/answers)
+            $quiz->questions()->whereNotIn('id', $submittedQuestionIds)->delete();
 
             foreach ($request->questions as $qData) {
-                $question = $quiz->questions()->create([
-                    'text' => $qData['text'],
-                ]);
+                // Find existing or create new question
+                $question = isset($qData['id'])
+                    ? $quiz->questions()->find($qData['id'])
+                    : null;
+
+                if ($question) {
+                    $question->update(['text' => $qData['text']]);
+                } else {
+                    $question = $quiz->questions()->create(['text' => $qData['text']]);
+                }
+
+                // Sync Options
+                $submittedOptionIds = collect($qData['options'])->pluck('id')->filter()->all();
+
+                // Delete existing options not in request
+                $question->options()->whereNotIn('id', $submittedOptionIds)->delete();
 
                 foreach ($qData['options'] as $oIndex => $oData) {
-                    $question->options()->create([
-                        'text' => $oData['text'],
-                        'is_correct' => ($oIndex == $qData['correct_option']),
-                    ]);
+                    $isCorrect = ((int) $oIndex === (int) $qData['correct_option']);
+
+                    $option = isset($oData['id'])
+                        ? $question->options()->find($oData['id'])
+                        : null;
+
+                    if ($option) {
+                        $option->update([
+                            'text' => $oData['text'],
+                            'is_correct' => $isCorrect,
+                        ]);
+                    } else {
+                        $question->options()->create([
+                            'text' => $oData['text'],
+                            'is_correct' => $isCorrect,
+                        ]);
+                    }
                 }
             }
         });
@@ -236,20 +262,10 @@ class AdminController extends Controller
      */
     public function destroy(Quiz $quiz)
     {
-        $quiz->questions()->each(function ($question) {
-            $question->options()->delete();
-            $question->delete();
-        });
-
-        // Clean up participants and their answers
-        $quiz->participants()->each(function ($participant) {
-            $participant->answers()->delete();
-            $participant->delete();
-        });
-
+        // Database cascades handle cleaning up questions, options, participants, and answers
         $quiz->delete();
 
-        return redirect()->route('admin.quizzes.index')->with('success', 'Quiz deleted successfully!');
+        return redirect()->route('admin.quizzes.index')->with('success', 'Quiz and all associated records deleted successfully!');
     }
 
     public function employeeIndex()
@@ -362,16 +378,10 @@ class AdminController extends Controller
 
     public function employeeDestroy(Employee $employee)
     {
-        // Clean up all participation records for this employee
-        $participations = Participant::where('employee_id', $employee->id)->get();
-        foreach ($participations as $p) {
-            $p->answers()->delete();
-            $p->delete();
-        }
-
+        // Database nullOnDelete() handles participants. Historical records stay, but linked to NULL employee ID.
         $employee->delete();
 
-        return redirect()->route('admin.employees.index')->with('success', 'Employee removed from master list.');
+        return redirect()->route('admin.employees.index')->with('success', 'Employee removed. Historical records preserved.');
     }
 
     public function participantAnswers(Quiz $quiz, Participant $participant)

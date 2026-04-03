@@ -54,6 +54,22 @@ Route::get('/health/mongodb', function () {
     }
 });
 
+Route::get('/health/zip', function () {
+    if (! app()->environment('local')) {
+        abort(404);
+    }
+
+    return response()->json([
+        'ziparchive' => class_exists('ZipArchive'),
+        'extension_loaded_zip' => extension_loaded('zip'),
+        'gd_imagecreatefromstring' => function_exists('imagecreatefromstring'),
+        'extension_loaded_gd' => extension_loaded('gd'),
+        'php_version' => PHP_VERSION,
+        'sapi' => PHP_SAPI,
+        'ini_loaded' => php_ini_loaded_file(),
+    ]);
+});
+
 // Quiz Engine Routes for Participants
 Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
 
@@ -144,5 +160,3 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     })->name('force-seed');
 
 });
-
-

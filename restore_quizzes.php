@@ -3,26 +3,28 @@
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
 
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Quiz;
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Question;
+use App\Models\Quiz;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 echo "Starting Emergency Data Restoration from MongoDB to PostgreSQL...\n";
 
 try {
     $mongoQuizzes = DB::connection('mongodb')->table('quizzes')->get();
-    echo "Found " . count($mongoQuizzes) . " quizzes in MongoDB.\n";
+    echo 'Found '.count($mongoQuizzes)." quizzes in MongoDB.\n";
 
     DB::connection('pgsql')->beginTransaction();
 
     foreach ($mongoQuizzes as $mQuiz) {
         $title = $mQuiz->title ?? ($mQuiz->name ?? 'Untitled');
-        $slug = $mQuiz->slug ?? \Illuminate\Support\Str::slug($title);
+        $slug = $mQuiz->slug ?? Str::slug($title);
         $mId = (string) $mQuiz->id;
-        
+
         echo "Restoring Quiz: $title...\n";
 
         // Create Quiz in PGSQL
@@ -50,7 +52,7 @@ try {
             $qText = $mQuestion->text ?? ($mQuestion->question ?? ($mQuestion->question_text ?? 'Untitled Question'));
             $mQId = (string) ($mQuestion->id ?? '');
 
-            echo "  - Restoring Question: " . substr($qText, 0, 50) . "...\n";
+            echo '  - Restoring Question: '.substr($qText, 0, 50)."...\n";
 
             $question = Question::create([
                 'quiz_id' => $quiz->id,
@@ -89,8 +91,8 @@ try {
     DB::connection('pgsql')->commit();
     echo "\nSuccess! Data restoration complete.\n";
 
-} catch (\Exception $e) {
+} catch (Exception $e) {
     DB::connection('pgsql')->rollBack();
-    echo "\nError during restoration: " . $e->getMessage() . "\n";
-    echo $e->getTraceAsString() . "\n";
+    echo "\nError during restoration: ".$e->getMessage()."\n";
+    echo $e->getTraceAsString()."\n";
 }

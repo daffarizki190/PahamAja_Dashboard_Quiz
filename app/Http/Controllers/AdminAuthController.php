@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
@@ -55,7 +54,6 @@ class AdminAuthController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
-
 
         return redirect()->route('admin.login');
     }

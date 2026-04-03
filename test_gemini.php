@@ -1,6 +1,6 @@
 <?php
+
 require 'vendor/autoload.php';
-use Illuminate\Support\Facades\Http;
 
 // Mocking minimal environment
 $apiKey = 'AIzaSyDVp-TO_by8O7ioErK3BCHfeF221Zap7kw';
@@ -13,8 +13,10 @@ $response = @file_get_contents("https://generativelanguage.googleapis.com/v1beta
 if ($response === false) {
     echo "Error: Could not reach API or Model not found.\n";
     $headers = $http_response_header ?? [];
-    foreach ($headers as $h) echo "Header: $h\n";
+    foreach ($headers as $h) {
+        echo "Header: $h\n";
+    }
 } else {
     echo "Success! Model info:\n";
-    echo $response . "\n";
+    echo $response."\n";
 }

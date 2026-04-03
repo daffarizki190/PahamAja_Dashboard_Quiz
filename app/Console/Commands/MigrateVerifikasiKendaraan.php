@@ -10,6 +10,9 @@ use App\Models\Question;
 use App\Models\Quiz;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
+use MongoDB\Client;
 
 class MigrateVerifikasiKendaraan extends Command
 {
@@ -28,10 +31,11 @@ class MigrateVerifikasiKendaraan extends Command
         $mongoConfig = config('database.connections.mongodb');
 
         try {
-            $client  = new \MongoDB\Client($mongoConfig['dsn'] ?? env('MONGODB_URI'));
+            $client = new Client($mongoConfig['dsn'] ?? env('MONGODB_URI'));
             $mongoDB = $client->selectDatabase($mongoConfig['database'] ?? env('MONGODB_DATABASE', 'dashboard_quis'));
         } catch (\Exception $e) {
-            $this->error('Gagal terhubung ke MongoDB: ' . $e->getMessage());
+            $this->error('Gagal terhubung ke MongoDB: '.$e->getMessage());
+
             return;
         }
 
@@ -39,7 +43,7 @@ class MigrateVerifikasiKendaraan extends Command
 
         // Cari quiz di MongoDB
         $mongoQuiz = $mongoDB->selectCollection('quizzes')->findOne([
-            '_id' => new \MongoDB\BSON\ObjectId($this->targetQuizId),
+            '_id' => new ObjectId($this->targetQuizId),
         ]);
 
         if (! $mongoQuiz) {
@@ -51,6 +55,7 @@ class MigrateVerifikasiKendaraan extends Command
 
         if (! $mongoQuiz) {
             $this->error('Quiz VERIVIKASI KENDARAAN KELUAR tidak ditemukan di MongoDB.');
+
             return;
         }
 
@@ -62,24 +67,25 @@ class MigrateVerifikasiKendaraan extends Command
         if ($existing) {
             $this->warn("Quiz \"{$mongoQuiz->title}\" sudah ada di PostgreSQL (ID: {$existing->id}). Proses dihentikan.");
             $this->info('Gunakan --force untuk menimpa data yang ada.');
+
             return;
         }
 
         // --- 1. Insert Quiz ---
         $newQuiz = Quiz::create([
-            'title'         => $mongoQuiz->title ?? 'VERIVIKASI KENDARAAN KELUAR',
-            'slug'          => Str::slug($mongoQuiz->title ?? 'verivikasi-kendaraan') . '-' . substr($oldQuizId, -5),
-            'time_limit'    => $mongoQuiz->time_limit ?? 15,
+            'title' => $mongoQuiz->title ?? 'VERIVIKASI KENDARAAN KELUAR',
+            'slug' => Str::slug($mongoQuiz->title ?? 'verivikasi-kendaraan').'-'.substr($oldQuizId, -5),
+            'time_limit' => $mongoQuiz->time_limit ?? 15,
             'passing_score' => $mongoQuiz->passing_score ?? 70,
-            'created_at'    => $this->parseDate($mongoQuiz->created_at ?? null) ?? now(),
-            'updated_at'    => $this->parseDate($mongoQuiz->updated_at ?? null) ?? now(),
+            'created_at' => $this->parseDate($mongoQuiz->created_at ?? null) ?? now(),
+            'updated_at' => $this->parseDate($mongoQuiz->updated_at ?? null) ?? now(),
         ]);
 
         $this->info("✓ Quiz berhasil dibuat di PostgreSQL (ID: {$newQuiz->id})");
 
         // Map ID lama → baru
         $questionMap = [];
-        $optionMap   = [];
+        $optionMap = [];
 
         // --- 2. Insert Questions ---
         $this->info('Migrasi pertanyaan...');
@@ -93,8 +99,8 @@ class MigrateVerifikasiKendaraan extends Command
             $oldQId = (string) $question->_id;
 
             $newQuestion = Question::create([
-                'quiz_id'    => $newQuiz->id,
-                'text'       => $question->text ?? '',
+                'quiz_id' => $newQuiz->id,
+                'text' => $question->text ?? '',
                 'created_at' => $this->parseDate($question->created_at ?? null) ?? now(),
                 'updated_at' => $this->parseDate($question->updated_at ?? null) ?? now(),
             ]);
@@ -119,10 +125,10 @@ class MigrateVerifikasiKendaraan extends Command
 
                 $newOption = Option::create([
                     'question_id' => $questionMap[$oldQId],
-                    'text'        => $option->text ?? '',
-                    'is_correct'  => $option->is_correct ?? false,
-                    'created_at'  => $this->parseDate($option->created_at ?? null) ?? now(),
-                    'updated_at'  => $this->parseDate($option->updated_at ?? null) ?? now(),
+                    'text' => $option->text ?? '',
+                    'is_correct' => $option->is_correct ?? false,
+                    'created_at' => $this->parseDate($option->created_at ?? null) ?? now(),
+                    'updated_at' => $this->parseDate($option->updated_at ?? null) ?? now(),
                 ]);
 
                 $optionMap[$oldOptId] = $newOption->id;
@@ -135,7 +141,7 @@ class MigrateVerifikasiKendaraan extends Command
         // --- 4. Insert Participants & Answers ---
         $this->info('Migrasi peserta dan jawaban...');
         $participantCount = 0;
-        $answerCount      = 0;
+        $answerCount = 0;
 
         $participants = $mongoDB->selectCollection('participants')->find([
             'quiz_id' => $oldQuizId,
@@ -146,14 +152,14 @@ class MigrateVerifikasiKendaraan extends Command
             $employee = Employee::where('nim', $participant->nim ?? '')->first();
 
             $newParticipant = Participant::create([
-                'quiz_id'     => $newQuiz->id,
+                'quiz_id' => $newQuiz->id,
                 'employee_id' => $employee?->id,
-                'name'        => $participant->name ?? 'Tidak Diketahui',
-                'nim'         => $participant->nim ?? '',
-                'score'       => isset($participant->score) ? (int) $participant->score : null,
-                'attempt'     => isset($participant->attempt) ? (int) $participant->attempt : 1,
-                'created_at'  => $this->parseDate($participant->created_at ?? null) ?? now(),
-                'updated_at'  => $this->parseDate($participant->updated_at ?? null) ?? now(),
+                'name' => $participant->name ?? 'Tidak Diketahui',
+                'nim' => $participant->nim ?? '',
+                'score' => isset($participant->score) ? (int) $participant->score : null,
+                'attempt' => isset($participant->attempt) ? (int) $participant->attempt : 1,
+                'created_at' => $this->parseDate($participant->created_at ?? null) ?? now(),
+                'updated_at' => $this->parseDate($participant->updated_at ?? null) ?? now(),
             ]);
 
             $participantCount++;
@@ -165,7 +171,7 @@ class MigrateVerifikasiKendaraan extends Command
 
             foreach ($answers as $answer) {
                 $oldOptId = (string) ($answer->option_id ?? '');
-                $oldQId   = (string) ($answer->question_id ?? '');
+                $oldQId = (string) ($answer->question_id ?? '');
 
                 if (! isset($questionMap[$oldQId]) || ! isset($optionMap[$oldOptId])) {
                     continue;
@@ -173,10 +179,10 @@ class MigrateVerifikasiKendaraan extends Command
 
                 Answer::create([
                     'participant_id' => $newParticipant->id,
-                    'question_id'    => $questionMap[$oldQId],
-                    'option_id'      => $optionMap[$oldOptId],
-                    'created_at'     => $this->parseDate($answer->created_at ?? null) ?? now(),
-                    'updated_at'     => $this->parseDate($answer->updated_at ?? null) ?? now(),
+                    'question_id' => $questionMap[$oldQId],
+                    'option_id' => $optionMap[$oldOptId],
+                    'created_at' => $this->parseDate($answer->created_at ?? null) ?? now(),
+                    'updated_at' => $this->parseDate($answer->updated_at ?? null) ?? now(),
                 ]);
 
                 $answerCount++;
@@ -187,7 +193,7 @@ class MigrateVerifikasiKendaraan extends Command
         $this->info("✓ {$answerCount} jawaban berhasil dipindahkan.");
 
         $this->newLine();
-        $this->info('✅ Migrasi selesai! Quiz "' . $newQuiz->title . '" sudah tersedia di Supabase.');
+        $this->info('✅ Migrasi selesai! Quiz "'.$newQuiz->title.'" sudah tersedia di Supabase.');
         $this->info("   Jumlah soal    : {$questionCount}");
         $this->info("   Jumlah peserta : {$participantCount}");
         $this->info("   Jumlah jawaban : {$answerCount}");
@@ -199,7 +205,7 @@ class MigrateVerifikasiKendaraan extends Command
             return null;
         }
 
-        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+        if ($date instanceof UTCDateTime) {
             return $date->toDateTime()->format('Y-m-d H:i:s');
         }
 

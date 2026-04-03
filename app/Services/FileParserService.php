@@ -40,6 +40,10 @@ class FileParserService
      */
     private function parseDocx(string $filePath): string
     {
+        if (! class_exists('ZipArchive')) {
+            throw new Exception('ZipArchive extension is required to parse DOCX files. Enable the PHP zip extension (php-zip).');
+        }
+
         $phpWord = WordIOFactory::load($filePath);
         $fullText = '';
         foreach ($phpWord->getSections() as $section) {
@@ -143,6 +147,14 @@ class FileParserService
      */
     private function parsePptx(string $filePath): string
     {
+        if (! class_exists('ZipArchive')) {
+            throw new Exception('ZipArchive extension is required to parse PPTX files. Enable the PHP zip extension (php-zip).');
+        }
+
+        if (! function_exists('imagecreatefromstring')) {
+            throw new Exception('GD extension is required to parse PPTX files (imagecreatefromstring). Enable the PHP gd extension (php-gd).');
+        }
+
         $presentation = PptIOFactory::load($filePath);
         $fullText = '';
         foreach ($presentation->getAllSlides() as $slide) {

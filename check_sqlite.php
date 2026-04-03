@@ -1,16 +1,19 @@
 <?php
 
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
 
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 try {
-    $quizzes = \Illuminate\Support\Facades\DB::connection('sqlite')->table('quizzes')->get();
-    echo "Found " . count($quizzes) . " quizzes in SQLite.\n";
+    $quizzes = DB::connection('sqlite')->table('quizzes')->get();
+    echo 'Found '.count($quizzes)." quizzes in SQLite.\n";
     foreach ($quizzes as $q) {
-        echo " - " . ($q->title ?? 'No Title') . " (Slug: " . ($q->slug ?? 'no-slug') . ")\n";
+        echo ' - '.($q->title ?? 'No Title').' (Slug: '.($q->slug ?? 'no-slug').")\n";
     }
-} catch (\Exception $e) {
-    echo "Error connecting to SQLite: " . $e->getMessage() . "\n";
+} catch (Exception $e) {
+    echo 'Error connecting to SQLite: '.$e->getMessage()."\n";
 }

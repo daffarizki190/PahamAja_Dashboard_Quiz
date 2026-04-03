@@ -77,7 +77,7 @@
                         <span class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{{ $employee->position }}</span>
                     </p>
                 </div>
-                <div class="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl shadow-slate-200 border border-slate-800">
+                <div class="bg-slate-900 text-white p-6 rounded-4xl shadow-2xl shadow-slate-200 border border-slate-800">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Performa Akumulatif</p>
                     <p class="text-3xl font-black font-outfit">{{ number_format($employee->average_score, 1) }}%</p>
                 </div>

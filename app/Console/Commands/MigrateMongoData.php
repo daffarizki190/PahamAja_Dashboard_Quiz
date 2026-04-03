@@ -2,15 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Answer;
+use App\Models\Employee;
+use App\Models\Option;
+use App\Models\Participant;
+use App\Models\Question;
+use App\Models\Quiz;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Models\Employee;
-use App\Models\Quiz;
-use App\Models\Question;
-use App\Models\Option;
-use App\Models\Participant;
-use App\Models\Answer;
+use MongoDB\BSON\UTCDateTime;
+use MongoDB\Client;
 
 class MigrateMongoData extends Command
 {
@@ -26,14 +28,16 @@ class MigrateMongoData extends Command
 
         if (! $mongoConfig) {
             $this->error('Konfigurasi koneksi MongoDB tidak ditemukan.');
+
             return;
         }
 
         try {
-            $client   = new \MongoDB\Client($mongoConfig['dsn'] ?? env('MONGODB_URI'));
-            $mongoDB  = $client->selectDatabase($mongoConfig['database'] ?? env('MONGODB_DATABASE', 'dashboard_quis'));
+            $client = new Client($mongoConfig['dsn'] ?? env('MONGODB_URI'));
+            $mongoDB = $client->selectDatabase($mongoConfig['database'] ?? env('MONGODB_DATABASE', 'dashboard_quis'));
         } catch (\Exception $e) {
-            $this->error('Gagal terhubung ke MongoDB: ' . $e->getMessage());
+            $this->error('Gagal terhubung ke MongoDB: '.$e->getMessage());
+
             return;
         }
 
@@ -42,9 +46,9 @@ class MigrateMongoData extends Command
         $this->info('PostgreSQL sudah bersih.');
 
         // Map dari MongoDB ObjectID ke PostgreSQL integer ID
-        $quizMap        = [];
-        $questionMap    = [];
-        $optionMap      = [];
+        $quizMap = [];
+        $questionMap = [];
+        $optionMap = [];
         $participantMap = [];
 
         // --- 1. Kuis ---
@@ -55,12 +59,12 @@ class MigrateMongoData extends Command
             $oldId = (string) $quiz->_id;
 
             $newQuiz = Quiz::create([
-                'title'         => $quiz->title ?? 'Tanpa Judul',
-                'slug'          => Str::slug($quiz->title ?? 'quiz') . '-' . substr($oldId, -5),
-                'time_limit'    => $quiz->time_limit ?? 60,
+                'title' => $quiz->title ?? 'Tanpa Judul',
+                'slug' => Str::slug($quiz->title ?? 'quiz').'-'.substr($oldId, -5),
+                'time_limit' => $quiz->time_limit ?? 60,
                 'passing_score' => $quiz->passing_score ?? 70,
-                'created_at'    => $this->parseDate($quiz->created_at ?? null) ?? now(),
-                'updated_at'    => $this->parseDate($quiz->updated_at ?? null) ?? now(),
+                'created_at' => $this->parseDate($quiz->created_at ?? null) ?? now(),
+                'updated_at' => $this->parseDate($quiz->updated_at ?? null) ?? now(),
             ]);
 
             $quizMap[$oldId] = $newQuiz->id;
@@ -74,16 +78,16 @@ class MigrateMongoData extends Command
         $questionCount = 0;
 
         foreach ($mongoDB->selectCollection('questions')->find() as $question) {
-            $oldId      = (string) $question->_id;
-            $oldQuizId  = (string) ($question->quiz_id ?? '');
+            $oldId = (string) $question->_id;
+            $oldQuizId = (string) ($question->quiz_id ?? '');
 
             if (! isset($quizMap[$oldQuizId])) {
                 continue;
             }
 
             $newQuestion = Question::create([
-                'quiz_id'    => $quizMap[$oldQuizId],
-                'text'       => $question->text ?? '',
+                'quiz_id' => $quizMap[$oldQuizId],
+                'text' => $question->text ?? '',
                 'created_at' => $this->parseDate($question->created_at ?? null) ?? now(),
                 'updated_at' => $this->parseDate($question->updated_at ?? null) ?? now(),
             ]);
@@ -99,7 +103,7 @@ class MigrateMongoData extends Command
         $optionCount = 0;
 
         foreach ($mongoDB->selectCollection('options')->find() as $option) {
-            $oldId         = (string) $option->_id;
+            $oldId = (string) $option->_id;
             $oldQuestionId = (string) ($option->question_id ?? '');
 
             if (! isset($questionMap[$oldQuestionId])) {
@@ -108,10 +112,10 @@ class MigrateMongoData extends Command
 
             $newOption = Option::create([
                 'question_id' => $questionMap[$oldQuestionId],
-                'text'        => $option->text ?? '',
-                'is_correct'  => $option->is_correct ?? false,
-                'created_at'  => $this->parseDate($option->created_at ?? null) ?? now(),
-                'updated_at'  => $this->parseDate($option->updated_at ?? null) ?? now(),
+                'text' => $option->text ?? '',
+                'is_correct' => $option->is_correct ?? false,
+                'created_at' => $this->parseDate($option->created_at ?? null) ?? now(),
+                'updated_at' => $this->parseDate($option->updated_at ?? null) ?? now(),
             ]);
 
             $optionMap[$oldId] = $newOption->id;
@@ -123,28 +127,29 @@ class MigrateMongoData extends Command
         // --- 4. Peserta ---
         $this->info('Migrasi peserta...');
         $participantCount = 0;
-        $skippedCount     = 0;
+        $skippedCount = 0;
 
         foreach ($mongoDB->selectCollection('participants')->find() as $participant) {
-            $oldId     = (string) $participant->_id;
+            $oldId = (string) $participant->_id;
             $oldQuizId = (string) ($participant->quiz_id ?? '');
 
             if (! isset($quizMap[$oldQuizId])) {
                 $skippedCount++;
+
                 continue;
             }
 
             $employee = Employee::where('nim', $participant->nim ?? '')->first();
 
             $newParticipant = Participant::create([
-                'quiz_id'     => $quizMap[$oldQuizId],
+                'quiz_id' => $quizMap[$oldQuizId],
                 'employee_id' => $employee?->id,
-                'name'        => $participant->name ?? 'Tidak Diketahui',
-                'nim'         => $participant->nim ?? '',
-                'score'       => isset($participant->score) ? (int) $participant->score : null,
-                'attempt'     => isset($participant->attempt) ? (int) $participant->attempt : 1,
-                'created_at'  => $this->parseDate($participant->created_at ?? null) ?? now(),
-                'updated_at'  => $this->parseDate($participant->updated_at ?? null) ?? now(),
+                'name' => $participant->name ?? 'Tidak Diketahui',
+                'nim' => $participant->nim ?? '',
+                'score' => isset($participant->score) ? (int) $participant->score : null,
+                'attempt' => isset($participant->attempt) ? (int) $participant->attempt : 1,
+                'created_at' => $this->parseDate($participant->created_at ?? null) ?? now(),
+                'updated_at' => $this->parseDate($participant->updated_at ?? null) ?? now(),
             ]);
 
             $participantMap[$oldId] = $newParticipant->id;
@@ -159,8 +164,8 @@ class MigrateMongoData extends Command
 
         foreach ($mongoDB->selectCollection('answers')->find() as $answer) {
             $oldParticipantId = (string) ($answer->participant_id ?? '');
-            $oldQuestionId    = (string) ($answer->question_id ?? '');
-            $oldOptionId      = (string) ($answer->option_id ?? '');
+            $oldQuestionId = (string) ($answer->question_id ?? '');
+            $oldOptionId = (string) ($answer->option_id ?? '');
 
             if (
                 ! isset($participantMap[$oldParticipantId]) ||
@@ -172,10 +177,10 @@ class MigrateMongoData extends Command
 
             Answer::create([
                 'participant_id' => $participantMap[$oldParticipantId],
-                'question_id'    => $questionMap[$oldQuestionId],
-                'option_id'      => $optionMap[$oldOptionId],
-                'created_at'     => $this->parseDate($answer->created_at ?? null) ?? now(),
-                'updated_at'     => $this->parseDate($answer->updated_at ?? null) ?? now(),
+                'question_id' => $questionMap[$oldQuestionId],
+                'option_id' => $optionMap[$oldOptionId],
+                'created_at' => $this->parseDate($answer->created_at ?? null) ?? now(),
+                'updated_at' => $this->parseDate($answer->updated_at ?? null) ?? now(),
             ]);
 
             $answerCount++;
@@ -196,7 +201,7 @@ class MigrateMongoData extends Command
             return null;
         }
 
-        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+        if ($date instanceof UTCDateTime) {
             return $date->toDateTime()->format('Y-m-d H:i:s');
         }
 
