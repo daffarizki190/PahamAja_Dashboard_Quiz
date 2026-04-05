@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Exception;
-use PhpOffice\PhpPresentation\IOFactory as PptIOFactory;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use Smalot\PdfParser\Parser;
 
@@ -143,7 +142,8 @@ class FileParserService
     }
 
     /**
-     * Extract text from PPTX.
+     * Extract text from PPTX using native ZipArchive (no GD required).
+     * PPTX files are ZIP archives. Each slide is at ppt/slides/slideN.xml.
      */
     private function parsePptx(string $filePath): string
     {
@@ -151,26 +151,43 @@ class FileParserService
             throw new Exception('ZipArchive extension is required to parse PPTX files. Enable the PHP zip extension (php-zip).');
         }
 
-        if (! function_exists('imagecreatefromstring')) {
-            throw new Exception('GD extension is required to parse PPTX files (imagecreatefromstring). Enable the PHP gd extension (php-gd).');
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) !== true) {
+            throw new Exception('Failed to open PPTX file. The file may be corrupted.');
         }
 
-        $presentation = PptIOFactory::load($filePath);
         $fullText = '';
-        foreach ($presentation->getAllSlides() as $slide) {
-            foreach ($slide->getShapeCollection() as $shape) {
-                if (method_exists($shape, 'getText')) {
-                    $textObj = $shape->getText();
-                    foreach ($textObj->getParagraphs() as $paragraph) {
-                        foreach ($paragraph->getRichTextElements() as $richText) {
-                            $fullText .= $richText->getText();
+        $slideIndex = 1;
+
+        while (true) {
+            $slideXml = $zip->getFromName("ppt/slides/slide{$slideIndex}.xml");
+            if ($slideXml === false) {
+                break;
+            }
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($slideXml);
+            libxml_clear_errors();
+
+            if ($xml !== false) {
+                $xml->registerXPathNamespace('a', 'http://schemas.openxmlformats.org/drawingml/2006/main');
+                $textNodes = $xml->xpath('//a:t');
+                if ($textNodes) {
+                    foreach ($textNodes as $node) {
+                        $text = trim((string) $node);
+                        if ($text !== '') {
+                            $fullText .= $text . ' ';
                         }
-                        $fullText .= "\n";
                     }
+                    $fullText .= "\n";
                 }
             }
+
+            $slideIndex++;
         }
 
-        return $fullText;
+        $zip->close();
+
+        return trim($fullText);
     }
 }
