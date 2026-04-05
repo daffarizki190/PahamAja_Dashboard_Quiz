@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Str;
-use MongoDB\Client;
-use MongoDB\Laravel\MongoDBServiceProvider;
 use Pdo\Mysql;
 
 return [
@@ -45,12 +43,6 @@ return [
             'synchronous' => null,
             'transaction_mode' => 'DEFERRED',
         ],
-
-        'mongodb' => (class_exists(Client::class) && class_exists(MongoDBServiceProvider::class)) ? [
-            'driver' => 'mongodb',
-            'dsn' => env('MONGODB_URI'),
-            'database' => env('MONGODB_DATABASE', 'dashboard_quis'),
-        ] : null,
 
         'mysql' => [
             'driver' => 'mysql',

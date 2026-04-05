@@ -29,31 +29,6 @@ Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.lo
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-Route::get('/health/mongodb', function () {
-    if (! app()->environment('local')) {
-        abort(404);
-    }
-
-    $extensionOk = class_exists(Manager::class);
-
-    try {
-        Quiz::query()->limit(1)->get();
-
-        return response()->json([
-            'ok' => $extensionOk,
-            'extension' => $extensionOk ? 'installed' : 'missing',
-            'connection' => config('database.default'),
-        ]);
-    } catch (Throwable $e) {
-        return response()->json([
-            'ok' => false,
-            'extension' => $extensionOk ? 'installed' : 'missing',
-            'connection' => config('database.default'),
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-});
-
 Route::get('/health/zip', function () {
     if (! app()->environment('local')) {
         abort(404);
