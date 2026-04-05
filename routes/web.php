@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\AiQuizController;
+use App\Http\Controllers\DevController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\QuizController;
 use App\Models\Quiz;
@@ -28,6 +29,16 @@ Route::get('/', function () {
 Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+
+// ─── Dev Team Portal ────────────────────────────────────────────────────────
+Route::get('/dev/login', [DevController::class, 'showLogin'])->name('dev.login');
+Route::post('/dev/login', [DevController::class, 'login'])->name('dev.login.submit');
+Route::post('/dev/logout', [DevController::class, 'logout'])->name('dev.logout');
+
+Route::prefix('dev')->name('dev.')->middleware(['dev.auth', 'nocache'])->group(function () {
+    Route::get('/', [DevController::class, 'health'])->name('health');
+    Route::get('/health.json', [DevController::class, 'healthJson'])->name('health.json');
+});
 
 Route::get('/health/zip', function () {
     if (! app()->environment('local')) {

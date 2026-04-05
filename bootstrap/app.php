@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminAuth;
+use App\Http\Middleware\DevAuth;
 use App\Http\Middleware\ForceNoCache;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,7 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias([
             'admin.auth' => AdminAuth::class,
-            'nocache' => ForceNoCache::class,
+            'dev.auth'   => DevAuth::class,
+            'nocache'    => ForceNoCache::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
