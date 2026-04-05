@@ -1,59 +1,211 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="300" alt="Laravel Logo">
 </p>
 
-## About Laravel
+<h1 align="center">PahamAja — Dashboard Kuis Admin</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  Sistem manajemen kuis berbasis web untuk pelatihan karyawan, dilengkapi fitur pembuatan soal berbantuan AI, ekspor PDF, dan analisis kinerja real-time.
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat&logo=laravel&logoColor=white" alt="Laravel">
+  <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=flat&logo=php&logoColor=white" alt="PHP">
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/Deploy-Vercel-000000?style=flat&logo=vercel&logoColor=white" alt="Vercel">
+  <img src="https://img.shields.io/badge/AI-Gemini-4285F4?style=flat&logo=google&logoColor=white" alt="Gemini AI">
+</p>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📋 Tentang Proyek
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**PahamAja Dashboard Quiz** adalah platform administrasi kuis internal yang dibangun untuk kebutuhan pelatihan karyawan di Gandaria City. Admin dapat membuat dan mengelola kuis, memantau hasil peserta secara real-time, serta memanfaatkan kecerdasan buatan (Google Gemini) untuk menghasilkan soal secara otomatis dari file materi (PDF, DOCX, PPTX).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### ✨ Fitur Utama
 
-## Laravel Sponsors
+| Fitur | Deskripsi |
+|---|---|
+| 🧠 **AI Quiz Generator** | Generate soal pilihan ganda otomatis dari file materi menggunakan Google Gemini |
+| 📂 **File Parser** | Mendukung upload file PDF, DOCX, dan PPTX sebagai sumber materi soal |
+| 📊 **Dashboard Real-time** | Monitoring peserta, skor, dan statistik kuis secara live |
+| 📄 **Ekspor PDF** | Cetak laporan hasil kuis per peserta menggunakan DomPDF |
+| 📈 **AI Insight** | Analisis kinerja karyawan berbasis AI dengan rekomendasi otomatis |
+| 👥 **Manajemen Karyawan** | Kelola data peserta kuis berdasarkan NIK dan divisi |
+| 🔒 **Admin Auth** | Sistem autentikasi admin sederhana berbasis cookie session |
+| 📱 **Responsive UI** | Desain glassmorphism yang optimal di semua ukuran layar |
+| 🔢 **QR Code** | Generate QR Code untuk akses cepat ke halaman kuis |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🏗️ Tech Stack
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Backend**: Laravel 12.x (PHP 8.2)
+- **Database**: PostgreSQL (via Supabase)
+- **Frontend**: Blade Templates, Vanilla CSS, JavaScript
+- **AI**: Google Gemini API (`google-gemini-php/client`)
+- **PDF**: `barryvdh/laravel-dompdf`
+- **File Parsing**: `smalot/pdfparser`, `phpoffice/phpword`, native ZipArchive (PPTX)
+- **Export**: `maatwebsite/excel`
+- **QR Code**: `simplesoftwareio/simple-qrcode`
+- **Deployment**: Vercel (Serverless PHP via `vercel-php`)
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🚀 Instalasi & Menjalankan Lokal
 
-## Code of Conduct
+### Prasyarat
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- PHP >= 8.2 (dengan ekstensi `zip`, `pdo_pgsql`)
+- Composer
+- Node.js & npm
+- Akses ke database PostgreSQL (misal: Supabase)
 
-## Security Vulnerabilities
+### Langkah Instalasi
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# 1. Clone repositori
+git clone https://github.com/daffarizki190/PahamAja_Dashboard_Quiz.git
+cd PahamAja_Dashboard_Quiz
 
-## License
+# 2. Install dependensi PHP
+composer install
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 3. Install dependensi frontend
+npm install
+
+# 4. Salin file environment
+cp .env.example .env
+
+# 5. Generate application key
+php artisan key:generate
+
+# 6. Konfigurasi .env (isi DB_* dan GEMINI_API_KEY)
+# Edit file .env sesuai kebutuhan
+
+# 7. Jalankan migrasi database
+php artisan migrate
+
+# 8. Build aset frontend
+npm run build
+```
+
+### Menjalankan Server Lokal
+
+```bash
+# Jalankan semua sekaligus (server + vite + log)
+composer run dev
+```
+
+Akses di: `http://127.0.0.1:8000`
+
+---
+
+## ⚙️ Konfigurasi Environment
+
+Variabel penting di file `.env`:
+
+```env
+APP_NAME="PahamAja Dashboard Quiz"
+APP_ENV=production
+APP_URL=https://paham-aja-dashboard-quiz.vercel.app
+
+# Database PostgreSQL (Supabase)
+DB_CONNECTION=pgsql
+DB_HOST=your-supabase-host
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=your-password
+
+# Google Gemini AI
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-flash
+
+# Admin Credentials
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-password
+```
+
+---
+
+## 🌐 Deployment ke Vercel
+
+Proyek ini di-deploy sebagai **Serverless PHP** di Vercel menggunakan runtime `vercel-php@0.6.2`.
+
+### Langkah Deploy
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login dan deploy
+vercel --prod
+```
+
+### Catatan Penting untuk Vercel
+
+- Storage dialihkan ke `/tmp` (tidak persisten antar request)
+- Session menggunakan driver `cookie`
+- Cache menggunakan driver `array`
+- Log diarahkan ke `stderr`
+- File konten besar (materi kuis) diproses langsung dari upload tanpa menyimpan permanen
+
+---
+
+## 📁 Struktur Direktori Penting
+
+```
+app/
+├── Http/Controllers/
+│   ├── AdminController.php       # Dashboard, manajemen quiz & karyawan
+│   ├── AiQuizController.php      # Generate soal dengan AI
+│   ├── AiInsightController.php   # Analisis kinerja AI
+│   ├── PdfExportController.php   # Ekspor laporan PDF
+│   └── QuizController.php        # Alur pengerjaan kuis oleh peserta
+├── Services/
+│   ├── FileParserService.php     # Parser PDF/DOCX/PPTX
+│   └── AiGeneratorService.php    # Integrasi Gemini AI
+└── Models/
+    ├── Quiz.php
+    ├── Question.php
+    ├── Option.php
+    ├── Participant.php
+    ├── Answer.php
+    └── Employee.php
+
+api/
+└── index.php                     # Entry point Vercel Serverless
+```
+
+---
+
+## 🔑 Akses Admin
+
+| URL | Keterangan |
+|---|---|
+| `/admin/login` | Halaman login admin |
+| `/admin/dashboard` | Dashboard utama |
+| `/admin/quizzes` | Kelola daftar kuis |
+| `/admin/ai-quiz/create` | Buat soal dengan AI |
+| `/admin/employees` | Kelola data karyawan |
+
+---
+
+## 🧪 Menjalankan Tests
+
+```bash
+composer run test
+```
+
+---
+
+## 📄 Lisensi
+
+Proyek ini bersifat privat dan dikembangkan untuk keperluan internal **Gandaria City — PT Pakuwon Jati Tbk**.
+
+---
+
+<p align="center">
+  Dibuat dengan ❤️ menggunakan <a href="https://laravel.com">Laravel 12</a> &amp; <a href="https://ai.google.dev">Google Gemini AI</a>
+</p>
