@@ -8,55 +8,6 @@ use Illuminate\Support\Facades\Hash;
 
 class DevController extends Controller
 {
-    // ─── Auth ────────────────────────────────────────────────────────────────
-
-    public function showLogin()
-    {
-        if (session()->get('dev.authenticated')) {
-            return redirect()->route('dev.health');
-        }
-
-        return view('dev.login');
-    }
-
-    public function login(Request $request)
-    {
-        $request->validate(['password' => 'required|string']);
-
-        $configured = trim((string) (config('dev.password') ?? env('DEV_PASSWORD', '')));
-
-        if ($configured === '') {
-            return back()->with('error', 'DEV_PASSWORD belum dikonfigurasi di Environment Variable.')->withInput();
-        }
-
-        $provided = trim((string) $request->input('password'));
-        $ok = false;
-
-        if (str_starts_with($configured, '$2y$') || str_starts_with($configured, '$argon2')) {
-            $ok = Hash::check($provided, $configured);
-        } else {
-            $ok = hash_equals($configured, $provided);
-        }
-
-        if (! $ok) {
-            return back()->with('error', 'Password salah.')->withInput();
-        }
-
-        $request->session()->put('dev.authenticated', true);
-        $request->session()->regenerate();
-
-        return redirect()->route('dev.health');
-    }
-
-    public function logout(Request $request)
-    {
-        $request->session()->forget('dev.authenticated');
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('dev.login');
-    }
-
     // ─── Health Monitor ───────────────────────────────────────────────────────
 
     public function health()

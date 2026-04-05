@@ -29,11 +29,12 @@ Route::get('/', function () {
 Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+Route::post('/dev/logout', [AdminAuthController::class, 'logout'])->name('dev.logout');
 
-// ─── Dev Team Portal ────────────────────────────────────────────────────────
-Route::get('/dev/login', [DevController::class, 'showLogin'])->name('dev.login');
-Route::post('/dev/login', [DevController::class, 'login'])->name('dev.login.submit');
-Route::post('/dev/logout', [DevController::class, 'logout'])->name('dev.logout');
+// Redirect old dev login to unified login
+Route::get('/dev/login', function () {
+    return redirect()->route('admin.login');
+});
 
 Route::prefix('dev')->name('dev.')->middleware(['dev.auth', 'nocache'])->group(function () {
     Route::get('/', [DevController::class, 'health'])->name('health');

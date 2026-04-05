@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - PahamAja</title>
+    <title>PahamAja Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -44,7 +44,7 @@
                 <div class="bg-indigo-600 w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl italic text-white shadow-lg shadow-indigo-600/20">P</div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-tight text-slate-900">Paham<span class="text-indigo-600">Aja</span></h1>
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest -mt-0.5">Admin Access</p>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest -mt-0.5">Portal Akses</p>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@
                 </div>
 
                 <button type="submit" class="w-full btn-primary text-white px-6 py-4 rounded-2xl font-black text-sm active:scale-[0.99]">
-                    Masuk Admin
+                    Masuk →
                 </button>
             </form>
 

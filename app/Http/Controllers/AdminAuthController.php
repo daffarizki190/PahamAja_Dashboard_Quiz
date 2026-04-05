@@ -18,39 +18,60 @@ class AdminAuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $configured = trim((string) (config('admin.password') ?? ''));
+        $adminPass = trim((string) (config('admin.password') ?? ''));
+        $devPass = trim((string) (config('dev.password') ?? ''));
 
-        if ($configured === '') {
-            return back()->with('error', 'ADMIN_PASSWORD belum dikonfigurasi di Environment Variable Vercel.')->withInput();
+        if ($adminPass === '') {
+            return back()->with('error', 'ADMIN_PASSWORD belum dikonfigurasi.')->withInput();
         }
 
         $provided = trim((string) $request->input('password'));
 
-        $ok = false;
-
-        // Support both hashed (bcrypt/argon) and plain text passwords
-        if (str_starts_with($configured, '$2y$') || str_starts_with($configured, '$2a$') || str_starts_with($configured, '$argon2')) {
-            $ok = Hash::check($provided, $configured);
+        // 🟢 Check Admin Password
+        $isAdminOk = false;
+        if (str_starts_with($adminPass, '$2y$') || str_starts_with($adminPass, '$2a$') || str_starts_with($adminPass, '$argon2')) {
+            $isAdminOk = Hash::check($provided, $adminPass);
         } else {
-            $ok = hash_equals($configured, $provided);
+            $isAdminOk = hash_equals($adminPass, $provided);
         }
 
-        if (! $ok) {
-            return back()->with('error', 'Password admin salah. Pastikan ADMIN_PASSWORD di Vercel Dashboard sudah benar (saat ini terisi '.strlen($configured).' karakter).')->withInput();
+        if ($isAdminOk) {
+            if ($request->hasSession()) {
+                $request->session()->put('admin.authenticated', true);
+                $request->session()->regenerate();
+            }
+
+            return redirect()->route('admin.dashboard');
         }
 
-        if ($request->hasSession()) {
-            $request->session()->put('admin.authenticated', true);
-            $request->session()->regenerate();
+        // 🔵 Check Dev Password
+        $isDevOk = false;
+        if ($devPass !== '') {
+            if (str_starts_with($devPass, '$2y$') || str_starts_with($devPass, '$argon2')) {
+                $isDevOk = Hash::check($provided, $devPass);
+            } else {
+                $isDevOk = hash_equals($devPass, $provided);
+            }
         }
 
-        return redirect()->route('admin.dashboard');
+        if ($isDevOk) {
+            if ($request->hasSession()) {
+                $request->session()->put('dev.authenticated', true);
+                $request->session()->regenerate();
+            }
+
+            return redirect()->route('dev.health');
+        }
+
+        // 🔴 Fail
+        return back()->with('error', 'Password salah. Pastikan password Admin atau Dev yang Anda masukkan benar.')->withInput();
     }
 
     public function logout(Request $request)
     {
         if ($request->hasSession()) {
             $request->session()->forget('admin.authenticated');
+            $request->session()->forget('dev.authenticated');
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
