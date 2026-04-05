@@ -10,6 +10,7 @@ use App\Services\FileParserService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AiQuizController extends Controller
 {
@@ -80,7 +81,7 @@ class AiQuizController extends Controller
                 'questions' => $questions,
                 'qc' => $qc,
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return back()->with('error', 'AI Generation Error: '.$e->getMessage())->withInput();
         }
     }
@@ -121,7 +122,7 @@ class AiQuizController extends Controller
             }
 
             return redirect()->route('admin.quizzes.index')->with('success', 'AI Quiz created successfully!');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return back()->with('error', 'Storage Error: '.$e->getMessage());
         }
     }

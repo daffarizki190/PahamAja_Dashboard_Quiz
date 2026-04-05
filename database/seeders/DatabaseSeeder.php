@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Employee;
 use App\Models\Answer;
+use App\Models\Employee;
 use App\Models\Option;
 use App\Models\Participant;
 use App\Models\Question;

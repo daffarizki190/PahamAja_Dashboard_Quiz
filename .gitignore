@@ -24,3 +24,10 @@ Homestead.yaml
 Thumbs.db
 
 .vercel
+
+# Temporary/developer scripts (should not be committed)
+composer.phar
+clean.bat
+run.bat
+install_dompdf.bat
+migrate_all.bat

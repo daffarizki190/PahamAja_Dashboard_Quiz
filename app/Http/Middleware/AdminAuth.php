@@ -17,7 +17,6 @@ class AdminAuth
             }
         }
 
-
         return redirect()->route('admin.login');
     }
 }

@@ -122,6 +122,7 @@
                         </div>
 
                         <div class="mb-6">
+                            <input type="hidden" name="questions[{{ $qIndex }}][id]" value="{{ $question->id }}">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Teks Pertanyaan</label>
                             <textarea name="questions[{{ $qIndex }}][text]" required rows="2" 
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">{{ $question->text }}</textarea>
@@ -131,6 +132,7 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Pilihan Jawaban (Tandai yang benar)</label>
                             @foreach($question->options as $oIndex => $option)
                             <div class="flex items-center gap-4">
+                                <input type="hidden" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][id]" value="{{ $option->id }}">
                                 <input type="radio" name="questions[{{ $qIndex }}][correct_option]" value="{{ $oIndex }}" {{ $option->is_correct ? 'checked' : '' }}
                                     class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-slate-300">
                                 <input type="text" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][text]" required value="{{ $option->text }}"

@@ -519,6 +519,7 @@ Rules:
 - Use double quotes for all JSON keys/strings.
 - Do not use trailing commas.
 - Keep questions and options concise.
+- IMPORTANT: Ensure all questions and options are perfectly clear and unambiguous. Avoid trick questions, double negatives, or confusing sentence structures regardless of the difficulty level.
 
 Source Material:
 {$content}

@@ -346,15 +346,15 @@ class QuizController extends Controller
                 'inProgressCount' => $inProgressCount,
                 'completedCount' => $participants->whereNotNull('score')->count(),
                 'liveActivity' => $participants->count(),
-                'participants' => $participants->map(function($p) use ($quiz) {
+                'participants' => $participants->map(function ($p) use ($quiz) {
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
                         'nim' => $p->nim,
                         'score' => $p->score,
-                        'is_passing' => $p->score >= $quiz->passing_score
+                        'is_passing' => $p->score >= $quiz->passing_score,
                     ];
-                })->toArray()
+                })->toArray(),
             ]);
         }
 
