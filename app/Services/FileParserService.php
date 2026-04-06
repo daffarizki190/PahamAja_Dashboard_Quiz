@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use Smalot\PdfParser\Parser;
 
@@ -46,7 +47,7 @@ class FileParserService
                     $fullText .= $pageText . "\n";
                 }
             } catch (\Throwable $e) {
-                \Log::warning("Could not extract text from PDF page " . ($index + 1) . ": " . $e->getMessage());
+                Log::warning("Could not extract text from PDF page " . ($index + 1) . ": " . $e->getMessage());
             }
         }
 

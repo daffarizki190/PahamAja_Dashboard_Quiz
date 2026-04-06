@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AiGeneratorService
 {
@@ -213,16 +214,22 @@ class AiGeneratorService
 
     private function requestGenerateContent(string $model, string $prompt, int $maxOutputTokens, ?array $fileData = null)
     {
-        $parts = [['text' => $prompt]];
+        $parts = [];
 
         if ($fileData && isset($fileData['mime_type'], $fileData['data'])) {
+            // Using snake_case for the raw REST API payload as per Google documentation
             $parts[] = [
                 'inline_data' => [
                     'mime_type' => $fileData['mime_type'],
                     'data' => $fileData['data'],
                 ],
             ];
+            
+            // Log that we are sending multimodal data (excluding the huge base64 string)
+            Log::info("Sending multimodal PDF to Gemini. MIME: " . $fileData['mime_type']);
         }
+
+        $parts[] = ['text' => $prompt];
 
         return Http::timeout(90)
             ->withQueryParameters(['key' => $this->apiKey])
@@ -513,13 +520,28 @@ class AiGeneratorService
         $langLine = $language === 'en' ? 'Output language: English' : 'Output language: Indonesian';
 
         $sourceInstruction = $hasAttachedFile
-            ? "Based on the provided text AND the attached document,"
-            : "Based on the provided text,";
+            ? "Materi pelajaran diberikan sepenuhnya melalui LAMPIRAN DOKUMEN (PDF) yang disertakan."
+            : "Materi pelajaran diberikan melalui TEKS SUMBER di bawah.";
+
+        $sourceMaterialBlock = "";
+        if (!$hasAttachedFile || trim($content) !== "") {
+            $sourceMaterialBlock = "Source Material (Text):\n{$content}\n";
+        }
 
         return <<<PROMPT
-You are a professional quiz generator. {$sourceInstruction} generate exactly {$count} multiple-choice questions.
-Difficulty Level: {$difficulty}
-{$langLine}
+You are a professional quiz generator for a high-stakes corporate training system. Your task is to generate exactly {$count} multiple-choice questions.
+
+STRICT GROUNDING RULES:
+1. FACTUAL ACCURACY: Questions and options MUST be derived 100% and ONLY from the provided {$sourceInstruction}.
+2. FORBIDDEN: DO NOT use general knowledge, common sense, or real-world procedures (e.g., 'Reporting to police', 'Checking website') UNLESS they are explicitly mentioned in the document.
+3. SPECIFICITY: Use the exact terminology from the document (e.g., 'Petugas Parkir', 'Pakuwon Group', specific form numbers).
+4. NO HALLUCINATION: If the document doesn't mention a step, it doesn't exist for this quiz.
+5. QUALITY DISTRACTORS: Options that are incorrect should still be plausible within the context of the document, but clearly wrong based on the specific rules described. Avoid obviously silly options.
+6. TARGET: Focus on the actual procedures, roles, and rules defined in the document.
+
+Context Details:
+- Difficulty Level: {$difficulty}
+- {$langLine}
 
 The output MUST be a valid JSON array of objects. Each object must have:
 - "text": The question string.
@@ -527,18 +549,16 @@ The output MUST be a valid JSON array of objects. Each object must have:
     - "text": The option string.
     - "is_correct": A boolean (true for exactly one correct option, false otherwise).
 
-Rules:
+Instruction:
 - Return ONLY a JSON array, no markdown, no code fences.
 - Use double quotes for all JSON keys/strings.
 - Do not use trailing commas.
-- Keep questions and options concise.
-- IMPORTANT: Ensure all questions and options are perfectly clear and unambiguous. Avoid trick questions, double negatives, or confusing sentence structures regardless of the difficulty level.
+- Keep questions and options concise yet clear.
 
-Source Material:
-{$content}
+{$sourceMaterialBlock}
 {$regenLine}
 
-Return ONLY the JSON array. Do not include any explanation or markdown formatting outside the JSON block.
+FINAL WARNING: Read the attached document closely. If the user asks about 'Lost Cards', only provide answers that match the 'Tahapan Aktivitas' described in the document. Return ONLY the JSON array.
 PROMPT;
     }
 
