@@ -30,8 +30,25 @@ class FileParserService
     {
         $parser = new Parser;
         $pdf = $parser->parseFile($filePath);
+        $fullText = '';
 
-        return $pdf->getText();
+        foreach ($pdf->getPages() as $page) {
+            try {
+                $pageText = $page->getText();
+                if (trim($pageText) !== '') {
+                    $fullText .= $pageText . "\n";
+                }
+            } catch (\Throwable) {
+                // Skip problematic pages
+            }
+        }
+
+        if (trim($fullText) === '') {
+            // Try fallback method — getText on the entire document
+            $fullText = $pdf->getText();
+        }
+
+        return $fullText;
     }
 
     /**

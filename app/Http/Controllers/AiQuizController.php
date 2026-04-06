@@ -63,7 +63,13 @@ class AiQuizController extends Controller
             }
 
             if (empty(trim($text))) {
-                throw new Exception('Could not extract or read any text from the source.');
+                $ext = $request->file('file')->getClientOriginalExtension();
+                $filename = $request->file('file')->getClientOriginalName();
+                $msg = "Could not extract or read any text from '{$filename}'. ";
+                if (strtolower($ext) === 'pdf') {
+                    $msg .= 'Jika PDF ini adalah hasil scan/gambar, silakan gunakan fitur Tempel Teks (Copy-Paste).';
+                }
+                throw new Exception($msg);
             }
 
             $regenToken = $request->filled('regen_token') ? (string) $request->input('regen_token') : null;
