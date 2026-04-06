@@ -82,7 +82,16 @@ class AiQuizController extends Controller
                 'qc' => $qc,
             ]);
         } catch (Throwable $e) {
-            return back()->with('error', 'AI Generation Error: '.$e->getMessage())->withInput();
+            // Detailed logging for debug
+            $extractionInfo = isset($text) ? 'Extraction length: '.strlen($text).' chars. ' : 'Extraction failed. ';
+            \Log::error('AI Generation Error: '.$e->getMessage().' ['.$extractionInfo.']');
+            
+            $msg = $e->getMessage();
+            if (str_contains($msg, '504') || str_contains($msg, 'timeout')) {
+                $msg .= ' (Biasanya disebabkan oleh batas waktu Vercel Hobby 10 detik. Coba kurangi jumlah soal atau ringkas materi.)';
+            }
+
+            return back()->with('error', 'AI Generation Error: '.$msg)->withInput();
         }
     }
 

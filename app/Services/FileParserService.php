@@ -61,20 +61,43 @@ class FileParserService
     {
         $text = '';
 
-        if (is_object($element) && is_callable([$element, 'getText'])) {
-            try {
-                $text .= $this->extractTextContent($element->getText());
-            } catch (\Throwable) {
-            }
+        if (is_null($element)) {
+            return '';
         }
 
-        if (is_object($element) && is_callable([$element, 'getElements'])) {
+        // Handle specific element types for better structure
+        if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+            $text .= $element->getText()."\n";
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+            foreach ($element->getElements() as $child) {
+                $text .= $this->extractNodeText($child);
+            }
+            $text .= "\n";
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+            foreach ($element->getRows() as $row) {
+                foreach ($row->getCells() as $cell) {
+                    foreach ($cell->getElements() as $child) {
+                        $text .= $this->extractNodeText($child);
+                    }
+                    $text .= "\t"; // Cell separator
+                }
+                $text .= "\n";
+            }
+        } elseif (method_exists($element, 'getElements')) {
             try {
                 $children = $element->getElements();
                 if (is_iterable($children)) {
                     foreach ($children as $child) {
                         $text .= $this->extractNodeText($child);
                     }
+                }
+            } catch (\Throwable) {
+            }
+        } elseif (method_exists($element, 'getText')) {
+            try {
+                $elementText = $element->getText();
+                if (is_string($elementText)) {
+                    $text .= $elementText."\n";
                 }
             } catch (\Throwable) {
             }

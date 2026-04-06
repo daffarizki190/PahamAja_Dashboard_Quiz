@@ -145,6 +145,10 @@ class DevController extends Controller
         if (count($criticalMissing) > 0) {
             $status = 'red';
             $message = 'Ekstensi kritis tidak tersedia: '.implode(', ', $criticalMissing);
+            
+            if (in_array('zip', $criticalMissing)) {
+                $suggestions[] = 'EKSTENSI ZIP HILANG: DOCX & PPTX tidak akan berfungsi. Tambahkan "extension=zip" ke php.ini Anda.';
+            }
             $suggestions[] = 'Tambahkan ekstensi ke php.ini di direktori /api: extension='.implode('.so ', $criticalMissing).'.so';
         } elseif (count($missing) > 0) {
             $status = 'yellow';
