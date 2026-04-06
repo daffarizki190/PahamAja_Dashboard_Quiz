@@ -30,12 +30,12 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id'): array
+    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null): array
     {
-        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language);
+        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language, ! empty($fileData));
         $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
 
-        $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens);
+        $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens, $fileData);
 
         if (! $response->successful()) {
             $message = $response->json('error.message') ?: 'Gemini request failed.';
@@ -211,8 +211,19 @@ class AiGeneratorService
         return $result;
     }
 
-    private function requestGenerateContent(string $model, string $prompt, int $maxOutputTokens)
+    private function requestGenerateContent(string $model, string $prompt, int $maxOutputTokens, ?array $fileData = null)
     {
+        $parts = [['text' => $prompt]];
+
+        if ($fileData && isset($fileData['mime_type'], $fileData['data'])) {
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => $fileData['mime_type'],
+                    'data' => $fileData['data'],
+                ],
+            ];
+        }
+
         return Http::timeout(90)
             ->withQueryParameters(['key' => $this->apiKey])
             ->acceptJson()
@@ -220,9 +231,7 @@ class AiGeneratorService
                 'contents' => [
                     [
                         'role' => 'user',
-                        'parts' => [
-                            ['text' => $prompt],
-                        ],
+                        'parts' => $parts,
                     ],
                 ],
                 'generationConfig' => [
@@ -497,14 +506,18 @@ class AiGeneratorService
     /**
      * Build the prompt for Gemini.
      */
-    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id'): string
+    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id', bool $hasAttachedFile = false): string
     {
         $content = $this->limitSourceMaterial($content);
         $regenLine = $regenToken ? "\nRegeneration token: {$regenToken}\n" : "\n";
         $langLine = $language === 'en' ? 'Output language: English' : 'Output language: Indonesian';
 
+        $sourceInstruction = $hasAttachedFile
+            ? "Based on the provided text AND the attached document,"
+            : "Based on the provided text,";
+
         return <<<PROMPT
-You are a professional quiz generator. Based on the provided text, generate exactly {$count} multiple-choice questions.
+You are a professional quiz generator. {$sourceInstruction} generate exactly {$count} multiple-choice questions.
 Difficulty Level: {$difficulty}
 {$langLine}
 

@@ -51,18 +51,27 @@ class AiQuizController extends Controller
         ]);
 
         try {
-            $text = '';
-
+            $fileData = null;
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
-                $text = $this->fileParser->parseFile($file->getPathname(), $file->getClientOriginalExtension());
+                $extension = strtolower($file->getClientOriginalExtension());
+                $text = $this->fileParser->parseFile($file->getPathname(), $extension);
+                
+                // If it's a PDF, we can use Gemini's Multimodal capability as a powerful fallback or enhancement
+                if ($extension === 'pdf') {
+                    $fileData = [
+                        'mime_type' => 'application/pdf',
+                        'data' => base64_encode(file_get_contents($file->getPathname())),
+                    ];
+                }
             } elseif ($request->filled('content_text')) {
                 $text = (string) $request->input('content_text');
             } else {
                 throw new Exception('Please provide either a document or paste some text.');
             }
 
-            if (empty(trim($text))) {
+            // Only throw "empty text" error if we don't have multimodal file data
+            if (empty(trim($text)) && is_null($fileData)) {
                 $ext = $request->file('file')->getClientOriginalExtension();
                 $filename = $request->file('file')->getClientOriginalName();
                 $msg = "Could not extract or read any text from '{$filename}'. ";
@@ -73,7 +82,7 @@ class AiQuizController extends Controller
             }
 
             $regenToken = $request->filled('regen_token') ? (string) $request->input('regen_token') : null;
-            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken, (string) $request->language);
+            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken, (string) $request->language, $fileData);
             $qc = $request->boolean('qc') ? $this->aiGenerator->qualityCheck($questions) : null;
 
             return view('admin.quizzes.ai-preview', [
