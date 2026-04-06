@@ -9,6 +9,7 @@ use App\Services\AiGeneratorService;
 use App\Services\FileParserService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -84,7 +85,7 @@ class AiQuizController extends Controller
         } catch (Throwable $e) {
             // Detailed logging for debug
             $extractionInfo = isset($text) ? 'Extraction length: '.strlen($text).' chars. ' : 'Extraction failed. ';
-            \Log::error('AI Generation Error: '.$e->getMessage().' ['.$extractionInfo.']');
+            Log::error('AI Generation Error: '.$e->getMessage().' ['.$extractionInfo.']');
             
             $msg = $e->getMessage();
             if (str_contains($msg, '504') || str_contains($msg, 'timeout')) {

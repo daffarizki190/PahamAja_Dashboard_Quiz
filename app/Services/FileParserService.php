@@ -67,7 +67,7 @@ class FileParserService
 
         // Handle specific element types for better structure
         if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
-            $text .= $element->getText()."\n";
+            $text .= $element->getText();
         } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
             foreach ($element->getElements() as $child) {
                 $text .= $this->extractNodeText($child);
@@ -97,7 +97,10 @@ class FileParserService
             try {
                 $elementText = $element->getText();
                 if (is_string($elementText)) {
-                    $text .= $elementText."\n";
+                    $text .= $elementText;
+                    if (! ($element instanceof \PhpOffice\PhpWord\Element\Text)) {
+                        $text .= "\n";
+                    }
                 }
             } catch (\Throwable) {
             }
