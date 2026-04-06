@@ -28,24 +28,30 @@ class FileParserService
      */
     private function parsePdf(string $filePath): string
     {
-        $parser = new Parser;
+        // Configure parser for better extraction
+        $config = new \Smalot\PdfParser\Config();
+        $config->setHorizontalOffset("\t");
+        
+        $parser = new Parser([], $config);
         $pdf = $parser->parseFile($filePath);
+        
+        $pages = $pdf->getPages();
         $fullText = '';
 
-        foreach ($pdf->getPages() as $page) {
+        foreach ($pages as $index => $page) {
             try {
                 $pageText = $page->getText();
                 if (trim($pageText) !== '') {
+                    $fullText .= "--- PAGE " . ($index + 1) . " ---\n";
                     $fullText .= $pageText . "\n";
                 }
-            } catch (\Throwable) {
-                // Skip problematic pages
+            } catch (\Throwable $e) {
+                \Log::warning("Could not extract text from PDF page " . ($index + 1) . ": " . $e->getMessage());
             }
         }
 
         if (trim($fullText) === '') {
-            // Try fallback method — getText on the entire document
-            $fullText = $pdf->getText();
+            $fullText = (string) $pdf->getText();
         }
 
         return $fullText;
