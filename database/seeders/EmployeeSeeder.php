@@ -12,11 +12,6 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear existing employees
-        foreach (Employee::all() as $e) {
-            $e->delete();
-        }
-
         $employees = [
             ['name' => 'RIZAL MAULANA', 'position' => 'CPM', 'dept' => 'Management'],
             ['name' => 'RINA TRIANI USU', 'position' => 'ADM', 'dept' => 'Administration'],
@@ -56,13 +51,15 @@ class EmployeeSeeder extends Seeder
         ];
 
         foreach ($employees as $index => $data) {
-            Employee::create([
-                'name' => $data['name'],
-                'nim' => 'P-'.str_pad($index + 1, 2, '0', STR_PAD_LEFT), // Unique placeholder as requested
-                'department' => $data['dept'],
-                'position' => $data['position'],
-                'status' => 'Active',
-            ]);
+            Employee::updateOrCreate(
+                ['name' => $data['name']], // Unique check
+                [
+                    'nim' => 'P-'.str_pad($index + 1, 2, '0', STR_PAD_LEFT),
+                    'department' => $data['dept'],
+                    'position' => $data['position'],
+                    'status' => 'Active',
+                ]
+            );
         }
     }
 }

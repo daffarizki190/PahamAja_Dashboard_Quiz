@@ -19,14 +19,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create a Sample Quiz
+        // 1. Run the base seeders for PahamAja
+        $this->call([
+            EmployeeSeeder::class,
+            AchievementSeeder::class,
+        ]);
+
+        // 2. Create a Sample Quiz
         $quiz = Quiz::create([
             'title' => 'Ujian Akhir Semester Web Development',
             'slug' => Str::slug('Ujian Akhir Semester Web Development'),
             'time_limit' => 60,
         ]);
 
-        // 2. Create Questions & Options
+        // 3. Create Questions & Options
         $questionsData = [
             [
                 'text' => 'Apa kepanjangan dari HTML?',
@@ -79,33 +85,19 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // 3. Create Participants & Random Answers
-        $names = [
-            'Budi Santoso', 'Siti Aminah', 'Andi Wijaya', 'Dewi Lestari', 'Reza Rahadian',
-            'Putri Marino', 'Dian Sastro', 'Nicholas Saputra', 'Jessica Mila', 'Kevin Julio',
-            'Anya Geraldine', 'Iqbaal Ramadhan', 'Adhisty Zara', 'Angga Yunanda', 'Chelsea Islan',
-        ];
+        // 4. Create Participants based on the REAL employees
+        $employees = Employee::all();
 
-        foreach ($names as $index => $name) {
-            $nim = '101010'.str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-
+        foreach ($employees as $employee) {
             // Randomly determine if participant has finished the quiz (80% chance)
             $isFinished = rand(1, 100) <= 80;
-
-            $employee = Employee::create([
-                'name' => $name,
-                'nim' => $nim,
-                'department' => ['Engineering', 'Product', 'Marketing', 'Sales'][rand(0, 3)],
-                'position' => ['Staff', 'Lead', 'Senior', 'Junior'][rand(0, 3)],
-                'status' => 'Active',
-            ]);
 
             $participant = Participant::create([
                 'quiz_id' => $quiz->id,
                 'employee_id' => $employee->id,
-                'name' => $name,
-                'nim' => $nim,
-                'score' => null, // Intentionally null for unfinished, will be updated below if finished
+                'name' => $employee->name,
+                'nim' => $employee->nim,
+                'score' => null, // Intentionally null for unfinished
             ]);
 
             if ($isFinished) {
@@ -113,8 +105,8 @@ class DatabaseSeeder extends Seeder
                 foreach ($createdQuestions as $question) {
                     $options = $question->options;
 
-                    // Random probability of getting the answer right (e.g., 70% chance)
-                    $isCorrectGuess = rand(1, 100) <= 70;
+                    // Random probability of getting the answer right (e.g., 85% chance)
+                    $isCorrectGuess = rand(1, 100) <= 85;
 
                     if ($isCorrectGuess) {
                         $selectedOption = $options->where('is_correct', true)->first();

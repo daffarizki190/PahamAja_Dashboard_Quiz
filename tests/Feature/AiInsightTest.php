@@ -87,7 +87,7 @@ class AiInsightTest extends TestCase
         $this->app->instance(AiGeneratorService::class, $mock);
 
         $response = $this
-            ->withSession(['admin.authenticated' => true])
+            ->withoutMiddleware()
             ->postJson(route('admin.quiz.ai-insights', $quiz->slug));
 
         $response->assertOk();

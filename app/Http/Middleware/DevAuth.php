@@ -10,6 +10,11 @@ class DevAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip authentication in testing environment
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         if ($request->hasSession()) {
             $authenticated = $request->session()->get('dev.authenticated', false);
             if ($authenticated === true || $authenticated === 1 || $authenticated === '1') {

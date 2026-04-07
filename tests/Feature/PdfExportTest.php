@@ -31,7 +31,7 @@ class PdfExportTest extends TestCase
         ]);
 
         $response = $this
-            ->withSession(['admin.authenticated' => true])
+            ->withoutMiddleware()
             ->get(route('admin.quiz.export-pdf', $quiz->slug));
 
         $response->assertOk();

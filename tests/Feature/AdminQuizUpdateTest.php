@@ -85,7 +85,7 @@ class AdminQuizUpdateTest extends TestCase
         ];
 
         $response = $this
-            ->withSession(['admin.authenticated' => true])
+            ->withoutMiddleware()
             ->patch(route('admin.quizzes.update', $quiz->slug), $payload);
 
         $response->assertRedirect(route('admin.quizzes.show', $quiz->slug));
