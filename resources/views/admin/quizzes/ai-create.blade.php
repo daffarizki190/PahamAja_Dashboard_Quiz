@@ -209,6 +209,10 @@
                                         <label class="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Passing Score</label>
                                         <input type="number" name="passing_score" required value="{{ old('passing_score', 70) }}" min="0" max="100" class="w-full field px-6 py-4 rounded-2xl font-bold text-slate-700">
                                     </div>
+                                    <div class="flex items-center gap-3">
+                                        <input type="checkbox" name="strict_mode" id="strict_mode" value="1" {{ old('strict_mode') ? 'checked' : '' }} class="w-5 h-5 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500">
+                                        <label for="strict_mode" class="text-sm font-bold text-slate-700">Strict Mode: Soal harus sama persis dengan materi</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Employee extends Model
 {
@@ -33,5 +33,12 @@ class Employee extends Model
     public function getAverageScoreAttribute()
     {
         return $this->participations()->whereNotNull('score')->avg('score') ?? 0;
+    }
+
+    public function achievements(): BelongsToMany
+    {
+        return $this->belongsToMany(Achievement::class, 'employee_achievements')
+            ->withPivot('unlocked_at')
+            ->withTimestamps();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\QuizUpdated;
 use App\Exports\QuizExport;
 use App\Models\Answer;
 use App\Models\Employee;
@@ -196,6 +197,33 @@ class QuizController extends Controller
 
         $participant->update(['score' => $finalScore]);
 
+        // Unlock achievements
+        $this->unlockAchievements($participant->employee, $finalScore);
+
+        // Broadcast update to dashboard
+        $participants = $quiz->participants()->get();
+        $finished = $participants->whereNotNull('score');
+        $avgScore = round($finished->avg('score') ?? 0, 1);
+        $inProgressCount = $participants->whereNull('score')->count();
+        $completedCount = $finished->count();
+        $liveActivity = $participants->count();
+
+        broadcast(new QuizUpdated($quiz, [
+            'avgScore' => number_format($avgScore, 1),
+            'inProgressCount' => $inProgressCount,
+            'completedCount' => $completedCount,
+            'liveActivity' => $liveActivity,
+            'participants' => $participants->map(function ($p) use ($quiz) {
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'nim' => $p->nim,
+                    'score' => $p->score,
+                    'is_passing' => $p->score >= $quiz->passing_score,
+                ];
+            })->toArray(),
+        ]));
+
         session()->forget("quiz_in_progress.{$quiz->id}");
 
         return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id])
@@ -359,5 +387,36 @@ class QuizController extends Controller
         }
 
         return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount', 'questionAnalytics'));
+    }
+
+    private function unlockAchievements(Employee $employee, float $score)
+    {
+        $achievements = \App\Models\Achievement::all();
+
+        foreach ($achievements as $achievement) {
+            if ($employee->achievements()->where('achievement_id', $achievement->id)->exists()) {
+                continue; // Already unlocked
+            }
+
+            $unlocked = false;
+
+            switch ($achievement->condition) {
+                case 'quizzes_completed':
+                    $completed = $employee->participations()->whereNotNull('score')->count();
+                    $unlocked = $completed >= $achievement->threshold;
+                    break;
+                case 'perfect_score':
+                    $unlocked = $score == 100;
+                    break;
+                case 'high_scores':
+                    $highScores = $employee->participations()->where('score', '>=', 80)->count();
+                    $unlocked = $highScores >= $achievement->threshold;
+                    break;
+            }
+
+            if ($unlocked) {
+                $employee->achievements()->attach($achievement->id, ['unlocked_at' => now()]);
+            }
+        }
     }
 }

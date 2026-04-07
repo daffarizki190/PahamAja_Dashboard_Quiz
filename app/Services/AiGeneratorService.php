@@ -31,9 +31,9 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null): array
+    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null, bool $strictMode = false): array
     {
-        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language, ! empty($fileData));
+        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language, ! empty($fileData), $strictMode);
         $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
 
         $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens, $fileData);
@@ -513,7 +513,7 @@ class AiGeneratorService
     /**
      * Build the prompt for Gemini.
      */
-    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id', bool $hasAttachedFile = false): string
+    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id', bool $hasAttachedFile = false, bool $strictMode = false): string
     {
         $content = $this->limitSourceMaterial($content);
         $regenLine = $regenToken ? "\nRegeneration token: {$regenToken}\n" : "\n";
@@ -538,6 +538,7 @@ STRICT GROUNDING RULES:
 4. NO HALLUCINATION: If the document doesn't mention a step, it doesn't exist for this quiz.
 5. QUALITY DISTRACTORS: Options that are incorrect should still be plausible within the context of the document, but clearly wrong based on the specific rules described. Avoid obviously silly options.
 6. TARGET: Focus on the actual procedures, roles, and rules defined in the document.
+{@$strictMode ? '7. STRICT MODE: Questions and options MUST use EXACT wording and phrases from the source material. Do not paraphrase or reword - copy the exact text where possible.' : ''}
 
 Context Details:
 - Difficulty Level: {$difficulty}

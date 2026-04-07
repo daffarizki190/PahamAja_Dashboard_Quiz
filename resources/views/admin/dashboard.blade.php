@@ -971,28 +971,21 @@
     </div>
 </footer>
 
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-    // Real-time Dashboard Polling with Shimmer/Skeleton Effect
-    let pollInterval = setInterval(fetchLiveStats, 5000);
+    // Initialize Laravel Echo with Pusher
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: '{{ config('broadcasting.connections.pusher.key') }}',
+        cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+        encrypted: true
+    });
 
-    async function fetchLiveStats() {
-        try {
-            const url = '{{ route('admin.quiz.dashboard', $quiz->slug) }}';
-            const res = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            if (!res.ok) return;
-            const contentType = res.headers.get('content-type') || '';
-            if (!contentType.includes('application/json')) return;
-            const data = await res.json();
-            updateDashboard(data);
-        } catch (e) {
-            console.error('Polling error:', e);
-        }
-    }
+    // Listen for real-time updates
+    Echo.private('quiz.{{ $quiz->id }}')
+        .listen('.QuizUpdated', (e) => {
+            updateDashboard(e);
+        });
 
     function updateDashboard(data) {
         // Skeleton effect

@@ -83,6 +83,24 @@
                 </div>
             </header>
 
+            <!-- Achievements Section -->
+            <div class="mb-12 animate-fade-in opacity-0 delay-200">
+                <h3 class="text-lg font-black text-slate-800 uppercase tracking-widest mb-6">🏆 Achievements</h3>
+                <div class="flex flex-wrap gap-4">
+                    @forelse($employee->achievements as $achievement)
+                    <div class="bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-4 rounded-2xl shadow-lg border border-yellow-300 flex items-center gap-3">
+                        <div class="text-2xl">{{ $achievement->icon === 'trophy' ? '🏆' : ($achievement->icon === 'star' ? '⭐' : ($achievement->icon === 'crown' ? '👑' : '🎖️')) }}</div>
+                        <div>
+                            <p class="font-black text-sm">{{ $achievement->name }}</p>
+                            <p class="text-xs opacity-90">{{ $achievement->description }}</p>
+                        </div>
+                    </div>
+                    @empty
+                    <p class="text-slate-400 italic">Belum ada achievements yang didapat.</p>
+                    @endforelse
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-slide-up opacity-0 delay-100">
                 <!-- Assessment History -->
                 <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden self-start">
@@ -205,6 +223,11 @@
                 }
             });
         });
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        }
     </script>
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 </body>

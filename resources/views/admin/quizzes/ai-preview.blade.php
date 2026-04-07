@@ -106,6 +106,7 @@
                                 <input type="hidden" name="time_limit" value="{{ $time_limit }}">
                                 <input type="hidden" name="passing_score" value="{{ $passing_score }}">
                                 <input type="hidden" name="qc" value="{{ !empty($qc_enabled) ? '1' : '0' }}">
+                                <input type="hidden" name="strict_mode" value="{{ !empty($strict_mode) ? '1' : '0' }}">
                                 <input type="hidden" name="regen_token" value="{{ uniqid('regen_', true) }}">
                                 <button type="submit" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8 8 0 104.582 9m0 0H9"></path></svg>
