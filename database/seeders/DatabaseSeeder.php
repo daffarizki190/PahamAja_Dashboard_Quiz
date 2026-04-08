@@ -27,43 +27,48 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create a Sample Quiz
         $quiz = Quiz::create([
-            'title' => 'Ujian Akhir Semester Web Development',
-            'slug' => Str::slug('Ujian Akhir Semester Web Development'),
-            'time_limit' => 60,
+            'title' => 'Pemahaman Standar Pelayanan PahamAja',
+            'slug' => 'pemahaman-standar-pelayanan',
+            'time_limit' => 30,
+            'passing_score' => 70,
         ]);
 
         // 3. Create Questions & Options
         $questionsData = [
             [
-                'text' => 'Apa kepanjangan dari HTML?',
+                'text' => 'Apa nilai utama (Core Value) dari PahamAja dalam melayani pelanggan?',
                 'options' => [
-                    ['text' => 'Hyper Text Markup Language', 'is_correct' => true],
-                    ['text' => 'Hyperlinks and Text Markup Language', 'is_correct' => false],
-                    ['text' => 'Home Tool Markup Language', 'is_correct' => false],
+                    ['text' => 'Kecepatan Tanpa Batas', 'is_correct' => false],
+                    ['text' => 'Empati dan Solutif', 'is_correct' => true],
+                    ['text' => 'Kekakuan Prosedur', 'is_correct' => false],
+                    ['text' => 'Hanya Keuntungan', 'is_correct' => false],
                 ],
             ],
             [
-                'text' => 'Framework CSS yang menggunakan utility-first approach adalah?',
+                'text' => 'Bagaimana prosedur penanganan complain yang benar di PahamAja?',
                 'options' => [
-                    ['text' => 'Bootstrap', 'is_correct' => false],
-                    ['text' => 'Tailwind CSS', 'is_correct' => true],
-                    ['text' => 'Bulma', 'is_correct' => false],
+                    ['text' => 'Dengarkan, Catat, dan Berikan Solusi Segera', 'is_correct' => true],
+                    ['text' => 'Abaikan jika pelanggan marah', 'is_correct' => false],
+                    ['text' => 'Langsung alihkan ke pimpinan tanpa bertanya', 'is_correct' => false],
+                    ['text' => 'Minta pelanggan menunggu selamanya', 'is_correct' => false],
                 ],
             ],
             [
-                'text' => 'Di mana letak file routing utama (web) pada Laravel 11?',
+                'text' => 'Manakah yang merupakan elemen dari "Premium Hospitality" di PahamAja?',
                 'options' => [
-                    ['text' => 'app/routes.php', 'is_correct' => false],
-                    ['text' => 'routes/web.php', 'is_correct' => true],
-                    ['text' => 'config/routes.php', 'is_correct' => false],
+                    ['text' => 'Menyapa dengan senyum dan menyebut nama', 'is_correct' => true],
+                    ['text' => 'Tidak perlu menyapa pelanggan', 'is_correct' => false],
+                    ['text' => 'Menggunakan pakaian bebas', 'is_correct' => false],
+                    ['text' => 'Datang terlambat ke pertemuan', 'is_correct' => false],
                 ],
             ],
             [
-                'text' => 'Library PHP yang populer untuk integrasi QR Code di Laravel adalah?',
+                'text' => 'Berapa batas waktu (SLA) maksimal untuk respon pertama terhadap tiket bantuan?',
                 'options' => [
-                    ['text' => 'simplesoftwareio/simple-qrcode', 'is_correct' => true],
-                    ['text' => 'bacon/bacon-qr-code', 'is_correct' => false],
-                    ['text' => 'chillerlan/php-qrcode', 'is_correct' => false],
+                    ['text' => '24 Jam', 'is_correct' => false],
+                    ['text' => '1 Jam', 'is_correct' => false],
+                    ['text' => '15 Menit', 'is_correct' => true],
+                    ['text' => '1 Minggu', 'is_correct' => false],
                 ],
             ],
         ];

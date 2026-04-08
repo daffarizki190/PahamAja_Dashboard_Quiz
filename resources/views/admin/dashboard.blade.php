@@ -96,6 +96,16 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                 <span>✨ AI Insight</span>
             </button>
+            @if(app()->environment('local'))
+                <button
+                    type="button"
+                    id="btnRestoreData"
+                    class="bg-amber-500 hover:bg-amber-600 text-white px-6 md:px-8 py-4 rounded-[1.5rem] font-bold shadow-xl shadow-amber-100 transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full sm:w-auto"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8 8 0 104.582 9m0 0H9"></path></svg>
+                    <span>Pemulihan Data</span>
+                </button>
+            @endif
             <form action="{{ route('admin.logout') }}" method="POST" class="w-full sm:w-auto">
                 @csrf
                 <button type="submit" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-4 rounded-[1.5rem] font-bold shadow-sm transition-all flex items-center justify-center gap-3 active:scale-95 text-sm w-full">
@@ -156,6 +166,52 @@
             </div>
         </div>
     </div>
+
+    @if(app()->environment('local'))
+        <div id="restoreDataModal" class="hidden fixed inset-0 z-[9999]" style="display:none" aria-hidden="true">
+            <div id="restoreDataBackdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+            <div class="relative h-full w-full overflow-y-auto p-6 md:p-10">
+                <div class="max-w-3xl mx-auto">
+                    <div class="glass-card p-8 md:p-10 rounded-[2rem] border-l-4 border-amber-500">
+                        <div class="flex items-start gap-4 mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-8.2 14.2A2 2 0 003.82 21h16.36a2 2 0 001.73-2.94l-8.2-14.2a2 2 0 00-3.42 0z"></path></svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-xl font-black text-slate-800 tracking-tight">Pemulihan Data</h3>
+                                <p class="text-sm text-slate-500 font-semibold mt-1">Kembalikan data aplikasi ke kondisi awal (seed ulang).</p>
+                            </div>
+                            <button type="button" id="btnCloseRestoreDataModal" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                            <p class="text-sm font-bold text-amber-900 leading-relaxed">
+                                Aksi ini dapat menghapus data yang ada dan menjalankan seeding ulang.
+                            </p>
+                            <p class="text-xs font-semibold text-amber-800 mt-2">
+                                Disarankan hanya untuk environment local.
+                            </p>
+                        </div>
+
+                        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                            <button type="button" id="btnRestoreSeedOnly" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-3.5 rounded-2xl font-black shadow-sm transition-all active:scale-95 text-xs flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                <span>Seed Ulang (Tanpa Hapus)</span>
+                            </button>
+                            <button type="button" id="btnRestoreClearSeed" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3.5 rounded-2xl font-black shadow-xl shadow-amber-100 transition-all active:scale-95 text-xs flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <span>Hapus + Seed Ulang</span>
+                            </button>
+                        </div>
+
+                        <div id="restoreDataStatus" class="mt-6 hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Professional Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -921,6 +977,123 @@
         bindAiInsightButton();
     }
 
+    (function () {
+        const isLocal = @json(app()->environment('local'));
+        if (!isLocal) return;
+
+        const modal = document.getElementById('restoreDataModal');
+        const btnOpen = document.getElementById('btnRestoreData');
+        const btnClose = document.getElementById('btnCloseRestoreDataModal');
+        const backdrop = document.getElementById('restoreDataBackdrop');
+        const btnSeedOnly = document.getElementById('btnRestoreSeedOnly');
+        const btnClearSeed = document.getElementById('btnRestoreClearSeed');
+        const status = document.getElementById('restoreDataStatus');
+        const baseUrl = @json(route('admin.force-seed'));
+
+        if (!modal || !btnOpen || !btnClose || !backdrop || !btnSeedOnly || !btnClearSeed || !status) return;
+
+        const open = () => {
+            modal.classList.remove('hidden');
+            modal.style.display = '';
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+            status.classList.add('hidden');
+            status.innerHTML = '';
+        };
+
+        const close = () => {
+            if (modal.classList.contains('hidden')) return;
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            const aiModal = document.getElementById('aiInsightModal');
+            const aiOpen = aiModal && !aiModal.classList.contains('hidden') && aiModal.getAttribute('aria-hidden') !== 'true';
+            if (!aiOpen) {
+                document.body.classList.remove('overflow-hidden');
+            }
+        };
+
+        const setBusy = (busy) => {
+            [btnSeedOnly, btnClearSeed].forEach((b) => {
+                b.disabled = !!busy;
+                b.classList.toggle('opacity-60', !!busy);
+                b.classList.toggle('cursor-not-allowed', !!busy);
+            });
+        };
+
+        const run = async (clear) => {
+            setBusy(true);
+            status.classList.remove('hidden');
+            status.innerHTML = `
+                <div class="flex items-center gap-3 text-slate-500 bg-white/70 border border-slate-200 rounded-2xl p-4">
+                    <svg class="animate-spin w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span class="text-sm font-semibold">Menjalankan pemulihan data...</span>
+                </div>
+            `;
+
+            try {
+                const url = new URL(baseUrl, window.location.origin);
+                if (clear) url.searchParams.set('clear', '1');
+
+                const res = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const payload = await res.json().catch(() => null);
+                const ok = res.ok && payload && payload.status === 'success';
+
+                status.innerHTML = ok
+                    ? `
+                        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
+                            <p class="text-sm font-black text-emerald-800">Sukses</p>
+                            <p class="text-sm font-semibold text-emerald-700 mt-1">${payload.message || 'Pemulihan data selesai.'}</p>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                                <button type="button" id="btnRestoreReload" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs active:scale-95">Refresh Dashboard</button>
+                                <button type="button" id="btnRestoreCloseAfterSuccess" class="bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-6 py-3 rounded-2xl font-black text-xs active:scale-95">Tutup</button>
+                            </div>
+                        </div>
+                    `
+                    : `
+                        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-5">
+                            <p class="text-sm font-black text-rose-700">Gagal</p>
+                            <p class="text-sm font-semibold text-rose-600 mt-1">${(payload && (payload.message || payload.error)) ? (payload.message || payload.error) : 'Tidak bisa menjalankan pemulihan data.'}</p>
+                            <p class="text-xs font-semibold text-rose-500 mt-2">Cek akses admin / environment local / log aplikasi.</p>
+                        </div>
+                    `;
+
+                const reloadBtn = document.getElementById('btnRestoreReload');
+                if (reloadBtn) reloadBtn.addEventListener('click', () => window.location.reload());
+                const closeAfter = document.getElementById('btnRestoreCloseAfterSuccess');
+                if (closeAfter) closeAfter.addEventListener('click', close);
+            } catch (e) {
+                status.innerHTML = `
+                    <div class="bg-rose-50 border border-rose-100 rounded-2xl p-5">
+                        <p class="text-sm font-black text-rose-700">Gagal</p>
+                        <p class="text-sm font-semibold text-rose-600 mt-1">${e?.message || 'Terjadi error.'}</p>
+                    </div>
+                `;
+            } finally {
+                setBusy(false);
+            }
+        };
+
+        btnOpen.addEventListener('click', open);
+        btnClose.addEventListener('click', close);
+        backdrop.addEventListener('click', close);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') close();
+        });
+
+        btnSeedOnly.addEventListener('click', () => run(false));
+        btnClearSeed.addEventListener('click', () => run(true));
+    })();
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
@@ -971,22 +1144,7 @@
     </div>
 </footer>
 
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-    // Initialize Laravel Echo with Pusher
-    window.Echo = new Echo({
-        broadcaster: 'pusher',
-        key: '{{ config('broadcasting.connections.pusher.key') }}',
-        cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
-        encrypted: true
-    });
-
-    // Listen for real-time updates
-    Echo.private('quiz.{{ $quiz->id }}')
-        .listen('.QuizUpdated', (e) => {
-            updateDashboard(e);
-        });
-
     function updateDashboard(data) {
         // Skeleton effect
         const targets = ['statAvgScore', 'statInProgress', 'statCompleted', 'statLiveActivity', 'liveLeaderboard'];
@@ -1086,6 +1244,33 @@
             });
         }, 500);
     }
+
+    (function () {
+        const url = @json(route('admin.quiz.dashboard', $quiz->slug));
+
+        const poll = async () => {
+            try {
+                const res = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!res.ok) return;
+
+                const data = await res.json();
+                if (!data) return;
+                updateDashboard(data);
+            } catch (_) {
+            }
+        };
+
+        poll();
+        setInterval(poll, 5000);
+    })();
 </script>
 
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>

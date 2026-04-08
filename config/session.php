@@ -16,7 +16,6 @@ return [
     | Supported: "file", "cookie", "database", "memcached",
     |            "redis", "dynamodb", "array"
     |
-    'driver' => 'cookie',
     |--------------------------------------------------------------------------
     | Session Lifetime
     |--------------------------------------------------------------------------
@@ -27,6 +26,8 @@ return [
     | indicate that via the expire_on_close configuration option.
     |
     */
+
+    'driver' => env('SESSION_DRIVER', 'cookie'),
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 

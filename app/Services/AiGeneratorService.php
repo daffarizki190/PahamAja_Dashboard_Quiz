@@ -20,9 +20,8 @@ class AiGeneratorService
         }
 
         $this->apiKey = $apiKey;
-        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', 'gemini-1.5-flash'));
-        // Ensure model name doesn't have 'models/' prefix twice if concatenated in the URL
-        // Ensure model name is clean for the URL interpolation
+        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', 'gemini-2.0-flash'));
+        // Ensure model name doesn't have 'models/' prefix twice
         $this->model = trim(preg_replace('/^models\//', '', $model));
     }
 

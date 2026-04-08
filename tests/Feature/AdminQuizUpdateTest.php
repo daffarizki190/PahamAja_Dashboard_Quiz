@@ -84,9 +84,14 @@ class AdminQuizUpdateTest extends TestCase
             ],
         ];
 
+        $this->withoutExceptionHandling();
+
+        $token = 'test-csrf-token';
+
         $response = $this
-            ->withoutMiddleware()
-            ->patch(route('admin.quizzes.update', $quiz->slug), $payload);
+            ->withSession(['_token' => $token])
+            ->withoutMiddleware([\App\Http\Middleware\AdminAuth::class])
+            ->patch(route('admin.quizzes.update', $quiz->slug), $payload + ['_token' => $token]);
 
         $response->assertRedirect(route('admin.quizzes.show', $quiz->slug));
 

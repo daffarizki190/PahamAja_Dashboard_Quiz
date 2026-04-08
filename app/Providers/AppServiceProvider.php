@@ -11,7 +11,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if (defined('PHPUNIT_COMPOSER_INSTALL') || defined('PHPUNIT_VERSION')) {
+            config([
+                'database.default' => 'sqlite',
+                'database.connections.sqlite.database' => ':memory:',
+                'session.driver' => 'array',
+                'cache.default' => 'array',
+                'queue.default' => 'sync',
+            ]);
+        }
     }
 
     /**
@@ -19,6 +27,5 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
     }
 }

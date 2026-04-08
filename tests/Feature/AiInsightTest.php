@@ -86,9 +86,13 @@ class AiInsightTest extends TestCase
 
         $this->app->instance(AiGeneratorService::class, $mock);
 
+        $token = 'test-csrf-token';
+
         $response = $this
-            ->withoutMiddleware()
-            ->postJson(route('admin.quiz.ai-insights', $quiz->slug));
+            ->withSession(['_token' => $token])
+            ->withHeader('X-CSRF-TOKEN', $token)
+            ->withoutMiddleware([\App\Http\Middleware\AdminAuth::class])
+            ->postJson(route('admin.quiz.ai-insights', $quiz->slug), ['_token' => $token]);
 
         $response->assertOk();
         $response->assertJsonStructure([

@@ -9,7 +9,9 @@ use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\QuizController;
 use App\Models\Quiz;
 use Database\Seeders\EmployeeSeeder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -136,37 +138,37 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::delete('quiz/{quiz:slug}/participant/{participant}', [AdminController::class, 'participantDestroy'])
         ->name('participant.destroy');
 
-    Route::get('force-seed', function (Request $request) {
-        // Security: Allow in local or with a specific token in production
-        $token = $request->query('token');
-        $secret = 'PahamAjaSeed2026';
-
-        if (! app()->environment('local') && $token !== $secret) {
-            abort(403, 'Unauthorized seed attempt.');
-        }
-
-        // Optional: Clear existing data for "fresh" adjustment
-        if ($request->query('clear')) {
-            \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
-            \App\Models\Answer::truncate();
-            \App\Models\Participant::truncate();
-            \App\Models\Option::truncate();
-            \App\Models\Question::truncate();
-            \App\Models\Quiz::truncate();
-            \App\Models\Employee::truncate();
-            \App\Models\Achievement::truncate();
-            \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
-        }
-
-        // Run full database seeder
-        (new \Database\Seeders\DatabaseSeeder)->run();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Full PahamAja database seeding completed!',
-            'environment' => app()->environment(),
-            'cleared' => (bool) $request->query('clear'),
-        ]);
-    })->name('force-seed');
-
 });
+
+Route::get('force-seed', function (Request $request) {
+    // Security: Allow in local or with a specific token in production
+    $token = $request->query('token');
+    $secret = 'PahamAjaSeed2026';
+
+    if (! app()->environment('local') && $token !== $secret) {
+        abort(403, 'Unauthorized seed attempt.');
+    }
+
+    // Optional: Clear existing data for "fresh" adjustment
+    if ($request->query('clear')) {
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        \App\Models\Answer::truncate();
+        \App\Models\Participant::truncate();
+        \App\Models\Option::truncate();
+        \App\Models\Question::truncate();
+        \App\Models\Quiz::truncate();
+        \App\Models\Employee::truncate();
+        \App\Models\Achievement::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+    }
+
+    // Run full database seeder
+    (new \Database\Seeders\DatabaseSeeder)->run();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Full PahamAja database seeding completed!',
+        'environment' => app()->environment(),
+        'cleared' => (bool) $request->query('clear'),
+    ]);
+})->name('force-seed');
