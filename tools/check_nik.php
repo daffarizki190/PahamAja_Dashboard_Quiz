@@ -10,6 +10,6 @@ $employees = Employee::orderBy('id')->get(['name', 'nim']);
 
 echo "=== EMPLOYEE NIK VERIFICATION ===\n";
 foreach ($employees as $e) {
-    echo str_pad($e->name, 30) . " | " . $e->nim . "\n";
+    echo str_pad($e->name, 30) . " | " . str_pad($e->nim, 15) . " | " . $e->position . "\n";
 }
 echo "Total: " . $employees->count() . "\n";
