@@ -13,7 +13,7 @@ class EmployeeSeeder extends Seeder
     public function run(): void
     {
         $employees = [
-            ['name' => 'RIZAL MAULANA', 'nim' => '2023070292', 'position' => 'CPM', 'dept' => 'PT. CENTREPARK CITRA CORPORA'],
+            ['name' => 'RIZAL MAULANA', 'nim' => '01-2023070292', 'position' => 'CPM', 'dept' => 'PT. CENTREPARK CITRA CORPORA'],
             ['name' => 'RINA TRIANI USU', 'nim' => '01-2022070248', 'position' => 'ADM', 'dept' => 'PT. CENTREPARK CITRA CORPORA'],
             ['name' => 'ANISA PUTRI MISKIYAH', 'nim' => '01-2024010152', 'position' => 'ADM', 'dept' => 'PT. CENTREPARK CITRA CORPORA'],
             ['name' => 'IRVANDI MAULANA', 'nim' => '01-2024010341', 'position' => 'IT', 'dept' => 'PT. CENTREPARK CITRA CORPORA'],
