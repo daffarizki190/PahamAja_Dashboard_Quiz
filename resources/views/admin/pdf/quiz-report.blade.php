@@ -4,185 +4,155 @@
     <meta charset="UTF-8">
     <title>Laporan Kuis - {{ $quiz->title }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 11px; color: #1e293b; background: #fff; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #1e293b; line-height: 1.5; font-size: 11px; margin: 0; padding: 0; }
+        
+        .header-bar { height: 8px; background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%); }
+        .header { padding: 30px 40px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .header h1 { margin: 0; font-size: 22px; color: #0f172a; letter-spacing: -0.025em; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .container { padding: 30px 40px; }
+        
+        .summary-grid { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .summary-card { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .summary-card h3 { margin: 0; color: #64748b; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; }
+        .summary-card p { margin: 8px 0 0; font-size: 20px; font-weight: bold; color: #0f172a; }
 
-        .header { background: #1e293b; color: #fff; padding: 24px 32px; margin-bottom: 24px; }
-        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .brand { font-size: 10px; font-weight: bold; opacity: 0.6; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
-        .title { font-size: 20px; font-weight: bold; letter-spacing: -0.5px; }
-        .meta { font-size: 10px; opacity: 0.6; margin-top: 4px; }
-        .badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-                 padding: 6px 14px; border-radius: 8px; text-align: center; }
-        .badge-label { font-size: 9px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
-        .badge-value { font-size: 22px; font-weight: bold; margin-top: 2px; }
-
-        .stats-grid { display: flex; gap: 12px; margin: 0 32px 24px; }
-        .stat-card { flex: 1; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
-        .stat-label { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 6px; }
-        .stat-value { font-size: 22px; font-weight: bold; color: #0f172a; }
-        .stat-sub { font-size: 10px; color: #64748b; margin-top: 2px; }
-
-        .section { margin: 0 32px 24px; }
-        .section-title { font-size: 13px; font-weight: bold; color: #0f172a; margin-bottom: 12px; 
-                         padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
-
-        .dist-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-        .dist-item { flex: 1; border-radius: 8px; padding: 12px; text-align: center; }
-        .dist-item.low  { background: #fff1f2; border: 1px solid #fecdd3; }
-        .dist-item.mid  { background: #fffbeb; border: 1px solid #fde68a; }
-        .dist-item.high { background: #f0fdf4; border: 1px solid #bbf7d0; }
-        .dist-num { font-size: 24px; font-weight: bold; }
-        .dist-item.low  .dist-num { color: #e11d48; }
-        .dist-item.mid  .dist-num { color: #d97706; }
-        .dist-item.high .dist-num { color: #16a34a; }
-        .dist-label { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
-        .dist-desc { font-size: 9px; color: #64748b; }
+        .section-title { font-size: 14px; font-weight: bold; margin-bottom: 20px; color: #0f172a; border-left: 4px solid #4f46e5; padding-left: 12px; }
+        
+        /* CSS Chart Styles */
+        .chart-section { background: #fff; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 40px; }
+        .chart-row { margin-bottom: 20px; }
+        .chart-label { display: block; font-size: 10px; font-weight: bold; color: #475569; margin-bottom: 6px; }
+        .chart-track { height: 12px; background: #f1f5f9; border-radius: 100px; overflow: hidden; position: relative; }
+        .chart-fill { height: 100%; border-radius: 100px; }
+        .chart-legend { margin-top: 15px; display: table; width: 100%; }
+        .legend-item { display: table-cell; font-size: 9px; color: #64748b; }
+        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
 
         table { width: 100%; border-collapse: collapse; }
-        thead tr { background: #f8fafc; }
-        th { padding: 10px 12px; text-align: left; font-size: 9px; font-weight: bold; 
-             text-transform: uppercase; letter-spacing: 1px; color: #64748b; 
-             border-bottom: 2px solid #e2e8f0; }
-        td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
-        tr:nth-child(even) td { background: #f8fafc; }
+        th { background: #f8fafc; padding: 12px 15px; text-align: left; font-size: 9px; font-weight: bold; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }
+        tr:nth-child(even) td { background: #fcfcfc; }
 
-        .rank-badge { display: inline-block; width: 26px; height: 26px; border-radius: 6px;
-                      text-align: center; line-height: 26px; font-weight: bold; font-size: 11px; }
-        .rank-1 { background: #fef3c7; color: #d97706; }
-        .rank-2 { background: #f1f5f9; color: #475569; }
-        .rank-3 { background: #fff7ed; color: #ea580c; }
-        .rank-n { color: #94a3b8; font-style: italic; }
+        .tag { padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: bold; }
+        .tag-pass { background: #dcfce7; color: #166534; }
+        .tag-fail { background: #fee2e2; color: #991b1b; }
 
-        .score-chip { display: inline-block; background: #0f172a; color: #fff; 
-                      padding: 3px 10px; border-radius: 20px; font-weight: bold; font-size: 10px; }
-        .score-null { display: inline-block; background: #fef3c7; color: #d97706; 
-                      padding: 3px 10px; border-radius: 20px; font-size: 9px; font-weight: bold; }
-
-        .status-lulus    { color: #16a34a; font-weight: bold; font-size: 10px; }
-        .status-gagal    { color: #dc2626; font-weight: bold; font-size: 10px; }
-        .status-progress { color: #d97706; font-size: 10px; }
-
-        .footer { margin: 32px 32px 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;
-                  display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; }
+        .footer { position: fixed; bottom: 0; width: 100%; padding: 20px 40px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #f1f5f9; background: #fff; }
     </style>
 </head>
 <body>
+    <div class="header-bar"></div>
+    <div class="header">
+        <p>PAHAMAJA ENTERPRISE ASSESSMENT</p>
+        <h1>{{ $quiz->title }}</h1>
+        <div style="margin-top: 10px; font-size: 9px; color: #94a3b8;">
+            Passing Score: <strong>{{ $quiz->passing_score }}%</strong> &nbsp;|&nbsp; 
+            Durasi: <strong>{{ $quiz->time_limit }} Menit</strong> &nbsp;|&nbsp; 
+            Dicetak: {{ now()->format('d M Y, H:i') }}
+        </div>
+    </div>
 
-<div class="header">
-    <div class="header-top">
-        <div>
-            <div class="brand">PahamAja · Laporan Hasil Kuis</div>
-            <div class="title">{{ $quiz->title }}</div>
-            <div class="meta">Dicetak: {{ now()->locale('id')->translatedFormat('d F Y, H:i') }} &nbsp;|&nbsp; Nilai Kelulusan: {{ $quiz->passing_score }} &nbsp;|&nbsp; Durasi: {{ $quiz->time_limit }} menit</div>
-        </div>
-        <div class="badge">
-            <div class="badge-label">Total Peserta</div>
-            <div class="badge-value">{{ $participants->count() }}</div>
-        </div>
-    </div>
-</div>
-
-{{-- Stats --}}
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-label">Rata-rata Nilai</div>
-        <div class="stat-value">{{ $avgScore }}%</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Peserta Lulus</div>
-        <div class="stat-value" style="color:#16a34a;">{{ $passed }}</div>
-        <div class="stat-sub">dari {{ $finished->count() }} selesai ({{ $passRate }}%)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Tidak Lulus</div>
-        <div class="stat-value" style="color:#dc2626;">{{ $failed }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Sedang Mengerjakan</div>
-        <div class="stat-value" style="color:#d97706;">{{ $inProgress }}</div>
-    </div>
-</div>
-
-{{-- Score Distribution --}}
-<div class="section">
-    <div class="section-title">Sebaran Nilai</div>
-    <div class="dist-bar">
-        <div class="dist-item low">
-            <div class="dist-label" style="color:#e11d48;">Low</div>
-            <div class="dist-num">{{ $low }}</div>
-            <div class="dist-desc">Nilai 0 – 50</div>
-        </div>
-        <div class="dist-item mid">
-            <div class="dist-label" style="color:#d97706;">Mid</div>
-            <div class="dist-num">{{ $mid }}</div>
-            <div class="dist-desc">Nilai 51 – 75</div>
-        </div>
-        <div class="dist-item high">
-            <div class="dist-label" style="color:#16a34a;">High</div>
-            <div class="dist-num">{{ $high }}</div>
-            <div class="dist-desc">Nilai 76 – 100</div>
-        </div>
-    </div>
-</div>
-
-{{-- Participant Table --}}
-<div class="section">
-    <div class="section-title">Data Peserta ({{ $participants->count() }} orang)</div>
-    <table>
-        <thead>
+    <div class="container">
+        <table class="summary-grid">
             <tr>
-                <th style="width:50px;">No</th>
-                <th>Nama</th>
-                <th>NIK</th>
-                <th style="width:80px;">Nilai</th>
-                <th style="width:90px;">Status</th>
+                <td width="25%" style="padding-right: 15px;">
+                    <div class="summary-card">
+                        <h3>Peserta</h3>
+                        <p>{{ $participants->count() }}</p>
+                    </div>
+                </td>
+                <td width="25%" style="padding-right: 15px;">
+                    <div class="summary-card">
+                        <h3>Rata-rata</h3>
+                        <p>{{ $avgScore }}%</p>
+                    </div>
+                </td>
+                <td width="25%" style="padding-right: 15px;">
+                    <div class="summary-card">
+                        <h3>Lulus</h3>
+                        <p style="color: #10b981;">{{ $passed }}</p>
+                    </div>
+                </td>
+                <td width="25%">
+                    <div class="summary-card">
+                        <h3>Pass Rate</h3>
+                        <p style="color: #4f46e5;">{{ $passRate }}%</p>
+                    </div>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($participants as $i => $p)
-            <tr>
-                <td>
-                    @if($i === 0 && !is_null($p->score))
-                        <span class="rank-badge rank-1">1</span>
-                    @elseif($i === 1 && !is_null($p->score))
-                        <span class="rank-badge rank-2">2</span>
-                    @elseif($i === 2 && !is_null($p->score))
-                        <span class="rank-badge rank-3">3</span>
-                    @else
-                        <span class="rank-n">#{{ $i + 1 }}</span>
-                    @endif
-                </td>
-                <td><strong>{{ $p->name }}</strong></td>
-                <td style="color:#64748b;">{{ $p->nim }}</td>
-                <td>
-                    @if(!is_null($p->score))
-                        <span class="score-chip">{{ $p->score }}</span>
-                    @else
-                        <span class="score-null">Mengerjakan</span>
-                    @endif
-                </td>
-                <td>
-                    @if(!is_null($p->score))
-                        @if($p->score >= $quiz->passing_score)
-                            <span class="status-lulus">✓ LULUS</span>
+        </table>
+
+        <div class="section-title">Visualisasi Hasil & Sebaran</div>
+        <div class="chart-section">
+            <div class="chart-row">
+                <span class="chart-label">Status Kelulusan Peserta</span>
+                <div class="chart-track">
+                    @php($passPct = $finished->count() > 0 ? ($passed / $finished->count()) * 100 : 0)
+                    <div class="chart-fill" style="width: {{ $passPct }}%; background: #10b981;"></div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot" style="background: #10b981;"></span> Lulus ({{ $passed }})</div>
+                    <div class="legend-item"><span class="dot" style="background: #ef4444;"></span> Gagal ({{ $failed }})</div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <span class="chart-label">Distribusi Nilai Berdasarkan Grade</span>
+                <div class="chart-track" style="background: #f1f5f9; display: block; border-radius: 4px;">
+                    @php($lowPct = $finished->count() > 0 ? ($low / $finished->count()) * 100 : 0)
+                    @php($midPct = $finished->count() > 0 ? ($mid / $finished->count()) * 100 : 0)
+                    @php($highPct = $finished->count() > 0 ? ($high / $finished->count()) * 100 : 0)
+                    <div style="width: {{ $lowPct }}%; height: 100%; background: #f43f5e; float: left;"></div>
+                    <div style="width: {{ $midPct }}%; height: 100%; background: #3b82f6; float: left;"></div>
+                    <div style="width: {{ $highPct }}%; height: 100%; background: #8b5cf6; float: left;"></div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="dot" style="background: #f43f5e;"></span> Low (0-50): {{ $low }}</div>
+                    <div class="legend-item"><span class="dot" style="background: #3b82f6;"></span> Mid (51-75): {{ $mid }}</div>
+                    <div class="legend-item"><span class="dot" style="background: #8b5cf6;"></span> High (76-100): {{ $high }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Daftar Detail Peserta</div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="30">Pos</th>
+                    <th>Nama Lengkap</th>
+                    <th>NIK</th>
+                    <th>Skor</th>
+                    <th width="80">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($participants as $index => $p)
+                <tr>
+                    <td style="color: #94a3b8; font-weight: bold;">{{ $index + 1 }}</td>
+                    <td><strong style="color: #0f172a;">{{ $p->name }}</strong></td>
+                    <td style="color: #64748b;">{{ $p->nim }}</td>
+                    <td style="font-weight: bold; font-size: 11px; color: #4f46e5;">{{ $p->score ?? '-' }}%</td>
+                    <td>
+                        @if(!is_null($p->score))
+                            @if($p->score >= $quiz->passing_score)
+                                <span class="tag tag-pass">PASSED</span>
+                            @else
+                                <span class="tag tag-fail">FAILED</span>
+                            @endif
                         @else
-                            <span class="status-gagal">✗ TIDAK LULUS</span>
+                            <span style="color: #f59e0b; font-style: italic;">In Progress</span>
                         @endif
-                    @else
-                        <span class="status-progress">⏳ Belum Selesai</span>
-                    @endif
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 
-<div class="footer">
-    <span>PahamAja Dashboard &mdash; Laporan otomatis</span>
-    <span>{{ now()->locale('id')->translatedFormat('d/m/Y H:i') }}</span>
-</div>
-
+    <div class="footer">
+        Laporan ini dihasilkan secara otomatis oleh <strong>PahamAja Enterprise Dashboard</strong>. &nbsp;&bull;&nbsp; Dokumen ini adalah laporan resmi hasil kuis.
+    </div>
 </body>
 </html>

@@ -96,10 +96,14 @@ class HistoryRestorationSeeder extends Seeder
                 }
             }
             DB::commit();
-            $this->command->info('Historical scores restored safely to professional containers.');
+            if ($this->command) {
+                $this->command->info('Historical scores restored safely to professional containers.');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->command->error('Restoration aborted: ' . $e->getMessage());
+            if ($this->command) {
+                $this->command->error('Restoration aborted: ' . $e->getMessage());
+            }
         }
 
         fclose($handle);

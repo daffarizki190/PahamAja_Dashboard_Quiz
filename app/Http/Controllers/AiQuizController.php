@@ -137,6 +137,7 @@ class AiQuizController extends Controller
                 $question = Question::create([
                     'quiz_id' => $quiz->id,
                     'text' => $qData['text'],
+                    'explanation' => $qData['explanation'] ?? null,
                 ]);
 
                 foreach ($qData['options'] as $oData) {

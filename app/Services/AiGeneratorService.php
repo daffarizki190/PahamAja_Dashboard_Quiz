@@ -20,9 +20,13 @@ class AiGeneratorService
         }
 
         $this->apiKey = $apiKey;
-        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', 'gemini-2.0-flash'));
+        // Use cached last known good model if available
+        $cachedModel = (string) cache('gemini_last_good_model');
+        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', $cachedModel ?: 'gemini-1.5-flash'));
         // Ensure model name doesn't have 'models/' prefix twice
         $this->model = trim(preg_replace('/^models\//', '', $model));
+        
+        Log::info("AiGeneratorService initialized with model: " . $this->model);
     }
 
     /**
@@ -30,7 +34,7 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null, bool $strictMode = false): array
+    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null, bool $strictMode = false, array $tried = []): array
     {
         $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language, ! empty($fileData), $strictMode);
         $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
@@ -38,27 +42,25 @@ class AiGeneratorService
         $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens, $fileData);
 
         if (! $response->successful()) {
+            $status = $response->status();
             $message = $response->json('error.message') ?: 'Gemini request failed.';
-
-            if ($response->status() === 404) {
-                $fallbackModel = $this->pickFallbackModel();
-                if ($fallbackModel) {
-                    $retry = $this->requestGenerateContent($fallbackModel, $prompt, $maxOutputTokens);
-                    if ($retry->successful()) {
-                        return $this->parseQuestionsFromText($this->extractTextFromResponse($retry));
-                    }
+            
+            // If model is unavailable, overloaded, or quota exceeded for this specific model
+            if (in_array($status, [404, 429, 503, 500])) {
+                $tried[] = $this->model;
+                Log::warning("Gemini model {$this->model} failed with {$status}. Attempting self-healing rotation (Tried: ".implode(',', $tried).")...");
+                
+                $fallbackModel = $this->pickFallbackModel($tried);
+                if ($fallbackModel && !in_array($fallbackModel, $tried)) {
+                    $this->model = $fallbackModel;
+                    // Persist for this session and globally for a while
+                    cache(['gemini_last_good_model' => $fallbackModel], now()->addDay());
+                    
+                    return $this->generateQuestions($text, $questionCount, $difficulty, $regenToken, $language, $fileData, $strictMode, $tried);
                 }
-
-                $models = $this->listAvailableModels();
-                if (count($models) === 0) {
-                    throw new Exception('Gemini API Key tidak memiliki akses model text. Pastikan Generative Language API aktif dan billing/akses Gemini sudah tersedia.');
-                }
-
-                $modelNames = collect($models)->pluck('name')->take(10)->implode(', ');
-                throw new Exception('Model Gemini tidak tersedia untuk API key ini. Model tersedia (contoh): '.$modelNames);
             }
 
-            throw new Exception($message.' (HTTP '.$response->status().')');
+            throw new Exception($message.' (HTTP '.$status.')');
         }
 
         try {
@@ -76,44 +78,66 @@ class AiGeneratorService
         }
     }
 
-    public function generateInsight(string $prompt, int $maxOutputTokens = 512): string
+    public function generateInsight(string $prompt, int $maxOutputTokens = 512, array $tried = [], int $attempt = 1): string
     {
-        $response = $this->requestGenerateTextContent($this->model, $prompt, $maxOutputTokens);
+        try {
+            $response = $this->requestGenerateTextContent($this->model, $prompt, $maxOutputTokens);
 
-        if (! $response->successful()) {
-            $message = $response->json('error.message') ?: 'Gemini request failed.';
+            if (! $response->successful()) {
+                $status = $response->status();
+                $message = $response->json('error.message') ?: 'Gemini request failed.';
 
-            if ($response->status() === 404) {
-                $fallbackModel = $this->pickFallbackModel();
-                if ($fallbackModel) {
-                    $retry = $this->requestGenerateTextContent($fallbackModel, $prompt, $maxOutputTokens);
-                    if ($retry->successful()) {
-                        return trim($this->extractTextFromResponse($retry));
+                // Handle Rate Limiting (429) with simple sleep and retry
+                if ($status === 429 && $attempt <= 3) {
+                    $sleep = $attempt * 2;
+                    Log::warning("Gemini Rate Limit (429). Sleeping {$sleep}s... (Attempt {$attempt}/3)");
+                    sleep($sleep);
+                    return $this->generateInsight($prompt, $maxOutputTokens, $tried, $attempt + 1);
+                }
+
+                if (in_array($status, [404, 429, 503, 500])) {
+                    $tried[] = $this->model;
+                    Log::warning("Gemini model {$this->model} failed (Insight) with {$status}. Rotating model (Tried: ".implode(',', $tried).")...");
+                    $fallbackModel = $this->pickFallbackModel($tried);
+                    if ($fallbackModel && !in_array($fallbackModel, $tried)) {
+                        $this->model = $fallbackModel;
+                        cache(['gemini_last_good_model' => $fallbackModel], now()->addDay());
+                        return $this->generateInsight($prompt, $maxOutputTokens, $tried, 1); // Reset attempts for new model
                     }
                 }
 
-                $models = $this->listAvailableModels();
-                if (count($models) === 0) {
-                    throw new Exception('Gemini API Key tidak memiliki akses model text. Pastikan Generative Language API aktif dan billing/akses Gemini sudah tersedia.');
+                throw new Exception($message.' (HTTP '.$status.')');
+            }
+
+            // Check for Safety Filter blocks
+            $candidate = $response->json('candidates.0');
+            if (isset($candidate['finishReason']) && ($candidate['finishReason'] === 'SAFETY' || $candidate['finishReason'] === 'OTHER')) {
+                Log::warning("Gemini blocked content (Reason: {$candidate['finishReason']}). Retrying with softer prompt...");
+                if ($attempt <= 2) {
+                    $softerPrompt = "Please provide a safe, professional corporate explanation for: " . $prompt;
+                    return $this->generateInsight($softerPrompt, $maxOutputTokens, $tried, $attempt + 1);
                 }
-
-                $modelNames = collect($models)->pluck('name')->take(10)->implode(', ');
-                throw new Exception('Model Gemini tidak tersedia untuk API key ini. Model tersedia (contoh): '.$modelNames);
+                throw new Exception("Gemini refused to generate content due to safety filters.");
             }
 
-            throw new Exception($message.' (HTTP '.$response->status().')');
-        }
-
-        $finishReason = (string) ($response->json('candidates.0.finishReason') ?? '');
-        if ($finishReason === 'MAX_TOKENS' && $maxOutputTokens < 4096) {
-            $retryTokens = min(4096, max($maxOutputTokens * 2, 768));
-            $retry = $this->requestGenerateTextContent($this->model, $prompt, $retryTokens);
-            if ($retry->successful()) {
-                return trim($this->extractTextFromResponse($retry));
+            $finishReason = (string) ($candidate['finishReason'] ?? '');
+            if ($finishReason === 'MAX_TOKENS' && $maxOutputTokens < 4096) {
+                $retryTokens = min(4096, max($maxOutputTokens * 2, 768));
+                $retry = $this->requestGenerateTextContent($this->model, $prompt, $retryTokens);
+                if ($retry->successful()) {
+                    return trim($this->extractTextFromResponse($retry));
+                }
             }
-        }
 
-        return trim($this->extractTextFromResponse($response));
+            return trim($this->extractTextFromResponse($response));
+        } catch (Exception $e) {
+            if ($attempt <= 2 && !str_contains($e->getMessage(), 'refused')) {
+                Log::error("Gemini Error: " . $e->getMessage() . ". Retrying once...");
+                sleep(1);
+                return $this->generateInsight($prompt, $maxOutputTokens, $tried, $attempt + 1);
+            }
+            throw $e;
+        }
     }
 
     public function listAvailableModels(): array
@@ -230,10 +254,13 @@ class AiGeneratorService
 
         $parts[] = ['text' => $prompt];
 
-        return Http::timeout(90)
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+        Log::debug("Gemini post URL: " . $url);
+
+        return Http::timeout(120)
             ->withQueryParameters(['key' => $this->apiKey])
             ->acceptJson()
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+            ->post($url, [
                 'contents' => [
                     [
                         'role' => 'user',
@@ -250,7 +277,7 @@ class AiGeneratorService
 
     private function requestGenerateTextContent(string $model, string $prompt, int $maxOutputTokens)
     {
-        return Http::timeout(90)
+        return Http::timeout(120)
             ->withQueryParameters(['key' => $this->apiKey])
             ->acceptJson()
             ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
@@ -361,7 +388,7 @@ class AiGeneratorService
             return false;
         }
 
-        if (! array_key_exists('text', $first) || ! array_key_exists('options', $first)) {
+        if (! array_key_exists('text', $first) || ! array_key_exists('options', $first) || ! array_key_exists('explanation', $first)) {
             return false;
         }
 
@@ -470,43 +497,37 @@ class AiGeneratorService
         return null;
     }
 
-    private function pickFallbackModel(): ?string
+    private function pickFallbackModel(array $tried = []): ?string
     {
         $models = $this->listAvailableModels();
 
         $candidates = collect($models)
             ->filter(function ($m) {
                 $methods = $m['supportedGenerationMethods'];
-
                 return is_array($methods) && in_array('generateContent', $methods, true);
             })
             ->pluck('name')
             ->map(function ($name) {
                 return trim(preg_replace('/^models\//', '', (string) $name));
             })
+            ->filter(fn($name) => !in_array($name, $tried)) // Don't pick failing ones
             ->values();
 
-        $preferred = $candidates->first(function ($name) {
-            return str_contains($name, 'gemini-2.5-flash');
-        });
+        $preferredPatterns = [
+            'gemini-1.5-flash',
+            'gemini-2.0-flash-lite',
+            'gemini-flash-latest',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-1.5-flash-8b',
+        ];
 
-        if ($preferred) {
-            return $preferred;
+        foreach ($preferredPatterns as $pattern) {
+            $found = $candidates->first(fn($name) => str_contains($name, $pattern));
+            if ($found) return $found;
         }
 
-        $preferred = $candidates->first(function ($name) {
-            return str_contains($name, 'gemini-2.0-flash');
-        });
-
-        if ($preferred) {
-            return $preferred;
-        }
-
-        $preferred = $candidates->first(function ($name) {
-            return str_contains($name, 'gemini-1.5-flash');
-        });
-
-        return $preferred ?: $candidates->first();
+        return $candidates->first();
     }
 
     /**
@@ -545,6 +566,7 @@ Context Details:
 
 The output MUST be a valid JSON array of objects. Each object must have:
 - "text": The question string.
+- "explanation": A detailed reasoning (in Indonesian) explaining why the correct answer is right and why the incorrect ones are wrong, derived solely from the source material.
 - "options": An array of at least 4 objects, each with:
     - "text": The option string.
     - "is_correct": A boolean (true for exactly one correct option, false otherwise).

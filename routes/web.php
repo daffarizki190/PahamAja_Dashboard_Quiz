@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\AiQuizController;
+use App\Http\Controllers\GlobalReportController;
 use App\Http\Controllers\DevController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\QuizController;
@@ -131,6 +132,8 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('employees/{employee}', [AdminController::class, 'employeeShow'])->name('employees.show');
     Route::put('employees/{employee}', [AdminController::class, 'employeeUpdate'])->name('employees.update');
     Route::delete('employees/{employee}', [AdminController::class, 'employeeDestroy'])->name('employees.destroy');
+    Route::get('global-report/excel', [GlobalReportController::class, 'exportExcel'])->name('reports.global-excel');
+    Route::get('global-report/pdf', [GlobalReportController::class, 'exportPdf'])->name('reports.global-pdf');
 
     // Participant Management
     Route::get('quiz/{quiz:slug}/participant/{participant}/answers', [AdminController::class, 'participantAnswers'])
@@ -143,40 +146,35 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::delete('sessions/{session}', [AdminController::class, 'destroySession'])->name('sessions.destroy');
     Route::post('sessions/{session}/assign', [AdminController::class, 'assignParticipants'])->name('sessions.assign');
 
+    Route::get('force-seed', function (\Illuminate\Http\Request $request) {
+        // Security: Allow in local or with a specific token in production
+        $token = $request->query('token');
+        $secret = 'PahamAjaSeed2026';
+
+        if (! app()->environment('local') && $token !== $secret) {
+            abort(403, 'Unauthorized seed attempt.');
+        }
+
+        if ($request->query('clear')) {
+            \App\Models\Achievement::truncate();
+        }
+
+        try {
+            (new \Database\Seeders\DatabaseSeeder)->run();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'PahamAja dashboard SAFE-SYNC completed.',
+                'environment' => app()->environment(),
+                'cleared_metadata' => (bool) $request->query('clear'),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("FORCE-SEED FAILED: " . $e->getMessage());
+            return response()->json([
+                'status' => 'partial_success_or_error',
+                'error_message' => $e->getMessage(),
+                'message' => 'The sync process encountered a technical error.',
+            ], 500);
+        }
+    })->name('force-seed'); // This becomes admin.force-seed because of group prefix
+
 });
-
-Route::get('force-seed', function (Request $request) {
-    // Security: Allow in local or with a specific token in production
-    $token = $request->query('token');
-    $secret = 'PahamAjaSeed2026';
-
-    if (! app()->environment('local') && $token !== $secret) {
-        abort(403, 'Unauthorized seed attempt.');
-    }
-
-    // DELETED destructive truncate logic to protect Quiz, Question, Participant, and Employee data.
-    // The seeder now uses updateOrCreate() for total safety.
-    if ($request->query('clear')) {
-        // Achievement is the only 'safe' thing to reset if absolutely requested.
-        \App\Models\Achievement::truncate();
-    }
-
-    try {
-        // Run full database seeder
-        (new \Database\Seeders\DatabaseSeeder)->run();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'PahamAja dashboard SAFE-SYNC completed. No data was deleted.',
-            'environment' => app()->environment(),
-            'cleared_metadata' => (bool) $request->query('clear'),
-        ]);
-    } catch (\Exception $e) {
-        \Illuminate\Support\Facades\Log::error("FORCE-SEED FAILED: " . $e->getMessage());
-        return response()->json([
-            'status' => 'partial_success_or_error',
-            'error_message' => $e->getMessage(),
-            'message' => 'The sync process encountered a technical error but may have partially succeeded. Check the dashboard.',
-        ], 500);
-    }
-})->name('force-seed');

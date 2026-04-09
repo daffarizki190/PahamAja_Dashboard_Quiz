@@ -181,7 +181,7 @@ class AdminController extends Controller
                         'quiz_session_id' => $session->id,
                         'name' => $employee->name,
                         'nim' => $employee->nim,
-                        'is_assigned' => true,
+                        'is_assigned' => DB::raw('TRUE'),
                     ]
                 );
             }

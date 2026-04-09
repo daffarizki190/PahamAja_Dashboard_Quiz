@@ -85,6 +85,11 @@
                         <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">DURASI</p>
                         <p class="font-bold text-[#1C1C1E] text-[11px]">{{ $participant->finished_at->diff($participant->started_at)->format('%im %ss') }}</p>
                     </div>
+                    @else
+                    <div>
+                        <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">DURASI</p>
+                        <p class="font-bold text-[#1C1C1E] text-[11px]">-</p>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -121,6 +126,15 @@
                                 <div class="w-2 h-2 rounded-full bg-slate-400"></div>
                                 <p class="text-[11px] font-medium text-slate-600">
                                     Jawaban Benar: <span class="font-bold">{{ $item['correct'] }}</span>
+                                </p>
+                            </div>
+                            @endif
+                            
+                            @if(isset($item['explanation']) && $item['explanation'])
+                            <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl mt-3">
+                                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Penjelasan AI</p>
+                                <p class="text-[11px] text-indigo-700 leading-relaxed italic">
+                                    "{{ $item['explanation'] }}"
                                 </p>
                             </div>
                             @endif
