@@ -19,7 +19,7 @@ class QuizController extends Controller
      */
     public function exportExcel(Quiz $quiz)
     {
-        return Excel::download(new QuizExport($quiz->id, $quiz->passing_score), "Hasil-Kuis-{$quiz->slug}.xlsx");
+        return Excel::download(new QuizExport($quiz), "Hasil-Kuis-{$quiz->slug}.xlsx");
     }
 
     /**
@@ -360,6 +360,7 @@ class QuizController extends Controller
                     'selected' => $selected->text,
                     'correct' => $correct ? $correct->text : 'N/A',
                     'is_correct' => $selected->is_correct,
+                    'explanation' => $question->explanation,
                 ];
             });
         }

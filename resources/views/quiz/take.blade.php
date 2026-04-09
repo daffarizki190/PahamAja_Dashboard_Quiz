@@ -175,6 +175,7 @@
 
     <!-- UI Logic Scripts -->
     <script>
+        const questionPages = document.querySelectorAll('.question-page');
         const totalQuestions = questionPages.length;
         let currentIndex = 0;
         let unlockedMax = 0;
