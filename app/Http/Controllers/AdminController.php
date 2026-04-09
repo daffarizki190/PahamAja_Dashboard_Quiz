@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Participant;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Models\QuizSession;
 use App\Services\QuizImportService;
 use Exception;
 use Illuminate\Http\Request;
@@ -127,9 +128,66 @@ class AdminController extends Controller
      */
     public function show(Quiz $quiz)
     {
-        $quiz->load('questions.options');
+        $quiz->load(['questions.options', 'participants.quizSession']);
+        
+        $sessions = QuizSession::where('quiz_id', $quiz->id)->orderBy('start_time')->get();
+        $employees = Employee::where('status', 'Active')->orderBy('name')->get();
 
-        return view('admin.quizzes.show', compact('quiz'));
+        return view('admin.quizzes.show', compact('quiz', 'sessions', 'employees'));
+    }
+
+    public function storeSession(Request $request, Quiz $quiz)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+        ]);
+
+        $quiz->sessions()->create($request->all());
+
+        return back()->with('success', 'Sesi pengerjaan berhasil ditambahkan.');
+    }
+
+    public function destroySession(QuizSession $session)
+    {
+        $session->delete();
+        return back()->with('success', 'Sesi pengerjaan berhasil dihapus.');
+    }
+
+    public function assignParticipants(Request $request, QuizSession $session)
+    {
+        $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:employees,id',
+        ]);
+
+        $quizId = $session->quiz_id;
+        $employeeIds = $request->employee_ids;
+
+        DB::transaction(function () use ($quizId, $session, $employeeIds) {
+            foreach ($employeeIds as $empId) {
+                $employee = Employee::find($empId);
+                
+                // Pre-create participant record if it doesn't exist for this quiz
+                // or update it if it's already there but not finished.
+                Participant::updateOrCreate(
+                    [
+                        'quiz_id' => $quizId,
+                        'employee_id' => $empId,
+                        'score' => null, // Only for those who haven't finished
+                    ],
+                    [
+                        'quiz_session_id' => $session->id,
+                        'name' => $employee->name,
+                        'nim' => $employee->nim,
+                        'is_assigned' => true,
+                    ]
+                );
+            }
+        });
+
+        return back()->with('success', 'Peserta berhasil ditugaskan ke sesi ini.');
     }
 
     /**

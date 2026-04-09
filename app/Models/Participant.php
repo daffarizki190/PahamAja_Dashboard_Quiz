@@ -13,12 +13,30 @@ class Participant extends Model
 
     protected $fillable = [
         'quiz_id',
+        'quiz_session_id',
         'employee_id',
         'name',
         'nim',
         'score',
         'attempt',
+        'started_at',
+        'finished_at',
+        'is_assigned',
     ];
+
+    protected $casts = [
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+        'is_assigned' => 'boolean',
+    ];
+
+    /**
+     * Get the session associated with this participation.
+     */
+    public function quizSession(): BelongsTo
+    {
+        return $this->belongsTo(QuizSession::class);
+    }
 
     /**
      * Get the master employee record for this participant.

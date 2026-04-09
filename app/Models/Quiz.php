@@ -48,4 +48,12 @@ class Quiz extends Model
     {
         return $this->hasMany(Participant::class);
     }
+
+    /**
+     * Get all of the sessions for the Quiz
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(QuizSession::class);
+    }
 }

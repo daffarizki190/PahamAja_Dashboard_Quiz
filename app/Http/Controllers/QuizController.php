@@ -76,12 +76,66 @@ class QuizController extends Controller
                 ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
         }
 
+        // 1. Restriction: Check if already passed (No retakes if above passing grade)
+        $hasPassed = Participant::where('quiz_id', $quiz->id)
+            ->where('employee_id', $employee->id)
+            ->where('score', '>=', $quiz->passing_score)
+            ->exists();
+
+        if ($hasPassed) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Maaf, Anda sudah lulus kuis ini dan tidak diperbolehkan mengulang.');
+        }
+
+        // 2. Restriction: Check for Session Windows (Conditional)
+        $sessions = $quiz->sessions;
+        if ($sessions->count() > 0) {
+            $now = now();
+            
+            // Check if user is specifically PRE-ASSIGNED to a session
+            $assignedRecord = Participant::where('quiz_id', $quiz->id)
+                ->where('employee_id', $employee->id)
+                ->where('is_assigned', true)
+                ->first();
+
+            if ($assignedRecord) {
+                $s = $assignedRecord->quizSession;
+                if ($now < $s->start_time) {
+                    return redirect()->back()->with('error', "Maaf, sesi pengerjaan Anda ({$s->name}) baru akan dimulai pada " . $s->start_time->format('H:i') . " WIB.");
+                } elseif ($now > $s->end_time) {
+                    return redirect()->back()->with('error', "Maaf, sesi pengerjaan Anda ({$s->name}) sudah berakhir pada " . $s->end_time->format('H:i') . " WIB.");
+                }
+                // Participant record already exists (the $assignedRecord), we'll use it later
+            } else {
+                // No specific assignment. Are there any "Public" sessions active?
+                // A session is public if it has NO assigned participants (pre-registered by admin)
+                $activePublicSession = $quiz->sessions()
+                    ->where('start_time', '<=', $now)
+                    ->where('end_time', '>=', $now)
+                    ->whereDoesntHave('participants', function($q) {
+                        $q->where('is_assigned', true);
+                    })
+                    ->first();
+
+                if (!$activePublicSession) {
+                    return redirect()->back()->with('error', 'Maaf, Anda tidak terdaftar dalam sesi pengerjaan kuis ini atau tidak ada sesi umum yang sedang aktif saat ini.');
+                }
+                
+                // Store the public session ID to be used when creating the participant record
+                $publicSessionId = $activePublicSession->id;
+            }
+        }
+
         $inProgress = Participant::where('quiz_id', $quiz->id)
             ->where('employee_id', $employee->id)
             ->whereNull('score')
             ->first();
 
         if ($inProgress) {
+            if (is_null($inProgress->started_at)) {
+                $inProgress->update(['started_at' => now()]);
+            }
             session()->put("quiz_in_progress.{$quiz->id}", (string) $inProgress->id);
 
             return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
@@ -97,6 +151,8 @@ class QuizController extends Controller
             'name' => $employee->name,
             'nim' => $employee->nim,
             'attempt' => $attemptNumber,
+            'started_at' => now(),
+            'quiz_session_id' => $publicSessionId ?? null,
         ]);
 
         session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
@@ -195,7 +251,10 @@ class QuizController extends Controller
         // Final score on scale 0-100
         $finalScore = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
 
-        $participant->update(['score' => $finalScore]);
+        $participant->update([
+            'score' => $finalScore,
+            'finished_at' => now(),
+        ]);
 
         // Unlock achievements
         $this->unlockAchievements($participant->employee, $finalScore);
@@ -284,9 +343,28 @@ class QuizController extends Controller
             ->where('employee_id', $participant->employee_id)
             ->whereNotNull('score')
             ->orderBy('created_at')
-            ->get(['score', 'created_at', 'attempt']);
+            ->get(['score', 'created_at', 'attempt', 'started_at', 'finished_at', 'quiz_session_id'])
+            ->load('quizSession');
 
-        return view('quiz.result', compact('quiz', 'participant', 'attempts'));
+        // Load details for review if passed
+        $reviewData = null;
+        if ($participant->score >= $quiz->passing_score) {
+            $participant->load(['answers.question.options', 'answers.option']);
+            $reviewData = $participant->answers->map(function ($answer) {
+                $question = $answer->question;
+                $selected = $answer->option;
+                $correct = $question->options->where('is_correct', true)->first();
+                
+                return [
+                    'question' => $question->text,
+                    'selected' => $selected->text,
+                    'correct' => $correct ? $correct->text : 'N/A',
+                    'is_correct' => $selected->is_correct,
+                ];
+            });
+        }
+
+        return view('quiz.result', compact('quiz', 'participant', 'attempts', 'reviewData'));
     }
 
     /**
@@ -375,12 +453,18 @@ class QuizController extends Controller
                 'completedCount' => $participants->whereNotNull('score')->count(),
                 'liveActivity' => $participants->count(),
                 'participants' => $participants->map(function ($p) use ($quiz) {
+                    $duration = ($p->started_at && $p->finished_at) 
+                        ? $p->finished_at->diff($p->started_at)->format('%im %ss') 
+                        : null;
+                        
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
                         'nim' => $p->nim,
                         'score' => $p->score,
                         'is_passing' => $p->score >= $quiz->passing_score,
+                        'session' => $p->quizSession ? $p->quizSession->name : '-',
+                        'duration' => $duration,
                     ];
                 })->toArray(),
             ]);

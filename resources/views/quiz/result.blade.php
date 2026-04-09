@@ -65,7 +65,7 @@
                          data-score="{{ $participant->score ?? 0 }}"></div>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-[#F2F2F7] grid grid-cols-2 gap-6 text-left">
+                <div class="mt-8 pt-6 border-t border-[#F2F2F7] grid grid-cols-2 gap-y-6 gap-x-4 text-left">
                     <div>
                         <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">NAMA PESERTA</p>
                         <p class="font-bold text-[#1C1C1E] text-sm truncate uppercase">{{ $participant->name }}</p>
@@ -74,32 +74,82 @@
                         <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">NOMOR INDUK</p>
                         <p class="font-bold text-[#1C1C1E] text-sm tracking-tight">{{ $participant->nim }}</p>
                     </div>
+                    @if($participant->quizSession)
+                    <div>
+                        <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">SESI PENGERJAAN</p>
+                        <p class="font-bold text-indigo-600 text-[11px] leading-tight">{{ $participant->quizSession->name }}</p>
+                    </div>
+                    @endif
+                    @if($participant->started_at && $participant->finished_at)
+                    <div>
+                        <p class="text-[9px] text-[#8E8E93] font-black uppercase tracking-wider mb-1">DURASI</p>
+                        <p class="font-bold text-[#1C1C1E] text-[11px]">{{ $participant->finished_at->diff($participant->started_at)->format('%im %ss') }}</p>
+                    </div>
+                    @endif
                 </div>
             </div>
 
             <div class="text-[#1C1C1E] mb-10 leading-relaxed text-[15px] px-2 font-medium">
-                @if($participant->score !== null && $participant->score >= 70)
+                @if($participant->score !== null && $participant->score >= $quiz->passing_score)
+                    <p class="text-emerald-600 font-black text-xs uppercase tracking-widest mb-2 flex items-center justify-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        LULUS ASSESMEN
+                    </p>
                     Luar biasa! Anda telah menyelesaikan <span class="text-indigo-600 font-bold">{{ $quiz->title }}</span> dengan hasil yang sangat memuaskan.
                 @else
                     Terima kasih telah berpartisipasi dalam <span class="text-indigo-600 font-bold">{{ $quiz->title }}</span>. Hasil ujian Anda telah tersimpan di sistem.
                 @endif
             </div>
 
+            <!-- Detailed Answer Review (Only if Passed) -->
+            @if(isset($reviewData) && $reviewData->count() > 0)
+            <div class="bg-white rounded-[2rem] shadow-lg border border-gray-100 p-8 mx-auto mb-10 text-left">
+                <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-6">Review Jawaban</p>
+                <div class="space-y-6">
+                    @foreach($reviewData as $item)
+                    <div class="pb-6 border-b border-[#F2F2F7] last:border-0 last:pb-0">
+                        <p class="text-[13px] font-bold text-[#1C1C1E] mb-3 leading-snug">{{ $loop->iteration }}. {{ $item['question'] }}</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 p-3 rounded-xl border {{ $item['is_correct'] ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100' }}">
+                                <div class="w-2 h-2 rounded-full {{ $item['is_correct'] ? 'bg-emerald-500' : 'bg-rose-500' }}"></div>
+                                <p class="text-[11px] font-medium {{ $item['is_correct'] ? 'text-emerald-700' : 'text-rose-700' }}">
+                                    Jawaban Anda: <span class="font-bold">{{ $item['selected'] }}</span>
+                                </p>
+                            </div>
+                            @if(!$item['is_correct'])
+                            <div class="flex items-center gap-2 p-3 rounded-xl border bg-slate-50 border-slate-100 ml-4">
+                                <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                                <p class="text-[11px] font-medium text-slate-600">
+                                    Jawaban Benar: <span class="font-bold">{{ $item['correct'] }}</span>
+                                </p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             @if(isset($attempts) && $attempts->count() > 1)
                 <div class="bg-white rounded-[1.75rem] shadow-lg border border-gray-100 p-6 mx-auto mb-8 text-left">
                     <p class="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Riwayat Nilai</p>
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         @foreach($attempts as $a)
-                            <div class="flex items-center justify-between">
-                                <div class="text-sm font-bold text-[#1C1C1E]">
-                                    @if($loop->first)
-                                        Nilai Saya
-                                    @else
-                                        Remedial {{ $loop->iteration - 1 }}
-                                    @endif
+                            <div class="flex items-center justify-between group">
+                                <div class="flex flex-col">
+                                    <div class="text-sm font-bold text-[#1C1C1E]">
+                                        {{ $loop->iteration == 1 ? 'Upaya Pertama' : 'Remedial ' . ($loop->iteration - 1) }}
+                                    </div>
+                                    <div class="text-[9px] font-bold text-slate-400">
+                                        {{ $a->created_at->format('d M, H:i') }}
+                                        @if($a->started_at && $a->finished_at)
+                                            • {{ $a->finished_at->diff($a->started_at)->format('%im %ss') }}
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="text-sm font-black text-[#1C1C1E]">
-                                    {{ $a->score }}<span class="text-[#8E8E93] font-extrabold">/100</span>
+                                <div class="text-sm font-black {{ $a->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-[#1C1C1E]' }}">
+                                    {{ $a->score }}<span class="text-[#8E8E93] font-extra-bold">/100</span>
                                 </div>
                             </div>
                         @endforeach
@@ -109,7 +159,7 @@
 
             <div class="space-y-4">
                 <a href="{{ route('quiz.join', $quiz->slug) }}" class="inline-block w-full bg-[#1C1C1E] hover:bg-black text-white font-black py-5 px-8 rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-xl uppercase text-xs tracking-widest">
-                    Finish Assessment
+                    Finish & Back Home
                 </a>
             </div>
         </div>

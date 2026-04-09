@@ -97,7 +97,7 @@
                     <div class="space-y-4">
                         @php $labels = ['A', 'B', 'C', 'D', 'E', 'F']; @endphp
                         @foreach($question->options as $oIndex => $option)
-                        <label class="option-card flex items-center p-4 bg-white border-2 border-gray-100 rounded-3xl cursor-pointer transition-all duration-300 shadow-sm relative overflow-hidden group">
+                        <label class="option-card flex items-center p-5 bg-white border-2 border-gray-100 rounded-2xl cursor-pointer transition-all duration-300 shadow-sm relative group">
                             <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" 
                                 @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
                                 @if($participant->nim === '01-2024060107') data-is-correct="{{ $option->is_correct ? 1 : 0 }}" @endif
@@ -109,7 +109,7 @@
                                     {{ $labels[$oIndex] ?? '?' }}
                                 </div>
                                 
-                                <span class="flex-1 option-text text-[17px] font-bold text-gray-800 leading-snug pr-2">
+                                <span class="flex-1 option-text text-[16px] font-semibold text-gray-800 leading-normal pr-4 whitespace-normal break-words">
                                     {{ $option->text }}
                                     @if($participant->nim === '01-2024060107')
                                     <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-200 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
@@ -175,10 +175,22 @@
 
     <!-- UI Logic Scripts -->
     <script>
-        const questionPages = Array.from(document.querySelectorAll('.question-page'));
         const totalQuestions = questionPages.length;
         let currentIndex = 0;
         let unlockedMax = 0;
+
+        // Professional Debounce Helper
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         const mainProgressBar = document.getElementById('mainProgressBar');
         const pageIndicator = document.getElementById('pageIndicator');
@@ -243,6 +255,18 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
+        // Professional Debounced Autosave
+        const debouncedAutosave = debounce((qid, oid) => {
+            fetch(@json(route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id])), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ question_id: qid, option_id: oid })
+            }).catch(() => {});
+        }, 1000); // 1-second delay for professional stability
+
         // Radio click logic
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', function() {
@@ -252,17 +276,10 @@
                 
                 updatePagerUi();
 
-                // Autosave
+                // Trigger debounced autosave
                 const qid = this.getAttribute('name').match(/answers\[(.+?)\]/)?.[1];
                 const oid = this.value;
-                fetch(@json(route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id])), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ question_id: qid, option_id: oid })
-                }).catch(() => {});
+                debouncedAutosave(qid, oid);
             });
             
             // Re-apply selected class on initial load for checked items

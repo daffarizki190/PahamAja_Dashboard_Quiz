@@ -376,8 +376,9 @@
                     <tr>
                         <th class="px-10 py-6">Peringkat</th>
                         <th class="px-10 py-6">Identitas</th>
+                        <th class="px-10 py-6">Sesi</th>
                         <th class="px-10 py-6">Nilai</th>
-                        <th class="px-10 py-6">Status</th>
+                        <th class="px-10 py-6">Status & Durasi</th>
                         <th class="px-10 py-6 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -405,6 +406,12 @@
                         </td>
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Sesi</span>
+                                <span class="text-xs font-bold text-slate-600">{{ $participant->quizSession ? $participant->quizSession->name : '-' }}</span>
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
                                 <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Nilai</span>
                                 @if(!is_null($participant->score))
                                     <div class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-2xl">
@@ -421,13 +428,18 @@
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
                                 <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
-                                @if(!is_null($participant->score))
-                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
-                                        {{ $participant->score >= $quiz->passing_score ? 'Lulus' : 'Tidak Lulus' }}
-                                    </span>
-                                @else
-                                    <span class="text-slate-300 italic text-[10px] font-bold">Sedang Sinkronisasi...</span>
-                                @endif
+                                <div class="flex flex-col">
+                                    @if(!is_null($participant->score))
+                                        <span class="text-[10px] font-black uppercase tracking-[0.2em] {{ $participant->score >= $quiz->passing_score ? 'text-emerald-500' : 'text-rose-500' }}">
+                                            {{ $participant->score >= $quiz->passing_score ? 'Lulus' : 'Tidak Lulus' }}
+                                        </span>
+                                        @if($participant->started_at && $participant->finished_at)
+                                            <span class="text-[9px] font-bold text-slate-400 mt-1">🕒 {{ $participant->finished_at->diff($participant->started_at)->format('%im %ss') }}</span>
+                                        @endif
+                                    @else
+                                        <span class="text-slate-300 italic text-[10px] font-bold">Sedang Sinkronisasi...</span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td class="block lg:table-cell lg:px-10 pt-4 pb-2 lg:py-6 text-right">
@@ -1206,6 +1218,12 @@
                         </td>
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
+                                <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Session</span>
+                                <span class="text-xs font-bold text-slate-600">${p.session || '-'}</span>
+                            </div>
+                        </td>
+                        <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
+                            <div class="flex items-center justify-between lg:justify-start">
                                 <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Score</span>
                                 ${scoreMarkup}
                             </div>
@@ -1213,7 +1231,10 @@
                         <td class="block lg:table-cell lg:px-10 py-2 lg:py-6 border-b border-slate-50 lg:border-none">
                             <div class="flex items-center justify-between lg:justify-start">
                                 <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Status</span>
-                                ${statusMarkup}
+                                <div class="flex flex-col text-right lg:text-left">
+                                    ${statusMarkup}
+                                    ${p.duration ? `<span class="text-[9px] font-bold text-slate-400 mt-1">🕒 ${p.duration}</span>` : ''}
+                                </div>
                             </div>
                         </td>
                         <td class="block lg:table-cell lg:px-10 pt-4 pb-2 lg:py-6 text-right">

@@ -138,6 +138,11 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::delete('quiz/{quiz:slug}/participant/{participant}', [AdminController::class, 'participantDestroy'])
         ->name('participant.destroy');
 
+    // Quiz Session Management
+    Route::post('quizzes/{quiz:slug}/sessions', [AdminController::class, 'storeSession'])->name('quizzes.sessions.store');
+    Route::delete('sessions/{session}', [AdminController::class, 'destroySession'])->name('sessions.destroy');
+    Route::post('sessions/{session}/assign', [AdminController::class, 'assignParticipants'])->name('sessions.assign');
+
 });
 
 Route::get('force-seed', function (Request $request) {
@@ -149,26 +154,29 @@ Route::get('force-seed', function (Request $request) {
         abort(403, 'Unauthorized seed attempt.');
     }
 
-    // Optional: Clear existing data for "fresh" adjustment
+    // DELETED destructive truncate logic to protect Quiz, Question, Participant, and Employee data.
+    // The seeder now uses updateOrCreate() for total safety.
     if ($request->query('clear')) {
-        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
-        \App\Models\Answer::truncate();
-        \App\Models\Participant::truncate();
-        \App\Models\Option::truncate();
-        \App\Models\Question::truncate();
-        \App\Models\Quiz::truncate();
-        \App\Models\Employee::truncate();
+        // Achievement is the only 'safe' thing to reset if absolutely requested.
         \App\Models\Achievement::truncate();
-        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
     }
 
-    // Run full database seeder
-    (new \Database\Seeders\DatabaseSeeder)->run();
+    try {
+        // Run full database seeder
+        (new \Database\Seeders\DatabaseSeeder)->run();
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Full PahamAja database seeding completed!',
-        'environment' => app()->environment(),
-        'cleared' => (bool) $request->query('clear'),
-    ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'PahamAja dashboard SAFE-SYNC completed. No data was deleted.',
+            'environment' => app()->environment(),
+            'cleared_metadata' => (bool) $request->query('clear'),
+        ]);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error("FORCE-SEED FAILED: " . $e->getMessage());
+        return response()->json([
+            'status' => 'partial_success_or_error',
+            'error_message' => $e->getMessage(),
+            'message' => 'The sync process encountered a technical error but may have partially succeeded. Check the dashboard.',
+        ], 500);
+    }
 })->name('force-seed');
