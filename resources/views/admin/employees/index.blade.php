@@ -1,367 +1,552 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Directory - PahamAja Enterprise</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
-        .sidebar {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            margin: 16px;
-            height: calc(100vh - 32px);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .delay-100 { animation-delay: 100ms; }
-        .delay-200 { animation-delay: 200ms; }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="flex">
-        <!-- Sidebar -->
-        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
-                </div>
+@extends('layouts.app')
+
+@section('title', 'Data Karyawan – PahamAja')
+@section('meta_description', 'Kelola data karyawan dan pantau performa assessment')
+@section('search_placeholder', 'Cari nama atau NIM karyawan...')
+@section('show_search', true)
+
+@section('head_extra')
+<style>
+    /* ── Employee Card ── */
+    .emp-card {
+        background: #fff; border: 1px solid #E5E3F0; border-radius: 20px;
+        padding: 24px 22px; transition: all 0.2s;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+        display: flex; flex-direction: column;
+        min-width: 0;
+    }
+    .emp-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); border-color: rgba(124,58,237,0.3); }
+
+    /* ── 3D Avatar Wrapper ── */
+    .emp-avatar {
+        width: 60px; height: 60px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; font-weight: 800; color: #fff; flex-shrink: 0;
+        position: relative;
+    }
+
+    /* Clickable avatar with 3D photo effect */
+    .avatar-photo-wrap {
+        position: relative;
+        width: 60px; height: 60px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+    .avatar-photo-wrap img {
+        width: 100%; height: 100%; object-fit: cover;
+        border-radius: 50%;
+        transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s;
+        display: block;
+    }
+    /* If PNG with transparency: 3D floating effect */
+    .avatar-photo-wrap.has-photo img {
+        border-radius: 50%;
+        box-shadow:
+            0 2px 0 rgba(0,0,0,0.06),
+            0 6px 16px rgba(0,0,0,0.18),
+            0 14px 32px rgba(0,0,0,0.10),
+            0 0 0 3px rgba(255,255,255,0.9),
+            0 0 0 5px rgba(124,58,237,0.12);
+        transform: perspective(400px) rotateX(3deg) translateY(-2px) scale(1.02);
+        filter: drop-shadow(0 8px 16px rgba(80,40,180,0.22));
+    }
+    .avatar-photo-wrap.has-photo:hover img {
+        transform: perspective(400px) rotateX(6deg) translateY(-6px) scale(1.07);
+        box-shadow:
+            0 4px 0 rgba(0,0,0,0.08),
+            0 12px 28px rgba(80,40,180,0.3),
+            0 24px 48px rgba(0,0,0,0.12),
+            0 0 0 3px rgba(255,255,255,1),
+            0 0 0 6px rgba(124,58,237,0.25);
+        filter: drop-shadow(0 12px 24px rgba(80,40,180,0.35));
+    }
+    /* Zoom hint icon */
+    .avatar-photo-wrap .zoom-hint {
+        position: absolute; bottom: -2px; right: -2px;
+        width: 20px; height: 20px; border-radius: 50%;
+        background: linear-gradient(135deg, #7C3AED, #5B21B6);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 9px;
+        box-shadow: 0 2px 8px rgba(124,58,237,0.4);
+        opacity: 0; transform: scale(0.6);
+        transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none;
+    }
+    .avatar-photo-wrap:hover .zoom-hint { opacity: 1; transform: scale(1); }
+
+    .emp-name {
+        font-size: 16px; font-weight: 800; color: #1E1B4B;
+        margin-top: 18px; line-height: 1.3; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+    .emp-id { font-size: 13px; font-weight: 600; color: #9CA3AF; margin-top: 4px; }
+
+    .emp-bottom { margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+
+    /* SVG Donut text */
+    .donut-container { position: relative; width: 56px; height: 56px; }
+    .donut-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+    .donut-text {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 800;
+    }
+
+    .btn-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: #F3F2FB; border: 1px solid #E5E3F0;
+        display: flex; align-items: center; justify-content: center;
+        color: #4B5563; font-size: 11px; cursor: pointer; transition: all 0.2s;
+        text-decoration: none; border: none; padding: 0;
+    }
+    .btn-icon:hover { background: #EDE9FE; color: #7C3AED; border-color: #7C3AED; }
+    .btn-icon.text-danger:hover { background: rgba(239,68,68,0.1); color: #DC2626; border-color: rgba(239,68,68,0.2); }
+
+    .card-actions { display: flex; align-items: center; gap: 6px; }
+    .card-actions form { margin: 0; display: flex; }
+
+    /* Responsive Grid */
+    .emp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 22px;
+    }
+    @media (max-width: 640px) {
+        .emp-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Photo Lightbox ── */
+    #photoLightbox {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(10, 8, 30, 0.0);
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.3s ease, background 0.3s ease;
+    }
+    #photoLightbox.open {
+        opacity: 1; pointer-events: all;
+        background: rgba(10, 8, 30, 0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+    #photoLightbox .lb-inner {
+        position: relative;
+        transform: scale(0.7) translateY(30px);
+        transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+    }
+    #photoLightbox.open .lb-inner {
+        transform: scale(1) translateY(0);
+    }
+    #photoLightbox .lb-img {
+        max-width: 86vw; max-height: 82vh;
+        width: auto; height: auto;
+        border-radius: 24px;
+        display: block;
+        /* 3D depth shadow for photo in lightbox */
+        box-shadow:
+            0 0 0 4px rgba(255,255,255,0.12),
+            0 0 0 8px rgba(124,58,237,0.18),
+            0 30px 80px rgba(0,0,0,0.6),
+            0 8px 24px rgba(80,40,180,0.4);
+        filter: drop-shadow(0 20px 40px rgba(80,40,180,0.4));
+        transform: perspective(900px) rotateX(2deg);
+        transition: transform 0.5s cubic-bezier(.34,1.56,.64,1);
+    }
+    #photoLightbox.open .lb-img { transform: perspective(900px) rotateX(0deg); }
+    #photoLightbox .lb-name {
+        margin-top: 20px;
+        text-align: center;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 800;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        letter-spacing: 0.02em;
+    }
+    #photoLightbox .lb-sub {
+        text-align: center;
+        color: rgba(255,255,255,0.55);
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+    #photoLightbox .lb-close {
+        position: absolute; top: -18px; right: -18px;
+        width: 40px; height: 40px; border-radius: 50%;
+        background: rgba(255,255,255,0.15);
+        border: 1.5px solid rgba(255,255,255,0.3);
+        color: #fff; font-size: 16px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s;
+        backdrop-filter: blur(8px);
+    }
+    #photoLightbox .lb-close:hover {
+        background: rgba(239,68,68,0.7);
+        border-color: rgba(239,68,68,0.5);
+        transform: scale(1.1);
+    }
+    /* Floating particles in lightbox */
+    #photoLightbox .lb-glow {
+        position: absolute; border-radius: 50%;
+        background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
+        pointer-events: none;
+    }
+</style>
+@endsection
+
+@section('content')
+<!-- Header Area -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:center; gap:24px;">
+        <h1 style="font-size:26px; font-weight:900; color:#1E1B4B; margin:0;">Direktori Karyawan</h1>
+        <!-- Group Illustration placeholder (matches the mock up feel) -->
+        <div style="height:60px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+            <svg viewBox="0 0 200 60" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Decorative people/group illustration -->
+                <!-- Left person -->
+                <circle cx="40" cy="20" r="10" fill="#FDE68A"/>
+                <rect x="25" y="32" width="30" height="28" rx="8" fill="#3B82F6"/>
+                <!-- Center person -->
+                <circle cx="100" cy="15" r="12" fill="#FCA5A5"/>
+                <rect x="80" y="29" width="40" height="31" rx="10" fill="#7C3AED"/>
+                <!-- Right person -->
+                <circle cx="160" cy="22" r="10" fill="#A78BFA"/>
+                <rect x="145" y="34" width="30" height="26" rx="8" fill="#10B981"/>
+                <!-- Connecting lines/charts -->
+                <path d="M50 40 L80 20 L110 35 L140 15" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="80" cy="20" r="4" fill="#F59E0B"/>
+                <circle cx="110" cy="35" r="4" fill="#F59E0B"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Export & Add actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
+        <a href="{{ route('admin.reports.global-excel') }}" class="btn btn-ghost" title="Export Excel" style="padding:10px 14px; border-radius:12px;">
+            <i class="fa-solid fa-file-excel" style="color:#10B981; font-size:16px;"></i>
+        </a>
+        <a href="{{ route('admin.reports.global-pdf') }}" class="btn btn-ghost" title="Export PDF" style="padding:10px 14px; border-radius:12px;">
+            <i class="fa-solid fa-file-pdf" style="color:#EF4444; font-size:16px;"></i>
+        </a>
+        <button onclick="openRegisterModal()" class="btn btn-primary" style="padding:10px 20px; font-size:14px; border-radius:12px;">
+            <i class="fa-solid fa-plus"></i> <span style="margin-left:6px;">Tambah</span>
+        </button>
+    </div>
+</div>
+
+<!-- Content Info -->
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px;" class="fade-up">
+    <div>
+        <p style="font-size:14px; font-weight:600; color:#6B7280; margin:0;">Total <span style="color:#7C3AED;">{{ count($employees) }}</span> Karyawan Terdaftar</p>
+    </div>
+</div>
+    <!-- Dropdowns like reference -->
+    <div style="display:flex; gap:12px;">
+        <div style="position:relative;">
+            <select class="form-input" style="padding:12px 38px 12px 20px; border-radius:12px; border:none; background:#6D28D9; color:#fff; font-size:14px; font-weight:700; cursor:pointer; appearance:none;">
+                <option>Departemen</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); color:#fff; font-size:11px; pointer-events:none;"></i>
+        </div>
+        <div style="position:relative;">
+            <select class="form-input" style="padding:12px 38px 12px 20px; border-radius:12px; border:1px solid #E5E3F0; background:#EAE7F2; color:#1E1B4B; font-size:14px; font-weight:700; cursor:pointer; appearance:none;">
+                <option>Performa</option>
+            </select>
+            <i class="fa-solid fa-chevron-down" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); color:#6B7280; font-size:11px; pointer-events:none;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Grid -->
+<div class="emp-grid fade-up" id="empGrid">
+    @forelse($employees as $idx => $employee)
+    @php
+        $avg = min(100, max(0, $statsByNim[$employee->nim]['avg'] ?? 0));
+        $initials = strtoupper(mb_substr($employee->name, 0, 1)) . (str_contains($employee->name, ' ') ? strtoupper(mb_substr(explode(' ', $employee->name)[1], 0, 1)) : '');
+        
+        // Emulate reference colors
+        $palette = [
+            ['bg' => '#3B82F6', 'ring' => '#3B82F6'], // Blue
+            ['bg' => '#8B5CF6', 'ring' => '#8B5CF6'], // Purple
+            ['bg' => '#10B981', 'ring' => '#10B981'], // Green
+            ['bg' => '#F97316', 'ring' => '#F97316'], // Orange
+            ['bg' => '#EF4444', 'ring' => '#EF4444'], // Red
+            ['bg' => '#06B6D4', 'ring' => '#06B6D4'], // Cyan
+        ];
+        $theme = $palette[$idx % count($palette)];
+        
+        // Emulate reference emojis
+        $emojis = ['🌟','🏆','📈','🎯','⚙️','💡','📋','🚀'];
+        $emoji = $emojis[$idx % count($emojis)];
+
+        // SVG Ring Math
+        $r = 23;
+        $circ = 2 * pi() * $r;
+        $offset = $circ - ($avg / 100 * $circ);
+    @endphp
+    <div class="emp-card card-3d" data-name="{{ strtolower($employee->name) }}" data-nim="{{ strtolower($employee->nim) }}" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.1">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            @if($employee->avatar)
+            <div class="avatar-photo-wrap has-photo"
+                 onclick="openPhotoLightbox('{{ asset('storage/' . $employee->avatar) }}', '{{ addslashes($employee->name) }}', '{{ addslashes($employee->position) }} · {{ addslashes($employee->department) }}')"
+                 title="Klik untuk memperbesar foto">
+                <img src="{{ asset('storage/' . $employee->avatar) }}" alt="{{ $employee->name }}" loading="lazy">
+                <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
             </div>
-            <nav class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-medium">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-semibold">Employee Insights</span>
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-10 max-w-7xl mx-auto">
-            <header class="flex justify-between items-center mb-10">
-                <div class="flex items-center gap-4">
-                    <a href="{{ route('admin.dashboard') }}" class="bg-white p-3 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all shadow-sm group">
-                        <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    </a>
-                    <div>
-                        <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">Employee Directory</h2>
-                        <p class="text-slate-500 mt-4 font-medium">Comprehensive profile management and assessment history.</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('admin.reports.global-pdf') }}" class="bg-rose-600 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        <span>Global PDF Report</span>
-                    </a>
-                    <a href="{{ route('admin.reports.global-excel') }}" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span>Global Excel Report</span>
-                    </a>
-                    <button onclick="openRegisterModal()" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 hover:bg-black transition-all">
-                        Register Employee
-                    </button>
-                </div>
-            </header>
-
-            @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-8 flex items-center justify-between animate-fade-in font-bold text-sm">
-                {{ session('success') }}
+            @else
+            <div class="emp-avatar" style="background:{{ $theme['bg'] }}; box-shadow:0 4px 14px {{ $theme['bg'] }}40; display:flex; align-items:center; justify-content:center;">
+                {{ $initials }}
             </div>
             @endif
-
-            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name & Position</th>
-                            <th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee ID / NIM</th>
-                            <th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Performance</th>
-                            <th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse($employees as $employee)
-                        <tr class="hover:bg-slate-50/50 transition-all border-l-4 border-l-transparent hover:border-l-indigo-600">
-                            <td class="px-8 py-6">
-                                <p class="text-sm font-black text-slate-800 tracking-tight">{{ $employee->name }}</p>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest leading-none">{{ $employee->department }} • {{ $employee->position }}</p>
-                            </td>
-                            <td class="px-8 py-6">
-                                <span class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-black">{{ $employee->nim }}</span>
-                            </td>
-                            <td class="px-8 py-6">
-                                <div class="flex items-center gap-3">
-                                    @php($avg = min(100, max(0, $statsByNim[$employee->nim]['avg'] ?? 0)))
-                                    <span class="text-sm font-black text-slate-700">{{ number_format($avg, 1) }}%</span>
-                                    <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-emerald-500 avg-bar" data-avg="{{ $avg }}"></div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-8 py-6 text-right flex items-center justify-end gap-2">
-                                <button type="button" onclick="openEditModalFromButton(this)" data-employee='@json($employee)' class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition-all">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </button>
-                                <form action="{{ route('admin.employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus karyawan ini dari database?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-rose-600 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition-all">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </form>
-                                <a href="{{ route('admin.employees.show', $employee->id) }}" class="text-slate-600 bg-slate-100 hover:bg-slate-200 p-2 rounded-lg transition-all ml-2" title="View Growth Report">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                </a>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="px-8 py-20 text-center text-slate-400 font-bold italic">No employees registered.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="card-actions">
+                <a href="{{ route('admin.employees.show', $employee->id) }}" class="btn-icon" title="Lihat Analitik"><i class="fa-solid fa-chart-column"></i></a>
+                <button onclick="openEditModalFromButton(this)" data-employee='@json($employee)' class="btn-icon" title="Edit"><i class="fa-solid fa-pen" style="font-size:11px;"></i></button>
+                <form action="{{ route('admin.employees.destroy', $employee->id) }}" method="POST" 
+                      onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Karyawan', 'Anda yakin ingin menghapus karyawan ini? Seluruh data riwayat kuis dan nilai yang bersangkutan akan ikut terhapus secara permanen.', 'danger', () => this.submit())">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn-icon text-danger" title="Hapus"><i class="fa-solid fa-trash" style="font-size:11px;"></i></button>
+                </form>
             </div>
+        </div>
 
-            <div class="mt-10 bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                <div class="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-800 tracking-tight uppercase">Analisis Perkembangan Nilai</p>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Performance Growth Tracker</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-200">
-                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                <th class="px-8 py-5">Karyawan</th>
-                                <th class="px-8 py-5">Jumlah Kuis</th>
-                                <th class="px-8 py-5">Rata-rata</th>
-                                <th class="px-8 py-5">Terakhir</th>
-                                <th class="px-8 py-5">Perubahan</th>
-                                <th class="px-8 py-5 text-right">Detail</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @forelse($growthRows as $row)
-                                <tr class="hover:bg-indigo-50/30 transition-all">
-                                    <td class="px-8 py-5">
-                                        <p class="text-slate-900 font-black">{{ $row['name'] }}</p>
-                                        <p class="text-slate-400 text-xs font-bold">{{ $row['nim'] }} • {{ $row['department'] }}</p>
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $row['attempts'] }}</span>
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['avg'], 1) }}%</span>
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        @if(!is_null($row['last']))
-                                            <span class="text-slate-800 font-black">{{ number_format($row['last'], 0) }}%</span>
-                                        @else
-                                            <span class="text-slate-300 font-bold">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        @if(!is_null($row['delta']))
-                                            @if($row['delta'] > 0)
-                                                <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black">+{{ number_format($row['delta'], 1) }}</span>
-                                            @elseif($row['delta'] < 0)
-                                                <span class="inline-flex items-center gap-2 bg-rose-50 text-rose-700 px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['delta'], 1) }}</span>
-                                            @else
-                                                <span class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ number_format($row['delta'], 1) }}</span>
-                                            @endif
-                                        @else
-                                            <span class="text-slate-300 font-bold">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-8 py-5 text-right">
-                                        <a href="{{ route('admin.employees.show', $row['id']) }}" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">
-                                            <span>Detail</span>
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-8 py-20 text-center text-slate-400 font-bold italic">Belum ada data.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
+        <!-- Info -->
+        <div class="emp-name" title="{{ $employee->name }}">{{ $employee->name }}</div>
+        <div class="emp-id">ID {{ $employee->nim }}</div>
 
-    <!-- Edit Employee Modal -->
-    <div id="editModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
-            <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-xl font-black text-slate-800 tracking-tight">Edit Employee</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+        <!-- Progress ring & Emoji -->
+        <div class="emp-bottom">
+            <div class="donut-container">
+                <svg viewBox="0 0 56 56" class="donut-svg">
+                    <circle cx="28" cy="28" r="{{ $r }}" fill="none" stroke="#F3F2FB" stroke-width="6"/>
+                    <circle cx="28" cy="28" r="{{ $r }}" fill="none" stroke="{{ $theme['ring'] }}" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{ $circ }}" stroke-dashoffset="{{ $offset }}"/>
+                </svg>
+                <div class="donut-text" style="color:{{ $theme['ring'] }}">{{ number_format($avg, 0) }}%</div>
             </div>
-            <form id="editForm" method="POST" class="p-8 space-y-6">
-                @csrf
-                @method('PUT')
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
-                    <input type="text" name="name" id="edit_name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Department</label>
-                        <input type="text" name="department" id="edit_dept" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Position</label>
-                        <input type="text" name="position" id="edit_pos" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Status</label>
-                    <select name="status" id="edit_status" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
-                    Save Changes
-                </button>
-            </form>
+            <!-- 3D style Emoji -->
+            <div style="font-size:46px; filter:drop-shadow(2px 6px 8px rgba(0,0,0,0.15)); line-height:1;">
+                {{ $emoji }}
+            </div>
         </div>
     </div>
-
-    <!-- Register Employee Modal -->
-    <div id="registerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
-            <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-xl font-black text-slate-800 tracking-tight">New Employee</h3>
-                <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-slate-600 transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <form action="{{ route('admin.employees.store') }}" method="POST" class="p-8 space-y-6">
-                @csrf
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
-                    <input type="text" name="name" required placeholder="e.g. John Doe" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Employee ID (NIM)</label>
-                    <input type="text" name="nim" required placeholder="e.g. CP-2024-001" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Department</label>
-                        <input type="text" name="department" required placeholder="e.g. IT" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Position</label>
-                        <input type="text" name="position" required placeholder="e.g. Staff" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all">
-                    Register Member
-                </button>
-            </form>
-        </div>
+    @empty
+    <div style="grid-column:1/-1; text-align:center; padding:80px 20px;">
+        <div style="font-size:60px; margin-bottom:16px;">👤</div>
+        <div style="font-size:16px; color:#6B7280; font-weight:600; margin-bottom:16px;">Belum ada karyawan terdaftar</div>
+        <button onclick="openRegisterModal()" class="btn btn-primary" style="font-size:14px; padding:12px 24px;">
+            <i class="fa-solid fa-plus"></i> <span style="margin-left:8px;">Tambah Karyawan</span>
+        </button>
     </div>
+    @endforelse
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.avg-bar[data-avg]').forEach((el) => {
-                const raw = el.dataset.avg;
-                const value = Number.parseFloat(raw ?? '0');
-                const clamped = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
-                el.style.width = `${clamped}%`;
-            });
-        });
+<!-- Edit Modal -->
+<div id="editModal" class="modal-overlay" onclick="if(event.target===this) closeEditModal()">
+    <div class="modal-box" style="max-width:480px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+            <div>
+                <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin-bottom:4px;">Edit Karyawan</h3>
+                <p style="font-size:12px; color:#6B7280;">Perbarui data karyawan</p>
+            </div>
+            <button onclick="closeEditModal()" class="btn btn-ghost" style="padding:8px 10px;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form id="editForm" method="POST" class="space-y-4" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                <div id="editAvatarPreview" style="width:70px; height:70px; border-radius:50%; background:#F3F2FB; display:flex; align-items:center; justify-content:center; font-size:24px; color:#7C3AED; border:2px solid #E5E3F0; overflow:hidden;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="flex:1;">
+                    <label class="form-label">Foto Profil (Optional)</label>
+                    <input type="file" name="avatar" class="form-input" accept="image/*" onchange="previewImage(this, 'editAvatarPreview')">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Nama Lengkap</label>
+                <input type="text" name="name" id="edit_name" required class="form-input" placeholder="Nama karyawan...">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div>
+                    <label class="form-label">Departemen</label>
+                    <input type="text" name="department" id="edit_dept" required class="form-input" placeholder="Departemen...">
+                </div>
+                <div>
+                    <label class="form-label">Posisi</label>
+                    <input type="text" name="position" id="edit_pos" required class="form-input" placeholder="Posisi...">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Status</label>
+                <select name="status" id="edit_status" class="form-input">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:13px;">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+            </button>
+        </form>
+    </div>
+</div>
 
-        function openRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
+<!-- Register Modal -->
+<div id="registerModal" class="modal-overlay" onclick="if(event.target===this) closeRegisterModal()">
+    <div class="modal-box" style="max-width:480px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+            <div>
+                <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin-bottom:4px;">Tambah Karyawan</h3>
+                <p style="font-size:12px; color:#6B7280;">Daftarkan karyawan baru ke sistem</p>
+            </div>
+            <button onclick="closeRegisterModal()" class="btn btn-ghost" style="padding:8px 10px;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form action="{{ route('admin.employees.store') }}" method="POST" class="space-y-4" enctype="multipart/form-data">
+            @csrf
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                <div id="regAvatarPreview" style="width:70px; height:70px; border-radius:50%; background:#F3F2FB; display:flex; align-items:center; justify-content:center; font-size:24px; color:#7C3AED; border:2px solid #E5E3F0; overflow:hidden;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div style="flex:1;">
+                    <label class="form-label">Foto Profil (Optional)</label>
+                    <input type="file" name="avatar" class="form-input" accept="image/*" onchange="previewImage(this, 'regAvatarPreview')">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Nama Lengkap</label>
+                <input type="text" name="name" required class="form-input" placeholder="Contoh: Budi Santoso">
+            </div>
+            <div>
+                <label class="form-label">ID Karyawan (NIM)</label>
+                <input type="text" name="nim" required class="form-input" placeholder="Contoh: CP-2024-001">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div>
+                    <label class="form-label">Departemen</label>
+                    <input type="text" name="department" required class="form-input" placeholder="Contoh: IT">
+                </div>
+                <div>
+                    <label class="form-label">Posisi</label>
+                    <input type="text" name="position" required class="form-input" placeholder="Contoh: Staff">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:13px;">
+                <i class="fa-solid fa-user-plus"></i> <span style="margin-left:6px;">Daftarkan Karyawan</span>
+            </button>
+        </form>
+    </div>
+</div>
 
-        function closeRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
+<!-- ── Photo Lightbox Modal ── -->
+<div id="photoLightbox" onclick="if(event.target===this) closePhotoLightbox()">
+    <!-- Glow blobs -->
+    <div class="lb-glow" style="width:400px; height:400px; top:-100px; left:-80px; opacity:0.6;"></div>
+    <div class="lb-glow" style="width:300px; height:300px; bottom:-60px; right:-60px; opacity:0.4;"></div>
+    <div class="lb-inner">
+        <button class="lb-close" onclick="closePhotoLightbox()" title="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="lbImg" class="lb-img" src="" alt="Foto Karyawan">
+        <div class="lb-name" id="lbName"></div>
+        <div class="lb-sub" id="lbSub"></div>
+    </div>
+</div>
+@endsection
 
-        function openEditModal(employee) {
-            const modal = document.getElementById('editModal');
-            const form = document.getElementById('editForm');
-            
-            // Set values
-            document.getElementById('edit_name').value = employee.name;
-            document.getElementById('edit_dept').value = employee.department;
-            document.getElementById('edit_pos').value = employee.position;
-            document.getElementById('edit_status').value = employee.status || 'Active';
-            
-            // Set dynamic action URL
-            form.action = `/admin/employees/${employee.id}`;
-            
-            // Show modal
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function openEditModalFromButton(buttonEl) {
-            const raw = buttonEl?.dataset?.employee;
-            if (!raw) return;
-            const employee = JSON.parse(raw);
-            openEditModal(employee);
-        }
-
-        function closeEditModal() {
-            const modal = document.getElementById('editModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target == modal) {
-                closeEditModal();
-            }
-        }
-    </script>
+@section('scripts')
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
-</body>
-</html>
+<script>
+// Search
+window.addEventListener('pahamaja-search', function (e) {
+    const q = e.detail.toLowerCase().trim();
+    document.querySelectorAll('#empGrid .emp-card').forEach(card => {
+        const name = card.dataset.name ? card.dataset.name.toLowerCase() : '';
+        const nim  = card.dataset.nim ? card.dataset.nim.toLowerCase() : '';
+        const dept = card.querySelector('.emp-id + div') ? card.querySelector('.emp-id + div').textContent.toLowerCase() : '';
+        const pos  = card.querySelector('.badge-aktif') ? card.querySelector('.badge-aktif').textContent.toLowerCase() : '';
+        
+        const matches = !q || name.includes(q) || nim.includes(q) || dept.includes(q) || pos.includes(q);
+        card.style.display = matches ? '' : 'none';
+    });
+});
+
+// Image Preview
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ── Photo Lightbox ──
+function openPhotoLightbox(src, name, sub) {
+    const lb   = document.getElementById('photoLightbox');
+    const img  = document.getElementById('lbImg');
+    const nm   = document.getElementById('lbName');
+    const sb   = document.getElementById('lbSub');
+    img.src    = src;
+    nm.textContent = name || '';
+    sb.textContent = sub  || '';
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closePhotoLightbox() {
+    document.getElementById('photoLightbox').classList.remove('open');
+    document.body.style.overflow = '';
+    // Clear src after animation
+    setTimeout(() => {
+        const img = document.getElementById('lbImg');
+        if (img) img.src = '';
+    }, 350);
+}
+// ESC key closes lightbox
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closePhotoLightbox();
+});
+
+// Modal functions
+function openRegisterModal() {
+    document.getElementById('regAvatarPreview').innerHTML = '<i class="fa-solid fa-user"></i>';
+    document.getElementById('registerModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeRegisterModal() {
+    document.getElementById('registerModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function openEditModal(employee) {
+    document.getElementById('edit_name').value   = employee.name;
+    document.getElementById('edit_dept').value   = employee.department;
+    document.getElementById('edit_pos').value    = employee.position;
+    document.getElementById('edit_status').value = employee.status || 'Active';
+    document.getElementById('editForm').action   = `/admin/employees/${employee.id}`;
+    
+    // Avatar Preview in Edit
+    const preview = document.getElementById('editAvatarPreview');
+    if (employee.avatar) {
+        preview.innerHTML = `<img src="/storage/${employee.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else {
+        preview.innerHTML = '<i class="fa-solid fa-user"></i>';
+    }
+
+    document.getElementById('editModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function openEditModalFromButton(btn) {
+    const raw = btn?.dataset?.employee;
+    if (!raw) return;
+    openEditModal(JSON.parse(raw));
+}
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+</script>
+@endsection

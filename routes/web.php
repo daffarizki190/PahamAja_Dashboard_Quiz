@@ -5,9 +5,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\AiQuizController;
 use App\Http\Controllers\GlobalReportController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\DevController;
 use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\QuizAnalyticsController;
 use App\Models\Quiz;
 use Database\Seeders\EmployeeSeeder;
 use Illuminate\Http\Request;
@@ -26,11 +28,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect()->route('admin.dashboard');
+    return view('welcome');
 });
 
 Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.login');
-Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:login')->name('admin.login.submit');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 Route::post('/dev/logout', [AdminAuthController::class, 'logout'])->name('dev.logout');
 
@@ -67,7 +69,13 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
     Route::get('{quiz:slug}', [QuizController::class, 'showJoinForm'])->name('join');
 
     // Process joining the quiz
-    Route::post('{quiz:slug}/join', [QuizController::class, 'joinQuiz'])->name('join.process');
+    Route::post('{quiz:slug}/join', [QuizController::class, 'joinQuiz'])->middleware('throttle:join-quiz')->name('join.process');
+
+    // Confirm profile before starting
+    Route::get('{quiz:slug}/confirm/{employee}', [QuizController::class, 'confirmProfile'])->name('confirm-profile');
+
+    // Start quiz after confirmation
+    Route::post('{quiz:slug}/start/{employee}', [QuizController::class, 'startQuiz'])->name('start');
 
     // Page to take the quiz
     Route::get('{quiz:slug}/participant/{participant}/take', [QuizController::class, 'takeQuiz'])->name('take');
@@ -82,6 +90,9 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
 
     // Result page after submission
     Route::get('{quiz:slug}/participant/{participant}/result', [QuizController::class, 'showResult'])->name('result');
+
+    // Disqualify and restart route
+    Route::get('{quiz:slug}/disqualify', [QuizController::class, 'disqualify'])->name('disqualify');
 });
 
 // Admin Management & Dashboard Routes
@@ -100,8 +111,9 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('ai-quiz/generate', function () {
         return redirect()->route('admin.quizzes.ai-create');
     });
-    Route::post('ai-quiz/generate', [AiQuizController::class, 'aiGenerate'])->name('quizzes.ai-generate');
+    Route::post('ai-quiz/generate', [AiQuizController::class, 'aiGenerate'])->middleware('throttle:ai-generate')->name('quizzes.ai-generate');
     Route::post('ai-quiz/store', [AiQuizController::class, 'aiStore'])->name('quizzes.ai-store');
+    Route::post('quizzes/suggest-explanation', [AiQuizController::class, 'suggestExplanation'])->middleware('throttle:ai-generate')->name('quizzes.suggest-explanation');
 
     Route::get('quizzes/{quiz:slug}', [AdminController::class, 'show'])->name('quizzes.show');
 
@@ -110,11 +122,11 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::delete('quizzes/{quiz}', [AdminController::class, 'destroy'])->name('quizzes.destroy');
 
     // Real-time Monitoring Dashboard for a specific Quiz
-    Route::get('quiz/{quiz:slug}/dashboard', [QuizController::class, 'showDashboard'])
+    Route::get('quiz/{quiz:slug}/dashboard', [QuizAnalyticsController::class, 'showDashboard'])
         ->name('quiz.dashboard');
 
     // Export Excel Route
-    Route::get('quiz/{quiz:slug}/export', [QuizController::class, 'exportExcel'])
+    Route::get('quiz/{quiz:slug}/export', [QuizAnalyticsController::class, 'exportExcel'])
         ->name('quiz.export');
 
     // Export PDF Route
@@ -132,12 +144,30 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('employees/{employee}', [AdminController::class, 'employeeShow'])->name('employees.show');
     Route::put('employees/{employee}', [AdminController::class, 'employeeUpdate'])->name('employees.update');
     Route::delete('employees/{employee}', [AdminController::class, 'employeeDestroy'])->name('employees.destroy');
+    Route::get('global-report', [GlobalReportController::class, 'index'])->name('reports.index');
     Route::get('global-report/excel', [GlobalReportController::class, 'exportExcel'])->name('reports.global-excel');
     Route::get('global-report/pdf', [GlobalReportController::class, 'exportPdf'])->name('reports.global-pdf');
 
-    // Participant Management
+    // Settings
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::get('settings/backup', [\App\Http\Controllers\BackupController::class, 'download'])->name('settings.backup');
+
+    // Participant Management (Fixed Routing)
     Route::get('quiz/{quiz:slug}/participant/{participant}/answers', [AdminController::class, 'participantAnswers'])
         ->name('participant.answers');
+    
+    // Essay Review & Grading
+    Route::get('quiz/{quiz:slug}/participant/{participant}/review', [AdminController::class, 'reviewEssay'])
+        ->name('participant.review');
+    Route::post('quiz/{quiz:slug}/participant/{participant}/review', [AdminController::class, 'storeReview'])
+        ->name('participant.review.store');
+    
+    // Fail-safe redirect for accidental GET requests to the base participant URL
+    Route::get('quiz/{quiz:slug}/participant/{participant}', function($quiz, $participant) {
+        return redirect()->route('admin.participant.answers', ['quiz' => $quiz, 'participant' => $participant]);
+    });
+
     Route::delete('quiz/{quiz:slug}/participant/{participant}', [AdminController::class, 'participantDestroy'])
         ->name('participant.destroy');
 
@@ -149,9 +179,9 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('force-seed', function (\Illuminate\Http\Request $request) {
         // Security: Allow in local or with a specific token in production
         $token = $request->query('token');
-        $secret = 'PahamAjaSeed2026';
+        $secret = env('SEED_TOKEN');
 
-        if (! app()->environment('local') && $token !== $secret) {
+        if (! app()->environment('local') && ($secret === null || $token !== $secret)) {
             abort(403, 'Unauthorized seed attempt.');
         }
 

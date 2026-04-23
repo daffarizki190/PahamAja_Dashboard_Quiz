@@ -2,359 +2,541 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $quiz->title }} - Kuis</title>
-    <!-- Google Fonts: Inter & Outfit for header -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ $quiz->title }} – Ikuti kuis sekarang">
+    <title>{{ $quiz->title }} – PahamAja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; }
-        .font-outfit { font-family: 'Outfit', sans-serif; }
-        .option-card { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .option-card:hover { border-color: #d1d5db; transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .option-card:active { transform: scale(0.98); }
-        .option-card.selected { 
-            border-color: #10b981; 
-            background-color: #ecfdf5; 
-            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3), inset 0 0 0 1px #10b981; 
-            transform: scale(1.02);
-            z-index: 10;
+        :root {
+            --purple: #7C3AED;
+            --purple-light: #A78BFA;
+            --bg: #EEEDF5;
+            --white: #FFFFFF;
+            --border: #E5E3F0;
+            --text: #1E1B4B;
+            --muted: #6B7280;
         }
-        .progress-bar { transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        /* ── HEADER ── */
+        .quiz-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
-        @keyframes popIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            70% { transform: scale(1.05); }
-            100% { transform: scale(1); opacity: 1; }
+        .quiz-logo { display: flex; align-items: center; gap: 10px; }
+        .quiz-logo-icon {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 900; font-style: italic; color: #fff;
         }
-        .animate-pop-in {
-            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .quiz-logo-name { font-size: 15px; font-weight: 800; color: var(--text); }
+
+        .quiz-title-center {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 15px; font-weight: 800; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;
         }
-        
-        input[type="radio"]:checked + .radio-custom {
-            border-color: #10b981;
-            background-color: #10b981;
-            box-shadow: inset 0 0 0 3px white;
+
+        .timer-pill {
+            display: flex; align-items: center; gap: 7px;
+            background: #EF4444; color: #fff;
+            border-radius: 10px; padding: 8px 16px;
+            font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums;
         }
-        
-        /* Mobile Optimization */
+        .timer-pill.warning { background: #F59E0B; }
+        .timer-pill.safe    { background: #EF4444; }
+        @keyframes timerPulse { 0%,100%{opacity:1;} 50%{opacity:.65;} }
+        .timer-pill.danger  { animation: timerPulse 1s ease-in-out infinite; }
+
+        /* ── PROGRESS ── */
+        .progress-bar-wrap {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 32px;
+        }
+        .progress-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .progress-track { height: 6px; background: #E5E3F0; border-radius: 99px; overflow: hidden; }
+        .progress-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#7C3AED,#4F46E5); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(124,58,237,0.3); }
+
+        /* ── MAIN LAYOUT ── */
+        .quiz-body { padding: 32px; max-width: 800px; margin: 0 auto; }
+
+        /* ── ILLUSTRATION ── */
+        .question-illustration {
+            display: flex; justify-content: center;
+            margin-bottom: -20px; position: relative; z-index: 1;
+        }
+        .question-illustration img { width: 100px; height: 100px; }
+
+        /* ── QUESTION CARD ── */
+        .q-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px 40px 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .q-text {
+            font-size: 19px; font-weight: 800; color: var(--text);
+            line-height: 1.55; text-align: center; margin-bottom: 32px;
+        }
+
+        /* ── OPTIONS 2x2 GRID ── */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .option-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 18px;
+            border: 1.5px solid var(--border); border-radius: 12px;
+            cursor: pointer; transition: all 0.18s;
+            background: var(--white);
+        }
+        .option-item:hover { border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.04); }
+        .option-item.selected {
+            border-color: #7C3AED;
+            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+        }
+        .option-item input[type=radio] { display: none; }
+        .option-bubble {
+            width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800;
+            background: #F3F2FB; color: var(--muted); border: 1.5px solid var(--border);
+            transition: all 0.18s;
+        }
+        .option-item.selected .option-bubble {
+            background: rgba(255,255,255,0.25); color: #fff; border-color: transparent;
+        }
+        .option-label { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; padding-top: 4px; flex: 1; }
+        .option-item.selected .option-label { color: #fff; }
+
+        /* ── ESSAY STYLES ── */
+        .essay-textarea {
+            width: 100%; border-radius: 16px; border: 2px solid var(--border);
+            padding: 20px; font-family: inherit; font-size: 15px; font-weight: 600;
+            color: var(--text); background: #F9FAFB; transition: all 0.2s;
+            resize: vertical; min-height: 160px; outline: none;
+        }
+        .essay-textarea:focus { border-color: var(--purple); background: #fff; box-shadow: 0 0 0 4px rgba(124,58,237,0.1); }
+        .essay-status { font-size: 11px; font-weight: 700; color: var(--purple); margin-top: 8px; display: none; }
+
+        /* ── NAVIGATION ── */
+        .nav-buttons { display: flex; justify-content: center; gap: 14px; margin-top: 28px; }
+        .btn-nav {
+            display: flex; align-items: center; gap: 8px; padding: 12px 28px;
+            border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.18s; font-family: inherit;
+        }
+        .btn-prev {
+            background: var(--white); color: var(--text);
+            border: 1.5px solid var(--border);
+        }
+        .btn-prev:hover { border-color: #7C3AED; color: #7C3AED; }
+        .btn-next {
+            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            color: #fff; border: none;
+            box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+        }
+        .btn-next:hover { box-shadow: 0 6px 20px rgba(124,58,237,0.5); transform: translateY(-1px); }
+        .btn-submit {
+            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            color: #fff; border: none;
+            box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+        }
+        .btn-submit:hover { box-shadow: 0 6px 20px rgba(124,58,237,0.5); transform: translateY(-1px); }
+
+        /* ── SUBMIT MODAL ── */
+        .modal-bg { display:none; position:fixed; inset:0; z-index:9999; background:rgba(30,27,75,0.5); backdrop-filter:blur(6px); align-items:center; justify-content:center; }
+        .modal-bg.open { display:flex; }
+        .modal-box { background:#fff; border:1px solid #E5E3F0; border-radius:20px; padding:32px; max-width:420px; width:90%; animation:fadeUp .3s ease; box-shadow:0 20px 60px rgba(30,27,75,0.15); }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+
         @media (max-width: 640px) {
-            .question-text { font-size: 1.5rem; line-height: 1.2; }
-            .option-text { font-size: 0.95rem; }
+            .quiz-body { padding: 20px 16px; }
+            .q-card { padding: 24px 20px; }
+            .q-text { font-size: 16px; }
+            .options-grid { grid-template-columns: 1fr; }
+            .quiz-title-center { position: static; transform: none; display: flex; align-items: center; }
+            .test-title { display: none; }
+            .quiz-logo-name { display: none; }
+            .test-user { font-size: 11px !important; margin-top: 0 !important; }
+            .nav-buttons { flex-direction: column; gap: 12px; }
+            .btn-nav { width: 100%; justify-content: center; padding: 14px 20px; font-size: 15px; }
+            .modal-box { padding: 24px; width: 95%; }
         }
+        
+        /* Modal Custom */
+        .pa-modal-overlay { position: fixed; inset: 0; background: rgba(30,27,75,0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; }
+        .pa-modal-overlay.open { display: flex; }
+        .pa-modal {
+            background: #fff; border-radius: 24px; padding: 32px; width: 100%; max-width: 440px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.2); animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); text-align: center;
+        }
+        @keyframes modalIn { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .pa-modal-icon { width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; background: rgba(245,158,11,0.12); color: #F59E0B; }
+        .pa-modal-title { font-size: 20px; font-weight: 900; color: #1E1B4B; margin-bottom: 12px; }
+        .pa-modal-text { font-size: 14px; color: #6B7280; line-height: 1.6; margin-bottom: 28px; }
+        /* ── APPLE DOTS WAVE ── */
+        @keyframes dotsWave {
+            0%, 60%, 100% { transform: translateY(0) scale(1);   opacity: 0.35; }
+            30%            { transform: translateY(-9px) scale(1.15); opacity: 1; }
+        }
+        .dots-wave { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+        .dots-wave span {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: currentColor; animation: dotsWave 1.2s ease-in-out infinite;
+        }
+        .dots-wave span:nth-child(1) { animation-delay: 0s; }
+        .dots-wave span:nth-child(2) { animation-delay: 0.15s; }
+        .dots-wave span:nth-child(3) { animation-delay: 0.3s; }
+        .dots-wave span:nth-child(4) { animation-delay: 0.45s; }
+        .dots-wave.white { color: #fff; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 overflow-x-hidden selection:bg-emerald-100 selection:text-emerald-900">
+<body>
 
-    <!-- Slim Modern Progress Header -->
-    <div class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div class="h-1 bg-gray-100 w-full overflow-hidden">
-            <div id="mainProgressBar" class="h-full bg-emerald-500 progress-bar" style="width: 0%"></div>
-        </div>
-        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <button type="button" onclick="window.location.href='{{ route('quiz.join', $quiz->slug) }}'" class="p-2 -ml-2 text-gray-400 hover:text-gray-900 transition-colors" aria-label="Tutup">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <div class="text-center flex-1">
-                <span id="headerTimer" class="font-outfit font-extrabold text-sm tracking-tight text-gray-900 tabular-nums"></span>
-            </div>
-            <div class="flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span class="text-[11px] font-black text-emerald-700 uppercase tracking-widest tabular-nums" id="pageIndicatorTop">1/{{ $quiz->questions->count() }}</span>
-            </div>
+<!-- Header -->
+<header class="quiz-header">
+    <div class="quiz-logo">
+        <div class="quiz-logo-icon">P</div>
+        <div class="quiz-logo-name">Paham<span style="color:#7C3AED">Aja</span></div>
+    </div>
+
+    <div class="quiz-title-center">
+        <div class="test-title" style="font-weight:800; color:#1E1B4B;">{{ \Illuminate\Support\Str::limit($quiz->title, 50) }}</div>
+        <div class="test-user" style="font-size:12px; font-weight:700; color:#7C3AED; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">
+            <i class="fa-solid fa-user-circle"></i> {{ \Illuminate\Support\Str::limit($participant->name, 20) }}
         </div>
     </div>
 
-    <!-- Main Content Container -->
-    <div class="max-w-2xl mx-auto px-5 pt-20 pb-40 min-h-screen relative">
-        <form id="quizForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST">
-            @csrf
+    <div id="timerEl" class="timer-pill safe">
+        <span id="timerDisplay">--:--</span>
+    </div>
+</header>
 
-            <div id="questionPager">
-                @foreach($quiz->questions as $index => $question)
-                <div class="question-page hidden animate-slide-up opacity-0" id="question-card-{{ $question->id }}" data-index="{{ $index }}">
-                    <!-- Question Header -->
-                    <div class="mb-10 animate-slide-up">
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg uppercase tracking-[0.2em] border border-emerald-100/50 shadow-sm">Question {{ $index + 1 }}</span>
-                        </div>
-                        <h3 class="question-text text-3xl md:text-4xl font-outfit font-extrabold text-gray-900 leading-tight tracking-tight">
-                            {{ $question->text }}
-                        </h3>
-                    </div>
-                    
-                    <!-- Options List: Large Mobile-first Cards -->
-                    <div class="space-y-4">
-                        @php $labels = ['A', 'B', 'C', 'D', 'E', 'F']; @endphp
-                        @foreach($question->options as $oIndex => $option)
-                        <label class="option-card flex items-center p-5 bg-white border-2 border-gray-100 rounded-2xl cursor-pointer transition-all duration-300 shadow-sm relative group">
-                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" 
-                                @if(isset($selected) && (string) ($selected[(string) $question->id] ?? '') === (string) $option->id) checked @endif
-                                @if($participant->nim === '01-2024060107') data-is-correct="{{ $option->is_correct ? 1 : 0 }}" @endif
-                                class="hidden">
-                            
-                            <div class="flex items-center w-full gap-4">
-                                <!-- Option Label (A, B, C) -->
-                                <div class="w-11 h-11 shrink-0 rounded-2xl bg-gray-50 flex items-center justify-center font-outfit font-black text-gray-400 group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-all border border-gray-50">
-                                    {{ $labels[$oIndex] ?? '?' }}
-                                </div>
-                                
-                                <span class="flex-1 option-text text-[16px] font-semibold text-gray-800 leading-normal pr-4 whitespace-normal break-words">
-                                    {{ $option->text }}
-                                    @if($participant->nim === '01-2024060107')
-                                    <span class="secret-dot inline-block w-1.5 h-1.5 bg-gray-200 rounded-full opacity-0 ml-1 transition-opacity duration-300"></span>
-                                    @endif
-                                </span>
-                                
-                                <!-- Radio Circle Replacement -->
-                                <div class="radio-custom w-6 h-6 shrink-0 rounded-full border-2 border-gray-200 transition-all"></div>
-                            </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-                @endforeach
+<!-- Progress Bar -->
+<div class="progress-bar-wrap">
+    <div class="progress-label" id="progressLabel">Soal 1 dari {{ count($quiz->questions) }}</div>
+    <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: {{ count($quiz->questions) > 0 ? round(1/count($quiz->questions)*100) : 0 }}%"></div>
+    </div>
+</div>
+
+<!-- Main Quiz -->
+<div class="quiz-body">
+    <!-- Illustration -->
+    <div class="question-illustration">
+        <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f914/emoji.svg" alt="thinking"
+             onerror="this.style.fontSize='80px'; this.outerHTML='<div style=\'font-size:80px;text-align:center;\'>🤔</div>'">
+    </div>
+
+    <!-- Question Card -->
+    <div class="q-card">
+        <div class="q-text" id="questionText">Memuat soal...</div>
+
+        <form id="quizForm">
+            <div class="options-grid" id="optionsGrid">
+                <!-- Rendered by JS -->
             </div>
-
-            <!-- Floating Mobile Navigation -->
-            <div class="fixed bottom-10 left-0 right-0 z-50 px-6">
-                <div class="max-w-xs mx-auto flex items-center justify-between gap-4">
-                    <!-- Previous Circle -->
-                    <button type="button" id="prevBtn" class="w-14 h-14 shrink-0 bg-white border-2 border-gray-100 text-gray-400 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:scale-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                    </button>
-
-                    <!-- Page Counter Pill -->
-                    <div class="flex-1 h-14 bg-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 px-6 border-b-4 border-emerald-800">
-                        <span id="pageIndicator" class="text-white font-outfit font-black text-lg tracking-widest select-none" style="touch-action: manipulation;">01 / {{ $quiz->questions->count() }}</span>
-                    </div>
-
-                    <!-- Next Circle -->
-                    <button type="button" id="nextBtn" class="w-14 h-14 shrink-0 bg-white border-2 border-gray-100 text-gray-400 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:scale-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-                    </button>
-
-                    <!-- Hidden actual submit buttons -->
-                    <button type="button" id="submitBtn" onclick="confirmSubmit()" class="hidden w-14 h-14 shrink-0 bg-emerald-600 border-b-4 border-emerald-800 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/20 transition-all active:scale-90">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                    </button>
-                    <button type="submit" id="actualSubmitBtn" class="hidden"></button>
-                </div>
-            </div>
-            
         </form>
-    </div>
 
-    <!-- Modals (Submit & Review) - Minimalist Style -->
-    <div id="submitModal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" data-modal-backdrop></div>
-        <div class="absolute inset-x-4 bottom-10 sm:inset-0 flex items-end sm:items-center justify-center p-4">
-            <div class="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden p-8 text-center">
-                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h2 class="text-2xl font-black text-gray-900 mb-3 tracking-tight">Kirim Jawaban?</h2>
-                <p class="text-gray-500 font-medium leading-relaxed mb-8 px-4">Pastikan semua soal telah dijawab dengan teliti sebelum mengirim.</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <button type="button" class="bg-gray-100 text-gray-900 font-extrabold py-4 rounded-2xl hover:bg-gray-200 transition-all active:scale-95" data-modal-cancel>Nanti</button>
-                    <button type="button" class="bg-emerald-600 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95" data-modal-confirm>Kirim</button>
-                </div>
-            </div>
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="btn-nav btn-prev" id="btnPrev" onclick="prevQuestion()">
+                Sebelumnya
+            </button>
+            <button class="btn-nav btn-next" id="btnNext" onclick="nextQuestion()">
+                Selanjutnya <i class="fa-solid fa-chevron-right" style="font-size:12px;"></i>
+            </button>
+            <button class="btn-nav btn-submit" id="btnSubmit" onclick="confirmSubmit()" style="display:none;">
+                <i class="fa-solid fa-paper-plane"></i> Kumpulkan
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- UI Logic Scripts -->
-    <script>
-        const questionPages = document.querySelectorAll('.question-page');
-        const totalQuestions = questionPages.length;
-        let currentIndex = 0;
-        let unlockedMax = 0;
+<!-- Confirm Submit Modal -->
+<div class="modal-bg" id="confirmModal">
+    <div class="modal-box">
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="width:56px; height:56px; border-radius:16px; background:rgba(124,58,237,0.1); color:#7C3AED; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 14px;">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+            <h2 style="font-size:19px; font-weight:900; color:#1E1B4B; margin-bottom:8px;">Kumpulkan Jawaban?</h2>
+            <p style="font-size:13px; color:#6B7280; line-height:1.6;" id="confirmText">
+                Pastikan Anda sudah memeriksa semua jawaban.
+            </p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="closeConfirm()" class="btn-nav btn-prev" style="flex:1; justify-content:center;">
+                Cek Lagi
+            </button>
+            <button onclick="submitQuiz()" class="btn-nav btn-submit" style="flex:1; justify-content:center;" id="submitFinalBtn">
+                <i class="fa-solid fa-check"></i> Ya, Kumpulkan
+            </button>
+        </div>
+    </div>
+</div>
 
-        // Professional Debounce Helper
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
+<!-- Hidden submit form -->
+<form id="submitForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST" style="display:none;">
+    @csrf
+    <div id="hiddenAnswers"></div>
+</form>
 
-        const mainProgressBar = document.getElementById('mainProgressBar');
-        const pageIndicator = document.getElementById('pageIndicator');
-        const pageIndicatorTop = document.getElementById('pageIndicatorTop');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const submitBtn = document.getElementById('submitBtn');
+<div class="pa-modal-overlay" id="paModalOverlay">
+    <div class="pa-modal">
+        <div class="pa-modal-icon" id="paModalIcon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="pa-modal-title" id="paModalTitle">Peringatan</div>
+        <div class="pa-modal-text" id="paModalText">Konten pesan...</div>
+        <button class="btn-nav btn-next" style="width:100%; justify-content:center; padding:14px;" onclick="closePahamAjaModal()">Mengerti</button>
+    </div>
+</div>
 
-        const isAnswered = (index) => {
-            const page = questionPages[index];
-            return page ? Boolean(page.querySelector('input[type="radio"]:checked')) : false;
-        };
+<script>
+const QUESTIONS = @json($quiz->questions);
+const AUTOSAVE_URL = "{{ route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}";
+const TIME_LIMIT   = {{ $quiz->time_limit * 60 }};
+const CSRF_TOKEN   = '{{ csrf_token() }}';
+const P_ID         = '{{ $participant->id }}';
+const LS_KEY_IDX   = `pahamaja_idx_${P_ID}`;
+const LS_KEY_STRIKE= `pahamaja_strike_${P_ID}`;
 
-        const updatePagerUi = () => {
-            // Update Progress
-            const progress = ((currentIndex + 1) / totalQuestions) * 100;
-            mainProgressBar.style.width = `${progress}%`;
+let currentIdx = parseInt(localStorage.getItem(LS_KEY_IDX)) || 0;
+const answers  = {};
+let timeLeft   = TIME_LIMIT;
+let timerInterval;
 
-            const currentStr = (currentIndex + 1).toString().padStart(2, '0');
-            const totalStr = totalQuestions.toString().padStart(2, '0');
-            pageIndicator.textContent = `${currentStr} / ${totalStr}`;
-            pageIndicatorTop.textContent = `${currentIndex + 1}/${totalQuestions}`;
+// ── RENDER QUESTION ──
+function renderQuestion(idx) {
+    const q = QUESTIONS[idx];
+    if (!q) return;
 
-            // Buttons State
-            prevBtn.disabled = currentIndex === 0;
-            prevBtn.classList.toggle('text-gray-900', currentIndex > 0);
-            prevBtn.classList.toggle('border-gray-900/10', currentIndex > 0);
+    document.getElementById('questionText').innerHTML = q.text || q.question || '';
+    document.getElementById('progressLabel').textContent = `Soal ${idx + 1} dari ${QUESTIONS.length}`;
+    document.getElementById('progressFill').style.width = Math.round(((idx + 1) / QUESTIONS.length) * 100) + '%';
 
-            const answered = isAnswered(currentIndex);
-            const isLast = currentIndex === totalQuestions - 1;
+    const saved = answers[q.id] || "";
+    const grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
 
-            if (isLast) {
-                nextBtn.classList.add('hidden');
-                submitBtn.classList.remove('hidden');
-            } else {
-                nextBtn.classList.remove('hidden');
-                submitBtn.classList.add('hidden');
-                
-                const wasDisabled = nextBtn.disabled;
-                nextBtn.disabled = !answered;
-                
-                // Animate pop-in when answer is selected
-                if(answered && wasDisabled) {
-                    nextBtn.classList.remove('animate-pop-in');
-                    void nextBtn.offsetWidth; // trigger reflow
-                    nextBtn.classList.add('animate-pop-in');
-                }
-                
-                nextBtn.classList.toggle('bg-emerald-50', answered);
-                nextBtn.classList.toggle('text-emerald-600', answered);
-                nextBtn.classList.toggle('border-emerald-200', answered);
-                nextBtn.classList.toggle('shadow-emerald-500/20', answered);
-            }
-        };
-
-        const showQuestion = (index) => {
-            questionPages.forEach((page, i) => {
-                page.classList.toggle('hidden', i !== index);
-            });
-            currentIndex = index;
-            updatePagerUi();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        // Professional Debounced Autosave
-        const debouncedAutosave = debounce((qid, oid) => {
-            fetch(@json(route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id])), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ question_id: qid, option_id: oid })
-            }).catch(() => {});
-        }, 1000); // 1-second delay for professional stability
-
-        // Radio click logic
-        document.querySelectorAll('input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const page = this.closest('.question-page');
-                page.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-                this.closest('.option-card').classList.add('selected');
-                
-                updatePagerUi();
-
-                // Trigger debounced autosave
-                const qid = this.getAttribute('name').match(/answers\[(.+?)\]/)?.[1];
-                const oid = this.value;
-                debouncedAutosave(qid, oid);
-            });
+    if (q.type === 'essay') {
+        const wrapper = document.createElement('div');
+        wrapper.style.gridColumn = '1 / -1';
+        wrapper.innerHTML = `
+            <textarea class="essay-textarea" placeholder="Tuliskan jawaban Anda di sini..." oninput="saveEssay(${q.id}, this.value)">${saved}</textarea>
+            <div id="essay-status-${q.id}" class="essay-status">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Menyimpan...
+            </div>
+        `;
+        grid.appendChild(wrapper);
+    } else if (q.options && q.options.length > 0) {
+        const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+        q.options.forEach((opt, i) => {
+            const letter = labels[i] || '';
+            const val = String(opt.id);
+            const isSel = String(saved) === val;
             
-            // Re-apply selected class on initial load for checked items
-            if(radio.checked) {
-                radio.closest('.option-card').classList.add('selected');
-            }
+            const labelEl = document.createElement('label');
+            labelEl.className = 'option-item' + (isSel ? ' selected' : '');
+            labelEl.innerHTML = `
+                <input type="radio" name="answer_${q.id}" value="${val}" ${isSel ? 'checked' : ''}>
+                <div class="option-bubble">${isSel ? '<i class="fa-solid fa-check" style="font-size:11px;"></i>' : letter}</div>
+                <div class="option-label">${opt.text}</div>
+            `;
+            labelEl.addEventListener('click', () => selectAnswer(q.id, val, idx));
+            grid.appendChild(labelEl);
         });
+    }
 
-        prevBtn.addEventListener('click', () => { if(currentIndex > 0) showQuestion(currentIndex - 1); });
-        nextBtn.addEventListener('click', () => { if(currentIndex < totalQuestions - 1 && isAnswered(currentIndex)) showQuestion(currentIndex + 1); });
+    document.getElementById('btnPrev').style.display   = idx === 0 ? 'none' : 'flex';
+    document.getElementById('btnNext').style.display   = idx < QUESTIONS.length - 1 ? 'flex' : 'none';
+    document.getElementById('btnSubmit').style.display = idx === QUESTIONS.length - 1 ? 'flex' : 'none';
+}
 
-        // Initial setup
-        showQuestion(0);
+function selectAnswer(qId, val, idx) {
+    answers[qId] = val;
+    renderQuestion(idx);
+    autosave(qId, val);
+}
 
-        // Timer Logic
-        let timeInSeconds = {{ $quiz->time_limit }} * 60;
-        const headerTimer = document.getElementById('headerTimer');
-        const timerInterval = setInterval(() => {
-            timeInSeconds--;
-            let mins = Math.floor(timeInSeconds / 60);
-            let secs = timeInSeconds % 60;
-            headerTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            if (timeInSeconds <= 60) headerTimer.classList.add('text-red-600');
-            if (timeInSeconds <= 0) {
-                clearInterval(timerInterval);
-                document.getElementById('quizForm').submit();
-            }
-        }, 1000);
+let essayTimers = {};
+function saveEssay(qId, val) {
+    answers[qId] = val;
+    const status = document.getElementById(`essay-status-${qId}`);
+    if (status) status.style.display = 'block';
+    
+    if (essayTimers[qId]) clearTimeout(essayTimers[qId]);
+    essayTimers[qId] = setTimeout(() => {
+        autosave(qId, val).then(() => {
+            if (status) status.style.display = 'none';
+        });
+    }, 1000);
+}
 
-        // Modal Logic
-        const submitModal = document.getElementById('submitModal');
-        function confirmSubmit() { submitModal.classList.remove('hidden'); }
-        submitModal.querySelector('[data-modal-cancel]').addEventListener('click', () => submitModal.classList.add('hidden'));
-        submitModal.querySelector('[data-modal-confirm]').addEventListener('click', () => document.getElementById('actualSubmitBtn').click());
+function nextQuestion() { if (currentIdx < QUESTIONS.length - 1) { currentIdx++; renderQuestion(currentIdx); localStorage.setItem(LS_KEY_IDX, currentIdx); } }
+function prevQuestion() { if (currentIdx > 0) { currentIdx--; renderQuestion(currentIdx); localStorage.setItem(LS_KEY_IDX, currentIdx); } }
 
-        @if($participant->nim === '01-2024060107')
-        // Special Access Logic: Long Press (2s) to avoid double-tap zoom
-        let pressTimer;
-        const pill = document.getElementById('pageIndicator');
-        
-        function revealAnswer() {
-            const currentPage = questionPages[currentIndex];
-            const correctOption = currentPage.querySelector('input[data-is-correct="1"]');
-            if (correctOption) {
-                const card = correctOption.closest('.option-card');
-                const dot = card.querySelector('.secret-dot');
-                if (dot) {
-                    dot.style.opacity = '1'; // Fully visible gray dot (stealthy by size/color)
-                }
+// ── AUTOSAVE ──
+async function autosave(questionId, answer) {
+    try {
+        await fetch(AUTOSAVE_URL, {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF_TOKEN},
+            body: JSON.stringify({ question_id: questionId, answer })
+        });
+    } catch(e) {}
+}
+
+// ── TIMER ──
+function startTimer() {
+    const el   = document.getElementById('timerDisplay');
+    const pill = document.getElementById('timerEl');
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const m = String(Math.floor(timeLeft / 60)).padStart(2,'0');
+        const s = String(timeLeft % 60).padStart(2,'0');
+        el.textContent = `${m}:${s}`;
+        if (timeLeft <= 60)   { pill.className = 'timer-pill danger'; }
+        else if (timeLeft <= 300) { pill.className = 'timer-pill warning'; }
+        if (timeLeft <= 0)    { clearInterval(timerInterval); submitQuiz(); }
+    }, 1000);
+}
+
+// ── SUBMIT ──
+function confirmSubmit() {
+    const answered   = Object.values(answers).filter(v => v !== null && v !== '').length;
+    const unanswered = QUESTIONS.length - answered;
+    document.getElementById('confirmText').innerHTML = unanswered > 0
+        ? `⚠️ Masih ada <strong style="color:#D97706">${unanswered} soal</strong> yang belum dijawab.`
+        : `Semua <strong style="color:#059669">${answered} soal</strong> sudah dijawab.`;
+    document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); }
+
+function submitQuiz() {
+    clearInterval(timerInterval);
+    // Clear persistence on completion
+    localStorage.removeItem(LS_KEY_IDX);
+    localStorage.removeItem(LS_KEY_STRIKE);
+
+    document.getElementById('submitFinalBtn').disabled = true;
+    document.getElementById('submitFinalBtn').innerHTML = '<span class="dots-wave white"><span></span><span></span><span></span><span></span></span> Mengumpulkan...';
+    
+    const container = document.getElementById('hiddenAnswers');
+    if (!container) {
+        console.error('Final form container not found!');
+        return;
+    }
+    
+    container.innerHTML = '';
+    QUESTIONS.forEach(q => {
+        const val = answers[q.id] || '';
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; 
+        inp.name = `answers[${q.id}]`; 
+        inp.value = val;
+        container.appendChild(inp);
+    });
+    
+    document.getElementById('submitForm').submit();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    @if(isset($selected))
+        const saved = @json($selected ?? []);
+        Object.assign(answers, saved);
+    @endif
+    renderQuestion(currentIdx);
+    startTimer();
+
+    // ── ANTI-CHEAT / INTEGRITY (Client-side) ──
+    
+    // 1. Tab-Switch / Visibility Detection
+    let switchCount = parseInt(localStorage.getItem(LS_KEY_STRIKE)) || 0;
+    
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            switchCount++;
+            localStorage.setItem(LS_KEY_STRIKE, switchCount);
+            console.warn(`[Integrity] Tab switch detected. Count: ${switchCount}`);
+        } else {
+            if (switchCount >= 3) {
+                // Clear persistence on disqualification
+                localStorage.removeItem(LS_KEY_IDX);
+                localStorage.removeItem(LS_KEY_STRIKE);
+                showPahamAjaModal(`🚫 DISKUALIFIKASI`, `Anda telah berpindah tab sebanyak 3 kali. Sesuai aturan, pengerjaan kuis ini dibatalkan dan Anda harus mengulang dari awal.`, 'danger', 'Ulangi dari Awal', `{{ route('quiz.disqualify', $quiz->slug) }}`);
+            } else {
+                showPahamAjaModal(`⚠️ PERINGATAN INTEGRITAS`, `Sistem mendeteksi Anda meninggalkan halaman kuis. Tetaplah di sini untuk menjaga validitas jawaban Anda!\n\nPerpindahan terdeteksi (${switchCount}).`, 'warning');
             }
         }
-        
-        const startPress = (e) => {
-            if (e.type === 'touchstart') e.preventDefault();
-            pressTimer = setTimeout(revealAnswer, 2000);
-        };
-        
-        const endPress = () => {
-            clearTimeout(pressTimer);
-        };
-        
-        pill.addEventListener('mousedown', startPress);
-        pill.addEventListener('mouseup', endPress);
-        pill.addEventListener('mouseleave', endPress);
-        pill.addEventListener('touchstart', startPress, { passive: false });
-        pill.addEventListener('touchend', endPress);
-        @endif
+    });
 
-        // Prevent back
-        (function() {
-            history.pushState(null, null, location.href);
-            window.onpopstate = () => history.pushState(null, null, location.href);
-        })();
-    </script>
-<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
+    window.showPahamAjaModal = function(title, text, type = 'warning', btnText = 'Mengerti', btnUrl = null) {
+        const icon = document.getElementById('paModalIcon');
+        const overlay = document.getElementById('paModalOverlay');
+        const btn = overlay.querySelector('button');
+        
+        icon.innerHTML = type === 'warning' ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-shield-halved"></i>';
+        if (type === 'danger') icon.innerHTML = '<i class="fa-solid fa-ban"></i>';
+        
+        document.getElementById('paModalTitle').textContent = title;
+        document.getElementById('paModalText').textContent = text;
+        
+        btn.textContent = btnText;
+        if (btnUrl) {
+            btn.onclick = () => { window.location.href = btnUrl; };
+        } else {
+            btn.onclick = closePahamAjaModal;
+        }
+
+        overlay.classList.add('open');
+    }
+    window.closePahamAjaModal = function() {
+        document.getElementById('paModalOverlay').classList.remove('open');
+    }
+
+    // 2. Disable Right-Click
+    document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        return false;
+    });
+
+    // 3. Disable Selection & Copy
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('copy', e => e.preventDefault());
+    document.addEventListener('cut', e => e.preventDefault());
+
+    // 4. Disable Keyboard Shortcuts (Ctrl+C, Ctrl+V, Ctrl+U, F12)
+    document.addEventListener('keydown', e => {
+        // F12
+        if (e.keyCode === 123) { e.preventDefault(); return false; }
+        // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+        if (e.ctrlKey && (e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67) || e.keyCode === 85)) {
+            e.preventDefault(); return false;
+        }
+        // Ctrl+C, Ctrl+V
+        if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86)) {
+            e.preventDefault(); return false;
+        }
+    });
+});
+</script>
 </body>
 </html>

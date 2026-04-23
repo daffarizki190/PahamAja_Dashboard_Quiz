@@ -41,7 +41,11 @@ self.addEventListener('fetch', event => {
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
-                .catch(() => caches.match('/admin') || caches.match('/'))
+                .catch(() => caches.match('/admin').then(response => 
+                    response || caches.match('/').then(res => 
+                        res || new Response('Offline - Tidak ada koneksi internet', { status: 503, statusText: 'Offline' })
+                    )
+                ))
         );
         return;
     }
@@ -55,15 +59,22 @@ self.addEventListener('fetch', event => {
             caches.match(event.request).then(cached => {
                 if (cached) return cached;
                 return fetch(event.request).then(response => {
+                    if (!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
+                        return response;
+                    }
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
                     return response;
-                });
+                }).catch(() => new Response('', { status: 408, statusText: 'Request Timeout' }));
             })
         );
         return;
     }
 
     // Default: Network First
-    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    event.respondWith(
+        fetch(event.request).catch(() => caches.match(event.request).then(res => 
+            res || new Response('', { status: 408, statusText: 'Offline' })
+        ))
+    );
 });

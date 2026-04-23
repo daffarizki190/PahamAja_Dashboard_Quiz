@@ -1,351 +1,621 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Details - PahamAja</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
-        .sidebar {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            margin: 16px;
-            height: calc(100vh - 32px);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .delay-100 { animation-delay: 100ms; }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="flex">
-        <!-- Sidebar -->
-        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
+@extends('layouts.app')
+
+@section('title', $quiz->title . ' – Manage Quiz')
+@section('meta_description', 'Kelola soal dan sesi kuis ' . $quiz->title)
+@section('page_title', \Illuminate\Support\Str::limit($quiz->title, 36))
+@section('page_subtitle', 'Manajemen Soal & Sesi Kuis')
+
+@section('topbar_left')
+    <a href="{{ route('admin.quizzes.index') }}" class="btn btn-ghost" style="padding:9px 12px; font-size:12px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); color:var(--purple); margin-right:8px;">
+        <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+@endsection
+
+@section('topbar_actions')
+    <a href="{{ route('admin.quizzes.edit', $quiz->slug) }}" class="btn btn-primary" style="padding:9px 16px; font-size:12px;">
+        <i class="fa-solid fa-pen"></i> Edit
+    </a>
+    <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn btn-ghost" style="padding:9px 16px; font-size:12px;">
+        <i class="fa-solid fa-chart-line"></i> Analytics
+    </a>
+@endsection
+
+@section('head_extra')
+<style>
+    .tab-nav { display:flex; gap:4px; background:#F3F2FB; border:1px solid #E5E3F0; border-radius:12px; padding:4px; margin-bottom:24px; }
+    .tab-btn {
+        padding:9px 20px; border-radius:9px; font-size:13px; font-weight:700;
+        cursor:pointer; transition:all .2s; border:none; font-family:inherit; color:var(--text-muted);
+        background:transparent;
+    }
+    .tab-btn.active { background:var(--white); color:var(--purple); box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid #E5E3F0; }
+    .tab-btn:not(.active):hover { color:var(--text-primary); background:rgba(124,58,237,0.05); }
+
+    /* Responsive Grid */
+    .show-main-grid { display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
+    .show-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    @media (max-width: 1100px) {
+        .show-main-grid { grid-template-columns: 1fr; }
+        .show-sidebar { order: 2; }
+        .show-main-panel { order: 1; }
+    }
+    @media (max-width: 768px) {
+        .show-stats-grid { grid-template-columns: 1fr; }
+        .tab-nav { overflow-x: auto; padding-bottom: 8px; }
+        .tab-btn { white-space: nowrap; }
+    }
+
+    .q-block { padding:24px; border-bottom:1px solid #F3F2F9; }
+    .q-block:last-child { border-bottom:none; }
+    .option-tag {
+        display:inline-flex; align-items:center; gap:8px;
+        padding:8px 14px; border-radius:10px; font-size:13px; font-weight:600; margin:5px 4px 0 0;
+    }
+    .opt-correct { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); color:#059669; }
+    .opt-wrong   { background:#F9F8FD; border:1px solid #E5E3F0; color:var(--text-muted); }
+
+    .session-card { background:#F9F8FD; border:1px solid #E5E3F0; border-radius:16px; padding:20px 24px; transition:all .2s; }
+    .session-card:hover { border-color:var(--purple); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+
+    .info-row-r { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #F3F2F9; font-size:13px; }
+    .info-row-r:last-child { border-bottom:none; }
+</style>
+@endsection
+
+@section('content')
+<div class="show-main-grid fade-up">
+
+    <!-- Main Panel -->
+    <div class="show-main-panel">
+        <!-- Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" id="tab-analytics" onclick="switchTab('analytics')">
+                <i class="fa-solid fa-chart-pie" style="margin-right:6px;"></i> Analitik
+            </button>
+            <button class="tab-btn" id="tab-questions" onclick="switchTab('questions')">
+                <i class="fa-solid fa-list-ul" style="margin-right:6px;"></i> Soal ({{ $quiz->questions->count() }})
+            </button>
+            <button class="tab-btn" id="tab-sessions" onclick="switchTab('sessions')">
+                <i class="fa-solid fa-calendar-days" style="margin-right:6px;"></i> Sesi
+            </button>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="content-analytics">
+            <!-- Summary Row -->
+            <div class="show-stats-grid">
+                <div class="card" style="padding:20px; display:flex; align-items:center; gap:16px;">
+                    <div id="gaugeChartShow" style="width:80px; height:80px;"></div>
+                    <div>
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Rata-rata Skor</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--text-primary);">{{ number_format($avgScore, 1) }}</div>
+                    </div>
+                </div>
+                <div class="card" style="padding:20px; display:flex; align-items:center; gap:16px;">
+                    <div style="width:48px; height:48px; border-radius:12px; background:rgba(124,58,237,0.1); color:var(--purple); display:flex; align-items:center; justify-content:center; font-size:20px;">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Tingkat Lulus</div>
+                        @php
+                            $completed = $quiz->participants->whereNotNull('score')->count();
+                            $passed = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+                            $passRate = $completed > 0 ? round(($passed / $completed) * 100) : 0;
+                        @endphp
+                        <div style="font-size:24px; font-weight:900; color:var(--purple);">{{ $passRate }}%</div>
+                    </div>
+                </div>
+                <div class="card" style="padding:20px; display:flex; align-items:center; gap:16px;">
+                    <div style="width:48px; height:48px; border-radius:12px; background:rgba(79,70,229,0.1); color:var(--indigo); display:flex; align-items:center; justify-content:center; font-size:20px;">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Total Peserta</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->count() }}</div>
+                    </div>
                 </div>
             </div>
-            <nav class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-semibold">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-medium">Employee Insights</span>
-                </a>
-            </nav>
-        </aside>
 
-        <!-- Main -->
-        <main class="flex-1 p-10">
-            <header class="mb-10 flex flex-col md:flex-row justify-between items-start gap-6 animate-fade-in opacity-0">
-                <div>
-                    <div class="flex items-center gap-3 mb-3">
-                        <a href="{{ route('admin.dashboard') }}" class="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        </a>
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Assessment Details</span>
-                    </div>
-                    <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">{{ $quiz->title }}</h2>
-                    <p class="text-slate-500 mt-4 font-medium">Bank data pertanyaan dan parameter kuis.</p>
+            <!-- Participant Analytics (Leaderboard) -->
+            <div class="card" style="margin-bottom:24px;">
+                <div style="padding:18px 24px; border-bottom:1px solid #E5E3F0; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0;">Peringkat Peserta</h3>
+                    <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" style="font-size:12px; font-weight:700; color:var(--purple); text-decoration:none;">Lihat Semua</a>
                 </div>
-                <div class="flex gap-3">
-                    <a href="{{ route('admin.quizzes.edit', $quiz->slug) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-100 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        Edit Kuis
-                    </a>
-                    <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kuis ini?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Hapus
-                        </button>
-                    </form>
-                </div>
-            </header>
-
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-slate-200 mb-8 space-x-8 animate-fade-in opacity-0 delay-100">
-                <button onclick="switchTab('questions')" id="tab-questions" class="pb-4 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition-all">Pertanyaan</button>
-                <button onclick="switchTab('sessions')" id="tab-sessions" class="pb-4 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-all">Sesi Pengerjaan</button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Left Content: Tabs -->
-                <div class="lg:col-span-2 space-y-6">
-                    
-                    <!-- Questions Tab -->
-                    <div id="content-questions" class="space-y-6">
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-                            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
-                                <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </span>
-                                Daftar Pertanyaan ({{ $quiz->questions->count() }})
-                            </h3>
-
-                            @foreach($quiz->questions as $index => $question)
-                            <div class="mb-10 last:mb-0 pb-10 last:pb-0 border-b border-slate-100 last:border-0">
-                                <div class="flex items-start gap-4 mb-4">
-                                    <span class="w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center font-bold flex-shrink-0">
-                                        {{ $index + 1 }}
-                                    </span>
-                                    <h4 class="text-lg font-semibold text-slate-800 pt-0.5">{{ $question->text }}</h4>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pl-12">
-                                    @foreach($question->options as $option)
-                                    <div class="flex items-center gap-3 p-4 rounded-xl border {{ $option->is_correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600' }}">
-                                        @if($option->is_correct)
-                                        <svg class="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                        @else
-                                        <div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>
-                                        @endif
-                                        <span class="font-medium">{{ $option->text }}</span>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <!-- Sessions Tab -->
-                    <div id="content-sessions" class="hidden space-y-6">
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-                            <div class="flex justify-between items-center mb-8">
-                                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                    <span class="bg-violet-100 text-violet-600 p-1.5 rounded-lg">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    </span>
-                                    Sesi Pengerjaan
-                                </h3>
-                                <button onclick="openModal('modal-add-session')" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all">
-                                    + Tambah Sesi
-                                </button>
-                            </div>
-
-                            @if(session('success'))
-                                <div class="bg-emerald-50 text-emerald-600 p-4 rounded-xl mb-6 text-sm font-bold border border-emerald-100">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
-
-                            <div class="space-y-4">
-                                @forelse($sessions as $session)
-                                <div class="border border-slate-100 rounded-2xl p-6 hover:bg-slate-50 transition-all group">
-                                    <div class="flex justify-between items-start">
+                <div class="table-responsive">
+                    <table class="data-table" style="border:none;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nama Peserta</th>
+                                <th>Nilai</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($sortedParticipants->take(5) as $idx => $p)
+                            <tr>
+                                <td style="width:40px; font-weight:800; color:var(--text-muted);">{{ $idx + 1 }}</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        @php
+                                            $pEmp = $p->employee;
+                                            $pInit = strtoupper(substr($p->name, 0, 1));
+                                        @endphp
+                                        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0; overflow:hidden;">
+                                            @if($pEmp && $pEmp->avatar)
+                                                <img src="{{ asset('storage/' . $pEmp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                                            @else
+                                                {{ $pInit }}
+                                            @endif
+                                        </div>
                                         <div>
-                                            <h4 class="font-bold text-slate-800 text-lg">{{ $session->name }}</h4>
-                                            <div class="flex items-center gap-4 mt-2 text-sm font-medium text-slate-500">
-                                                <div class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                    {{ $session->start_time->format('d M Y, H:i') }} - {{ $session->end_time->format('H:i') }}
-                                                </div>
-                                                <div class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                                    {{ $session->participants->count() }} Peserta Ditugaskan
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button onclick="openAssignModal({{ $session->id }}, '{{ $session->name }}')" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all">
-                                                Kelola Peserta
-                                            </button>
-                                            <form action="{{ route('admin.sessions.destroy', $session->id) }}" method="POST" onsubmit="return confirm('Hapus sesi ini?')">
-                                                @csrf @method('DELETE')
-                                                <button class="text-rose-400 hover:text-rose-600 p-2">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                </button>
-                                            </form>
+                                            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">{{ $p->name }}</div>
+                                            <div style="font-size:11px; color:var(--text-muted);">{{ $p->nim }}</div>
                                         </div>
                                     </div>
-                                </div>
-                                @empty
-                                <div class="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                                    <p class="text-slate-400 font-medium italic text-sm">Belum ada sesi pengerjaan khusus. Kuis dapat diakses bebas oleh semua karyawan aktif.</p>
-                                </div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Stats & Settings Sidebar -->
-                <div class="space-y-6">
-                    <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                        <h4 class="text-indigo-100 text-sm font-bold uppercase tracking-wider mb-6">Informasi Kuis</h4>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                                <span class="text-indigo-100">Waktu</span>
-                                <span class="font-bold text-lg">{{ $quiz->time_limit }} Menit</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                                <span class="text-indigo-100">Nilai Kelulusan</span>
-                                <span class="font-bold text-lg">{{ $quiz->passing_score }}</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                                <span class="text-indigo-100">Peserta</span>
-                                <span class="font-bold text-lg">{{ $quiz->participants_count }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-                        <h4 class="text-slate-800 font-bold mb-4">Link Berbagi</h4>
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2 overflow-hidden">
-                            <span class="text-xs text-slate-500 truncate" id="quiz-link-text">{{ route('quiz.join', $quiz->slug) }}</span>
-                            <button onclick="copyToClipboard('quiz-link-text')" class="text-indigo-600 font-bold text-sm">Copy</button>
-                        </div>
-                    </div>
+                                </td>
+                                <td>
+                                    @if($p->status === 'pending_review')
+                                        <span class="badge badge-yellow" onclick="window.location.href='{{ route('admin.participant.review', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}'" style="cursor:pointer;">Review Esai</span>
+                                    @elseif(!is_null($p->score))
+                                        <span style="font-size:15px; font-weight:900; color:{{ $p->score >= $quiz->passing_score ? '#059669' : '#DC2626' }};">{{ $p->score }}</span>
+                                    @else
+                                        <span class="badge badge-purple">Mengerjakan</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(!is_null($p->score))
+                                        <span class="badge {{ $p->score >= $quiz->passing_score ? 'badge-green' : 'badge-red' }}">{{ $p->score >= $quiz->passing_score ? 'Lulus' : 'Gagal' }}</span>
+                                    @else
+                                        <span style="color:var(--text-muted); font-size:11px;">—</span>
+                                    @endif
+                                </td>
+                                <td style="text-align:right;">
+                                    @if($p->status === 'pending_review')
+                                        <a href="{{ route('admin.participant.review', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" 
+                                           class="btn btn-primary" style="padding:4px 12px; font-size:11px;">
+                                            <i class="fa-solid fa-pen-nib"></i> Nilai
+                                        </a>
+                                    @else
+                                        <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" 
+                                           class="btn btn-ghost" style="padding:4px 8px; font-size:11px;" title="Lihat Jawaban">
+                                            <i class="fa-solid fa-eye" style="color:var(--purple);"></i>
+                                        </a>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada peserta</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </main>
-    </div>
 
-    <!-- Modal: Add Session -->
-    <div id="modal-add-session" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-slide-up">
-            <h3 class="text-xl font-bold text-slate-800 mb-6">Tambah Sesi Baru</h3>
-            <form action="{{ route('admin.quizzes.sessions.store', $quiz->slug) }}" method="POST" class="space-y-6">
-                @csrf
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Nama Sesi</label>
-                    <input type="text" name="name" required placeholder="Misal: Sesi Pagi Batch A" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all font-medium">
+            <!-- Question Analytics -->
+            <div class="card">
+                <div style="padding:18px 24px; border-bottom:1px solid #E5E3F0;">
+                    <h3 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0;">Analisis Soal</h3>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Mulai</label>
-                        <input type="datetime-local" name="start_time" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all font-medium text-sm">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Berakhir</label>
-                        <input type="datetime-local" name="end_time" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all font-medium text-sm">
-                    </div>
+                <div class="table-responsive">
+                    <table class="data-table" style="border:none;">
+                        <thead>
+                            <tr>
+                                <th>Soal</th>
+                                <th>Tingkat Benar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($questionAnalytics->take(5) as $idx => $row)
+                            <tr>
+                                <td>
+                                    <div style="font-size:13px; color:var(--text-primary); line-height:1.4; max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        <span style="color:var(--purple); font-weight:800; margin-right:4px;">#{{ $idx+1 }}</span> {{ $row['text'] }}
+                                    </div>
+                                </td>
+                                <td>
+                                    @if(!is_null($row['correct_rate']))
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <div class="progress-bar-track" style="width:80px; height:6px;">
+                                                <div class="progress-bar-fill" style="width:{{ $row['correct_rate'] }}%; background:{{ $row['correct_rate'] >= 70 ? '#059669' : ($row['correct_rate'] >= 40 ? '#D97706' : '#DC2626') }};"></div>
+                                            </div>
+                                            <span style="font-size:12px; font-weight:800;">{{ $row['correct_rate'] }}%</span>
+                                        </div>
+                                    @else
+                                        <span style="font-size:11px; color:var(--text-muted);">N/A</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeModal('modal-add-session')" class="flex-1 bg-slate-50 text-slate-500 font-bold py-4 rounded-2xl hover:bg-slate-100 transition-all uppercase text-[10px] tracking-widest">Batal</button>
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 uppercase text-[10px] tracking-widest">Simpan Sesi</button>
+                <div style="padding:12px; text-align:center; border-top:1px solid #F3F2F9;">
+                    <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" style="font-size:11px; font-weight:700; color:var(--purple); text-decoration:none;">LIHAT ANALISA LENGKAP <i class="fa-solid fa-arrow-right" style="margin-left:4px;"></i></a>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Modal: Assign Participants -->
-    <div id="modal-assign-participants" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-0 overflow-hidden animate-slide-up">
-            <div class="p-8 border-b border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800" id="assign-modal-title">Kelola Peserta Sesi</h3>
-                <p class="text-slate-400 text-sm font-medium mt-1">Pilih karyawan yang ditugaskan untuk sesi ini.</p>
+        <!-- QUESTIONS TAB -->
+        <div id="content-questions" style="display:none;">
+            @if(session('success'))
+            <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); color:#34D399; padding:12px 20px; border-radius:12px; margin-bottom:18px; font-size:13px; font-weight:700;">
+                <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>{{ session('success') }}
             </div>
-            <form id="assign-form" method="POST" class="flex flex-col h-[600px]">
-                @csrf
-                <div class="bg-slate-50 px-8 py-4 border-b border-slate-100">
-                    <input type="text" id="employee-search" placeholder="Cari Nama atau NIK..." class="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500">
+            @endif
+
+            <div class="card" style="border-radius:20px; overflow:hidden;">
+                <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:12px;">
+                    <div style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,var(--purple),var(--indigo)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;">
+                        <i class="fa-solid fa-clipboard-question"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Daftar Pertanyaan</div>
+                        <div style="font-size:11px; color:var(--text-muted);">{{ $quiz->questions->count() }} soal tersedia</div>
+                    </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 space-y-2" id="employee-list">
-                    @foreach($employees as $employee)
-                    <label class="flex items-center justify-between p-4 rounded-2xl hover:bg-indigo-50 transition-all cursor-pointer group employee-row" data-search="{{ strtolower($employee->name . ' ' . $employee->nim) }}">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-400 group-hover:border-indigo-200 group-hover:text-indigo-600 transition-all">
-                                {{ substr($employee->name, 0, 1) }}
+
+                @forelse($quiz->questions as $idx => $question)
+                <div class="q-block">
+                    <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:14px;">
+                        <span style="width:32px; height:32px; border-radius:10px; background:rgba(124,58,237,0.15); color:#A78BFA; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">
+                            {{ $idx + 1 }}
+                        </span>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <div style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.5;">
+                                    {{ $question->question ?? $question->text }}
+                                </div>
+                                <span class="badge {{ $question->type === 'essay' ? 'badge-yellow' : 'badge-purple' }}" style="font-size:9px; padding:3px 8px;">{{ strtoupper($question->type ?? 'mcq') }}</span>
                             </div>
+                        </div>
+                    </div>
+                    @if(($question->type ?? 'mcq') === 'mcq')
+                    <div style="padding-left:46px; display:flex; flex-wrap:wrap; gap:6px;">
+                        @php
+                            $optMap = ['A'=>'option_a','B'=>'option_b','C'=>'option_c','D'=>'option_d'];
+                            $correct = strtoupper($question->correct_answer ?? '');
+                        @endphp
+                        @foreach($optMap as $letter => $field)
+                            @if(!empty($question->$field))
+                            <span class="option-tag {{ $letter === $correct ? 'opt-correct' : 'opt-wrong' }}">
+                                @if($letter === $correct)<i class="fa-solid fa-check" style="font-size:10px;"></i>@endif
+                                <strong>{{ $letter }}.</strong> {{ $question->$field }}
+                            </span>
+                            @endif
+                        @endforeach
+                    </div>
+                    @else
+                    <div style="padding-left:46px;">
+                        <div style="background:rgba(245,158,11,0.03); border:1px solid rgba(245,158,11,0.1); border-radius:12px; padding:16px;">
+                            <div style="font-size:11px; font-weight:800; color:#D97706; text-transform:uppercase; margin-bottom:8px;">Kunci Jawaban Ideal</div>
+                            <div style="font-size:13px; color:var(--text-primary); line-height:1.6; font-weight:600;">{{ $question->ideal_answer }}</div>
+                        </div>
+                    </div>
+                    @endif
+                    @if(!empty($question->explanation))
+                    <div style="margin-top:12px; padding:10px 14px; padding-left:46px; font-size:12px; color:#A78BFA; line-height:1.6; background:rgba(124,58,237,0.06); border-radius:10px; margin-left:46px;">
+                        <i class="fa-solid fa-lightbulb" style="margin-right:6px;"></i>{{ $question->explanation }}
+                    </div>
+                    @endif
+                </div>
+                @empty
+                <div style="padding:48px 24px; text-align:center;">
+                    <div style="font-size:40px; color:#4E4C6A; margin-bottom:12px;"><i class="fa-solid fa-inbox"></i></div>
+                    <div style="color:#8B8AAE; font-size:13px;">Belum ada soal untuk kuis ini</div>
+                    <div style="margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        <a href="{{ route('admin.quizzes.edit', $quiz->slug) }}" class="btn btn-primary" style="font-size:13px; padding:9px 18px;">
+                            <i class="fa-solid fa-pen"></i> Edit & Tambah Soal
+                        </a>
+                        <a href="{{ route('admin.quizzes.ai-create') }}" class="btn btn-ghost" style="font-size:13px; padding:9px 18px;">
+                            <i class="fa-solid fa-robot"></i> Generate AI
+                        </a>
+                    </div>
+                </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- SESSIONS TAB -->
+        <div id="content-sessions" style="display:none;">
+            <div class="card" style="border-radius:20px; overflow:hidden;">
+                <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,var(--indigo),var(--purple)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:14px; font-weight:800; color:var(--text-primary);">Sesi Pengerjaan</div>
+                            <div style="font-size:11px; color:var(--text-muted);">{{ $sessions->count() }} sesi terdaftar</div>
+                        </div>
+                    </div>
+                    <button onclick="openSessionModal()" class="btn btn-primary" style="padding:9px 16px; font-size:12px;">
+                        <i class="fa-solid fa-plus"></i> Tambah Sesi
+                    </button>
+                </div>
+
+                <div style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+                    @forelse($sessions as $session)
+                    <div class="session-card">
+                        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
                             <div>
-                                <p class="text-sm font-bold text-slate-800">{{ $employee->name }}</p>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ $employee->nim }} • {{ $employee->position }}</p>
+                                <div style="font-size:15px; font-weight:800; color:var(--text-primary); margin-bottom:6px;">{{ $session->name }}</div>
+                                <div style="font-size:12px; color:var(--text-muted); font-weight:600;">
+                                    <i class="fa-solid fa-calendar" style="margin-right:4px; color:var(--purple);"></i>
+                                    {{ $session->start_time->format('d M Y, H:i') }} – {{ $session->end_time->format('H:i') }}
+                                </div>
+                                <div style="font-size:12px; color:var(--text-muted); font-weight:600; margin-top:4px;">
+                                    <i class="fa-solid fa-users" style="margin-right:4px; color:var(--indigo);"></i>
+                                    {{ $session->participants->count() }} peserta ditugaskan
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:6px; flex-shrink:0;">
+                                <button onclick="openAssignModal({{ $session->id }}, '{{ addslashes($session->name) }}')"
+                                        class="btn btn-ghost" style="padding:7px 12px; font-size:11px;">
+                                    <i class="fa-solid fa-users-gear"></i> Kelola
+                                </button>
+                                <form action="{{ route('admin.sessions.destroy', $session->id) }}" method="POST"
+                                      onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Sesi', 'Apakah Anda yakin ingin menghapus sesi ini?', 'danger', () => this.submit())">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger" style="padding:7px 10px; font-size:12px;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                        <input type="checkbox" name="employee_ids[]" value="{{ $employee->id }}" class="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500">
-                    </label>
-                    @endforeach
+                    </div>
+                    @empty
+                    <div style="padding:40px; text-align:center;">
+                        <div style="font-size:36px; color:#4E4C6A; margin-bottom:12px;"><i class="fa-solid fa-calendar-xmark"></i></div>
+                        <div style="color:#8B8AAE; font-size:13px; margin-bottom:16px;">Belum ada sesi. Kuis dapat diakses bebas oleh semua karyawan.</div>
+                        <button onclick="openSessionModal()" class="btn btn-primary" style="font-size:13px; padding:9px 20px;">
+                            <i class="fa-solid fa-plus"></i> Buat Sesi Pertama
+                        </button>
+                    </div>
+                    @endforelse
                 </div>
-                <div class="p-8 bg-white border-t border-slate-100 flex gap-3">
-                    <button type="button" onclick="closeModal('modal-assign-participants')" class="flex-1 bg-slate-50 text-slate-500 font-bold py-4 rounded-2xl hover:bg-slate-100 transition-all uppercase text-[10px] tracking-widest">Batal</button>
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 uppercase text-[10px] tracking-widest" id="btn-save-assignment">Tugaskan Peserta</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <script>
-        function switchTab(tab) {
-            // Content
-            document.getElementById('content-questions').classList.add('hidden');
-            document.getElementById('content-sessions').classList.add('hidden');
-            document.getElementById('content-' + tab).classList.remove('hidden');
+    <!-- Right Sidebar -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Quiz Info -->
+        <div style="background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(79,70,229,0.06)); border:1px solid rgba(124,58,237,0.2); border-radius:20px; padding:24px;">
+            <div style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.15em; color:var(--purple); margin-bottom:16px;">
+                Info Kuis
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Dibuat pada</span>
+                <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->created_at->format('d M Y') }}</span>
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Durasi</span>
+                <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->time_limit }} menit</span>
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Nilai Lulus</span>
+                <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->passing_score }}%</span>
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Total Soal</span>
+                <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->questions->count() }}</span>
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Peserta</span>
+                <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->participants_count ?? $quiz->participants->count() }}</span>
+            </div>
+        </div>
 
-            // Tab Buttons
-            document.getElementById('tab-questions').classList.remove('border-indigo-600', 'text-indigo-600');
-            document.getElementById('tab-questions').classList.add('border-transparent', 'text-slate-400');
-            document.getElementById('tab-sessions').classList.remove('border-indigo-600', 'text-indigo-600');
-            document.getElementById('tab-sessions').classList.add('border-transparent', 'text-slate-400');
+        <!-- Share Link & Barcode -->
+        <div class="card" style="border-radius:18px; padding:20px;">
+            <div style="font-size:13px; font-weight:800; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+                <span><i class="fa-solid fa-qrcode" style="color:var(--purple); margin-right:6px;"></i> Akses Kuis</span>
+                <span style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Scan Barcode</span>
+            </div>
+            
+            <!-- Barcode Display -->
+            <div style="background:#fff; border:1px solid #F3F2FB; border-radius:12px; padding:16px; display:flex; justify-content:center; margin-bottom:16px; box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);">
+                {!! QrCode::size(140)->color(30,27,75)->margin(1)->generate(route('quiz.join', $quiz->slug)) !!}
+            </div>
 
-            document.getElementById('tab-' + tab).classList.add('border-indigo-600', 'text-indigo-600');
-            document.getElementById('tab-' + tab).classList.remove('border-transparent', 'text-slate-400');
-        }
+            <div style="background:#F9F8FD; border:1px solid #E5E3F0; border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+                <span id="quizLinkText" style="font-size:11px; color:var(--text-muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    {{ route('quiz.join', $quiz->slug) }}
+                </span>
+                <button onclick="copyLink()" class="btn btn-ghost" style="padding:5px 10px; font-size:11px; flex-shrink:0; background:#fff;">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+            </div>
+        </div>
 
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        }
-
-        function openAssignModal(sessionId, sessionName) {
-            document.getElementById('assign-modal-title').innerText = 'Kelola Peserta: ' + sessionName;
-            document.getElementById('assign-form').action = '/admin/sessions/' + sessionId + '/assign';
-            openModal('modal-assign-participants');
-        }
-
-        // Employee Search
-        document.getElementById('employee-search').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase();
-            document.querySelectorAll('.employee-row').forEach(row => {
-                const searchData = row.getAttribute('data-search');
-                if (searchData.includes(query)) {
-                    row.classList.remove('hidden');
-                } else {
-                    row.classList.add('hidden');
-                }
-            });
-        });
-
-        function copyToClipboard(id) {
-            const text = document.getElementById(id).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
-            });
-        }
-    </script>
-        </main>
+        <!-- Actions -->
+        <div class="card" style="border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:10px;">
+            <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.15em; color:var(--text-muted); margin-bottom:6px;">Aksi</div>
+            <a href="{{ route('admin.quizzes.edit', $quiz->slug) }}" class="btn btn-ghost" style="justify-content:flex-start; width:100%;">
+                <i class="fa-solid fa-pen" style="width:14px;"></i> Edit Kuis
+            </a>
+            <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="btn btn-ghost" style="justify-content:flex-start; width:100%;">
+                <i class="fa-solid fa-file-excel" style="width:14px; color:#34D399;"></i> Export Excel
+            </a>
+            <a href="{{ route('admin.quiz.export-pdf', $quiz->slug) }}" class="btn btn-ghost" style="justify-content:flex-start; width:100%;">
+                <i class="fa-solid fa-file-pdf" style="width:14px; color:#F87171;"></i> Export PDF
+            </a>
+            <div style="height:1px; background:rgba(255,255,255,0.07);"></div>
+            <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST"
+                  onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Kuis', 'Hapus kuis ini secara permanen? Data peserta dan sesi akan hilang.', 'danger', () => this.submit())">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger" style="justify-content:flex-start; width:100%;">
+                    <i class="fa-solid fa-trash" style="width:14px;"></i> Hapus Kuis
+                </button>
+            </form>
+        </div>
     </div>
+</div>
+
+<!-- Modal: Add Session -->
+<div id="sessionModal" class="modal-overlay" onclick="if(event.target===this) closeSessionModal()">
+    <div class="modal-box" style="max-width:480px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+            <div>
+                <h3 style="font-size:18px; font-weight:900; color:#fff;">Tambah Sesi Baru</h3>
+                <p style="font-size:12px; color:#8B8AAE; margin-top:4px;">Tentukan nama dan jadwal sesi</p>
+            </div>
+            <button onclick="closeSessionModal()" class="btn btn-ghost" style="padding:8px 10px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="{{ route('admin.quizzes.sessions.store', $quiz->slug) }}" method="POST" style="display:flex; flex-direction:column; gap:16px;">
+            @csrf
+            <div>
+                <label class="form-label">Nama Sesi</label>
+                <input type="text" name="name" required class="form-input" placeholder="Misal: Sesi Pagi Batch A">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                <div>
+                    <label class="form-label">Waktu Mulai</label>
+                    <input type="datetime-local" name="start_time" required class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Waktu Selesai</label>
+                    <input type="datetime-local" name="end_time" required class="form-input">
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:4px;">
+                <button type="button" onclick="closeSessionModal()" class="btn btn-ghost" style="flex:1; justify-content:center;">Batal</button>
+                <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Sesi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Assign Participants -->
+<div id="assignModal" class="modal-overlay" onclick="if(event.target===this) closeAssignModal()">
+    <div class="modal-box" style="max-width:520px; max-height:80vh; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-shrink:0;">
+            <div>
+                <h3 style="font-size:18px; font-weight:900; color:#fff;" id="assignModalTitle">Kelola Peserta Sesi</h3>
+                <p style="font-size:12px; color:#8B8AAE; margin-top:4px;">Pilih karyawan untuk sesi ini</p>
+            </div>
+            <button onclick="closeAssignModal()" class="btn btn-ghost" style="padding:8px 10px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="flex-shrink:0; margin-bottom:14px;">
+            <div style="position:relative;">
+                <i class="fa-solid fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#4E4C6A; font-size:12px;"></i>
+                <input type="text" id="empSearchModal" placeholder="Cari nama atau NIM..."
+                       class="form-input" style="padding-left:36px;"
+                       oninput="filterEmp(this.value)">
+            </div>
+        </div>
+        <div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; padding-right:4px;" id="empListModal">
+            @foreach($employees as $emp)
+            <label style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 16px; cursor:pointer; transition:all .2s;"
+                   data-search="{{ strtolower($emp->name . ' ' . $emp->nim) }}" class="emp-row"
+                   onmouseover="this.style.borderColor='rgba(124,58,237,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+                <input type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" style="width:16px; height:16px; accent-color:#7C3AED; flex-shrink:0;">
+                <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0;">
+                    {{ strtoupper(substr($emp->name, 0, 1)) }}
+                </div>
+                <div>
+                    <div style="font-size:13px; font-weight:700; color:#F1F0FF;">{{ $emp->name }}</div>
+                    <div style="font-size:11px; color:#8B8AAE;">{{ $emp->nim }} · {{ $emp->position }}</div>
+                </div>
+            </label>
+            @endforeach
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px; flex-shrink:0;">
+            <button onclick="closeAssignModal()" class="btn btn-ghost" style="flex:1; justify-content:center;">Batal</button>
+            <button onclick="submitAssign()" class="btn btn-primary" style="flex:1; justify-content:center;" id="btnSaveAssign">
+                <i class="fa-solid fa-users-gear"></i> Tugaskan
+            </button>
+        </div>
+    </div>
+</div>
+<form id="assignForm" method="POST" style="display:none;"></form>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
-</body>
-</html>
+<script>
+function switchTab(tab) {
+    ['analytics','questions','sessions'].forEach(t => {
+        const content = document.getElementById('content-' + t);
+        if (content) content.style.display = t === tab ? '' : 'none';
+        
+        const btn = document.getElementById('tab-' + t);
+        if (btn) btn.className = 'tab-btn' + (t === tab ? ' active' : '');
+    });
+}
+
+// Analytics Charts
+document.addEventListener('DOMContentLoaded', () => {
+    const avg = {{ number_format($avgScore, 1) }};
+    const el  = document.querySelector('#gaugeChartShow');
+    if (el && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(el, {
+            series: [avg],
+            chart: { type:'radialBar', height:100, sparkline:{enabled:true}, fontFamily:'Plus Jakarta Sans, sans-serif' },
+            plotOptions: { radialBar: {
+                hollow: { size:'50%' },
+                track: { background:'#F3F2FB' },
+                dataLabels: { name:{show:false}, value:{show:true, fontSize:'13px', fontWeight:900, color: '#1E1B4B', offsetY:5, formatter:v => v} }
+            }},
+            colors: ['#7C3AED']
+        }).render();
+    }
+});
+
+function openSessionModal()  { document.getElementById('sessionModal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeSessionModal() { document.getElementById('sessionModal').classList.remove('open'); document.body.style.overflow=''; }
+
+let currentSessionId = null;
+function openAssignModal(sessionId, name) {
+    currentSessionId = sessionId;
+    document.getElementById('assignModalTitle').textContent = 'Kelola Peserta: ' + name;
+    document.getElementById('assignModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeAssignModal()  { document.getElementById('assignModal').classList.remove('open'); document.body.style.overflow=''; }
+
+function filterEmp(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.emp-row').forEach(row => {
+        row.style.display = (!q || row.dataset.search.includes(q)) ? '' : 'none';
+    });
+}
+
+function submitAssign() {
+    const form = document.getElementById('assignForm');
+    const checked = document.querySelectorAll('#empListModal input[type=checkbox]:checked');
+    form.innerHTML = `<input type="hidden" name="_token" value="{{ csrf_token() }}">`;
+    checked.forEach(cb => {
+        const i = document.createElement('input');
+        i.type = 'hidden'; i.name = 'employee_ids[]'; i.value = cb.value;
+        form.appendChild(i);
+    });
+    form.action = `/admin/sessions/${currentSessionId}/assign`;
+    form.method = 'POST';
+    form.submit();
+}
+
+function copyLink() {
+    const text = document.getElementById('quizLinkText').textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="fa-solid fa-copy"></i>', 1500);
+    });
+}
+
+// Mobile grid collapse
+const grid = document.querySelector('[style*="grid-template-columns:1fr 300px"]');
+if (grid && window.innerWidth < 900) grid.style.gridTemplateColumns = '1fr';
+</script>
+@endsection

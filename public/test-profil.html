@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pahamaja Profile Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --dark-green: #0a4d34;
+            --light-green: #e9f5f0;
+        }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        /* Desain Kartu */
+        #canvas-container {
+            width: 400px;
+            height: 500px;
+            background: var(--light-green);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        /* Elemen Background Abstrak */
+        .bg-circle { position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: rgba(10, 77, 52, 0.1); border-radius: 50%; }
+        .bg-stripe { position: absolute; width: 120%; height: 60px; background: var(--dark-green); transform: rotate(-5deg); left: -10%; }
+        .stripe1 { top: 180px; opacity: 0.8; }
+        .stripe2 { top: 260px; opacity: 0.9; }
+
+        .header-text { position: absolute; top: 20px; left: 20px; font-size: 40px; font-weight: 900; color: var(--dark-green); opacity: 0.8; z-index: 1; }
+
+        /* Foto User */
+        #user-photo {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 90%;
+            z-index: 2;
+        }
+
+        /* Teks Dinamis */
+        .info-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            z-index: 5;
+            color: var(--dark-green);
+        }
+        #display-name { font-size: 28px; font-weight: bold; line-height: 1; text-transform: uppercase; background: rgba(255,255,255,0.7); padding: 5px; }
+        #display-company { font-size: 12px; margin-top: 10px; font-weight: bold; }
+        #display-id { font-size: 11px; }
+
+        /* Form Input */
+        .controls { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; width: 400px; box-sizing: border-box; }
+        input, select { width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: var(--dark-green); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <div class="bg-circle"></div>
+        <div class="header-text">PAHAMAJA</div>
+        <div class="bg-stripe stripe1"></div>
+        <div class="bg-stripe stripe2"></div>
+        
+        <img id="user-photo" src="https://via.placeholder.com/400x500?text=Upload+Foto" alt="Foto">
+
+        <div class="info-overlay">
+            <div id="display-name">M. ASAH<br>KURNIAWAN</div>
+            <div id="display-company">PT. CENTREPARK CITRA CORPORA</div>
+            <div id="display-id">01-2024120343</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <label>Upload Foto (Tanpa Background/PNG):</label>
+        <input type="file" id="upload-img" accept="image/*">
+        
+        <label>Nama (Gunakan Enter untuk 2 baris):</label>
+        <textarea id="input-name" style="width:100%; height:50px;">M. ASAH&#10;KURNIAWAN</textarea>
+        
+        <label>Nomor ID:</label>
+        <input type="text" id="input-id" value="01-2024120343">
+
+        <button onclick="downloadImage()">Download Gambar HD</button>
+    </div>
+
+    <script>
+        // Update Teks Otomatis
+        const inputName = document.getElementById('input-name');
+        const inputId = document.getElementById('input-id');
+        const uploadImg = document.getElementById('upload-img');
+
+        inputName.addEventListener('input', () => {
+            document.getElementById('display-name').innerHTML = inputName.value.replace(/\n/g, '<br>');
+        });
+
+        inputId.addEventListener('input', () => {
+            document.getElementById('display-id').innerText = inputId.value;
+        });
+
+        // Update Foto
+        uploadImg.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('user-photo').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Fungsi Download
+        function downloadImage() {
+            html2canvas(document.querySelector("#canvas-container"), { scale: 3 }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'Profil-Pahamaja.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
