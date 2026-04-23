@@ -164,8 +164,9 @@
     @php $idx = 0; @endphp
     @forelse($quizzes as $quiz)
     @php
-        $total    = $quiz->participants->count();
-        $passed   = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+        $total    = $quiz->participants->unique('employee_id')->count();
+        $passingScore = $quiz->passing_score ?? 70;
+        $passed   = $quiz->participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
         $icon     = $iconPool[$idx++ % count($iconPool)];
 
         /* Simple status logic: any participant who hasn't finished = aktif, else selesai */

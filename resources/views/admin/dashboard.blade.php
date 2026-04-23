@@ -171,8 +171,9 @@
             <h3>Tingkat Kelulusan</h3>
             <div class="val" style="font-size:38px; color:#7C3AED;">
                 @php
-                    $completed = $participants->whereNotNull('score')->count();
-                    $passed = $participants->whereNotNull('score')->where('score', '>=', $quiz->passing_score)->count();
+                    $passingScore = $quiz->passing_score ?? 70;
+                    $completed = $participants->whereNotNull('score')->unique('employee_id')->count();
+                    $passed = $participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
                     $passRate = $completed > 0 ? round(($passed / $completed) * 100) : 0;
                 @endphp
                 {{ $passRate }}%

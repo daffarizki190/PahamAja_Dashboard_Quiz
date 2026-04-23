@@ -100,8 +100,9 @@
                     <div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Tingkat Lulus</div>
                         @php
-                            $completed = $quiz->participants->whereNotNull('score')->count();
-                            $passed = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+                            $passingScore = $quiz->passing_score ?? 70;
+                            $completed = $quiz->participants->whereNotNull('score')->unique('employee_id')->count();
+                            $passed = $quiz->participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
                             $passRate = $completed > 0 ? round(($passed / $completed) * 100) : 0;
                         @endphp
                         <div style="font-size:24px; font-weight:900; color:var(--purple);">{{ $passRate }}%</div>
@@ -113,7 +114,7 @@
                     </div>
                     <div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Total Peserta</div>
-                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->count() }}</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->unique('employee_id')->count() }}</div>
                     </div>
                 </div>
             </div>
