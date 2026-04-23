@@ -11,6 +11,22 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class GlobalReportController extends Controller
 {
+    public function index()
+    {
+        $participants = Participant::withTrashed()->with(['quiz' => fn($q) => $q->withTrashed(), 'employee' => fn($q) => $q->withTrashed()])
+            ->whereNotNull('score')
+            ->orderByDesc('updated_at')
+            ->paginate(15);
+
+        $totalStats = [
+            'total_participants' => Participant::withTrashed()->whereNotNull('score')->count(),
+            'avg_score' => round(Participant::withTrashed()->whereNotNull('score')->avg('score') ?? 0, 1),
+            'total_quizzes' => Quiz::withTrashed()->count(),
+        ];
+
+        return view('admin.reports.index', compact('participants', 'totalStats'));
+    }
+
     public function exportExcel()
     {
         return Excel::download(new GlobalParticipantExport, 'Laporan-Keseluruhan-Peserta-'.now()->format('Ymd').'.xlsx');
@@ -18,13 +34,13 @@ class GlobalReportController extends Controller
 
     public function exportPdf()
     {
-        $participants = Participant::with('quiz')
+        $participants = Participant::withTrashed()->with(['quiz' => fn($q) => $q->withTrashed()])
             ->whereNotNull('score')
             ->orderByDesc('created_at')
             ->get();
 
-        $quizzes = Quiz::withCount(['participants' => function($q) {
-            $q->whereNotNull('score');
+        $quizzes = Quiz::withTrashed()->withCount(['participants' => function($q) {
+            $q->withTrashed()->whereNotNull('score');
         }])->get();
 
         $totalFinished = $participants->count();

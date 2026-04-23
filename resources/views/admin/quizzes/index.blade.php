@@ -1,371 +1,237 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta name="theme-color" content="#0f172a">
-    <meta name="description" content="Dashboard PahamAja - Platform Assessment Karyawan">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/icon-192.png">
-    <title>Dashboard - PahamAja</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
-        .font-serif { font-family: 'Fraunces', serif; }
-        .sidebar {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            margin: 16px;
-            height: calc(100vh - 32px);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .delay-100 { animation-delay: 100ms; }
-        .delay-200 { animation-delay: 200ms; }
-        .delay-300 { animation-delay: 300ms; }
-        .delay-400 { animation-delay: 400ms; }
-        
-        .card-enterprise {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 24px 40px -12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .card-enterprise:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 32px 50px -12px rgba(99, 102, 241, 0.15);
-            transform: translateY(-2px);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.23);
-            transform: translateY(-2px) scale(1.02);
-        }
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            transition: all 0.3s ease;
-        }
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(1.02);
-        }
-        .chip { background: #f8fafc; border: 1px solid #e2e8f0; }
-        .kpi { background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%); }
-        summary::-webkit-details-marker { display: none; }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="flex min-h-screen">
-        <!-- Enterprise Sidebar -->
-        <aside class="w-64 sidebar sticky top-4 text-white p-6 hidden md:flex flex-col z-50">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
-                </div>
-            </div>
+@extends('layouts.app')
 
-            <nav class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 bg-white/5 border border-white/10 text-white p-3 rounded-2xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-semibold">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-300 hover:bg-white/5 hover:text-white p-3 rounded-2xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-medium">Employee Insights</span>
-                </a>
-            </nav>
+@section('title', 'Dashboard – PahamAja')
+@section('meta_description', 'Kelola dan pantau semua kuis assessment')
+@section('search_placeholder', 'Cari nama kuis...')
+@section('show_search', true)
 
-            <div class="absolute bottom-6 left-6 right-6">
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
-                    <p class="text-[9px] text-indigo-400 font-black uppercase tracking-widest mb-1">Corporate System</p>
-                    <p class="text-xs font-bold text-white mb-3">Admin Panel</p>
-                    <form action="{{ route('admin.logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full btn-ghost text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </aside>
+@section('topbar_actions')
+    <a href="{{ route('admin.quizzes.create') }}" class="btn btn-primary" style="padding:8px 16px; font-size:13px;">
+        <i class="fa-solid fa-plus"></i> Tambah
+    </a>
+@endsection
 
-        <!-- Main Content -->
-        <main class="flex-1 p-10 flex flex-col min-h-screen">
-            <div class="flex-grow">
-                <header class="mb-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
-                    <div>
-                        <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                            <span class="chip px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest">Admin</span>
-                            <span>/</span>
-                            <span class="text-slate-600">Dashboard</span>
-                        </div>
-                        <h2 class="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tighter mt-3">Dashboard</h2>
-                        <p class="text-slate-500 mt-3 font-medium text-sm max-w-2xl">Kelola kuis dan laporan dengan UI premium.</p>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-3 animate-fade-in opacity-0 delay-100">
-                        <a href="{{ route('admin.quizzes.ai-create') }}" class="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span>AI Generator</span>
-                        </a>
-                        <a href="{{ route('admin.quizzes.import') }}" class="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l4 4m0 0l4-4m-4 4V4"></path></svg>
-                            <span>Import Soal</span>
-                        </a>
-                        <a href="{{ route('admin.quizzes.create') }}" class="w-full sm:w-auto btn-primary text-white px-7 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Buat Kuis</span>
-                        </a>
-                        <form action="{{ route('admin.logout') }}" method="POST" class="w-full md:hidden">
-                            @csrf
-                            <button type="submit" class="w-full bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center">
-                                Logout
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 animate-slide-up opacity-0 delay-200">
-                    <div class="card-enterprise kpi rounded-2xl p-6">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Kuis</p>
-                        <div class="mt-2 flex items-end justify-between gap-4">
-                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['quizzes'] }}</p>
-                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Deployments</span>
-                        </div>
-                    </div>
-                    <div class="card-enterprise kpi rounded-2xl p-6">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Participants</p>
-                        <div class="mt-2 flex items-end justify-between gap-4">
-                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['participants'] }}</p>
-                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Entries</span>
-                        </div>
-                    </div>
-                    <div class="card-enterprise kpi rounded-2xl p-6">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Questions</p>
-                        <div class="mt-2 flex items-end justify-between gap-4">
-                            <p class="text-3xl font-serif font-bold text-slate-900">{{ $stats['questions'] }}</p>
-                            <span class="chip px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700">Bank</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-
-
-            @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl mb-8 flex items-center justify-between animate-fade-in">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="font-bold text-sm">{{ session('success') }}</span>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-emerald-400 hover:text-emerald-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            @endif
-
-            <div class="card-enterprise rounded-2xl overflow-hidden">
-                <div class="p-6 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h8a2 2 0 012 2v11a1 1 0 01-1 1H8a2 2 0 01-2-2V6a1 1 0 011-1h2z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h7M9 13h7M9 17h7"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-900 tracking-tight">Daftar Kuis</p>
-                            <p class="text-xs font-semibold text-slate-500">Analytics, export, dan manajemen kuis</p>
-                        </div>
-                    </div>
-                    <div class="w-full lg:w-[420px]">
-                        <input id="quizSearch" type="text" placeholder="Cari judul kuis..." class="w-full bg-white border border-slate-200 px-4 py-3 rounded-2xl font-medium text-sm focus:outline-none focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600">
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left block lg:table">
-                        <thead class="bg-slate-50 border-b border-slate-200 hidden lg:table-header-group">
-                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                <th class="px-8 py-5">Kuis</th>
-                                <th class="px-8 py-5">Durasi</th>
-                                <th class="px-8 py-5">Passing</th>
-                                <th class="px-8 py-5">Peserta</th>
-                                <th class="px-8 py-5">Update</th>
-                                <th class="px-8 py-5 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 block lg:table-row-group" id="quizRows">
-                            @forelse($quizzes as $quiz)
-                                <tr class="block lg:table-row bg-white hover:bg-indigo-50/30 transition-all p-5 lg:p-0 my-4 lg:my-0 border border-slate-100 lg:border-none rounded-2xl lg:rounded-none shadow-sm lg:shadow-none" data-title="{{ strtolower($quiz->title) }}">
-                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
-                                        <div class="flex lg:block items-center justify-between">
-                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Kuis</span>
-                                            <div class="text-right lg:text-left">
-                                                <p class="text-slate-900 font-semibold tracking-tight">{{ $quiz->title }}</p>
-                                                <p class="text-slate-400 text-xs font-semibold">{{ $quiz->slug }}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
-                                        <div class="flex items-center justify-between lg:justify-start">
-                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Durasi</span>
-                                            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->time_limit }}m</span>
-                                        </div>
-                                    </td>
-                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
-                                        <div class="flex items-center justify-between lg:justify-start">
-                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Passing</span>
-                                            <span class="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-black">{{ $quiz->passing_score }}%</span>
-                                        </div>
-                                    </td>
-                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
-                                        <div class="flex items-center justify-between lg:justify-start">
-                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Peserta</span>
-                                            <span class="text-slate-800 font-black">{{ $quiz->participants_count }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="block lg:table-cell lg:px-8 py-2 lg:py-5 border-b border-slate-50 lg:border-none">
-                                        <div class="flex items-center justify-between lg:justify-start">
-                                            <span class="lg:hidden text-[10px] text-slate-400 font-black uppercase tracking-widest">Update</span>
-                                            <span class="text-slate-500 text-sm font-semibold">{{ $quiz->updated_at?->diffForHumans() ?? '-' }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="block lg:table-cell lg:px-8 pt-4 pb-2 lg:py-5">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all">
-                                                Analytics
-                                            </a>
-                                            <details class="relative group/dropdown">
-                                                <summary class="list-none cursor-pointer bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
-                                                    <span>Actions</span>
-                                                    <svg class="w-4 h-4 transition-transform group-open/dropdown:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                                </summary>
-                                                <div class="absolute right-0 bottom-full lg:bottom-auto lg:top-full mb-2 lg:mb-0 lg:mt-2 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-[9999]">
-                                                    <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Manage</a>
-                                                    <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Export</a>
-                                                    <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" onsubmit="return confirm('Hapus kuis ini?')" class="px-1">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button class="w-full text-left px-2 py-2 rounded-xl text-sm font-semibold text-rose-700 hover:bg-rose-50">Delete</button>
-                                                    </form>
-                                                </div>
-                                            </details>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-8 py-20 text-center">
-                                        <div class="flex flex-col items-center justify-center gap-4">
-                                            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
-                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                            </div>
-                                            <div>
-                                                <p class="text-slate-400 font-bold italic">Dashboard Kosong.</p>
-                                                <p class="text-slate-400 text-xs mt-1">Data karyawan dan hasil kuis belum dimuat. Pulihkan sekarang untuk melihat analitik lengkap.</p>
-                                            </div>
-                                            <div class="mt-6 flex gap-3">
-                                                <a href="{{ route('admin.force-seed') }}?token=PahamAjaSeed2026&clear=1" class="btn-primary text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                                    Pulihkan Semua Data (Original)
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <script>
-                const search = document.getElementById('quizSearch');
-                const rows = Array.from(document.querySelectorAll('#quizRows tr[data-title]'));
-
-                const applySearch = () => {
-                    const q = (search.value || '').toLowerCase().trim();
-                    rows.forEach((row) => {
-                        const title = row.getAttribute('data-title') || '';
-                        if (q === '') {
-                            row.classList.remove('hidden');
-                            row.classList.add('lg:table-row');
-                            row.classList.add('block');
-                        } else {
-                            const isMatch = title.includes(q);
-                            if (isMatch) {
-                                row.classList.remove('hidden');
-                                row.classList.add('lg:table-row');
-                                row.classList.add('block');
-                            } else {
-                                row.classList.add('hidden');
-                                row.classList.remove('lg:table-row');
-                                row.classList.remove('block');
-                            }
-                        }
-                    });
-                };
-                
-                if (search) {
-                    search.addEventListener('input', applySearch);
-                }
-
-            </script>
-        </div>
-
-        <footer class="mt-20 py-12 border-t border-slate-200">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-600 w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg italic text-white shadow-lg shadow-indigo-200">P</div>
-                    <div>
-                        <h2 class="text-sm font-bold text-slate-900 leading-none">PahamAja</h2>
-                        <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">Industrial Grade Assessment</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-6">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">&copy; 2026 PahamAja</p>
-                    <div class="flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">System Operational</span>
-                    </div>
-                </div>
-            </div>
-        </footer>
-    </main>
-</div>
-<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
-        });
+@section('head_extra')
+<style>
+    /* ── 3D Emoji Stat Cards ── */
+    .big-stat {
+        background: #fff; border: 1px solid #E8E6F0; border-radius: 18px;
+        padding: 24px 28px 20px;
+        display: flex; align-items: center; justify-content: space-between;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: all 0.2s;
     }
+    .big-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.09); }
+    .big-stat-label { font-size: 13px; font-weight: 600; color: #6B7280; margin-bottom: 8px; }
+    .big-stat-value { font-size: 42px; font-weight: 900; color: #1E1B4B; line-height: 1; }
+    .big-stat-emoji { font-size: 56px; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15)); }
+
+    /* ── QUIZ CARD ── */
+    .quiz-card {
+        background: #fff; border: 1px solid #E8E6F0; border-radius: 16px;
+        padding: 18px 20px; display: flex; align-items: flex-start; gap: 16px;
+        transition: all 0.2s; cursor: default;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .quiz-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
+    .quiz-card-icon {
+        width: 52px; height: 52px; border-radius: 12px;
+        background: #EDE9FE; display: flex; align-items: center; justify-content: center;
+        font-size: 30px; flex-shrink: 0;
+        filter: drop-shadow(0 3px 8px rgba(0,0,0,0.12));
+    }
+    .quiz-card-body { flex: 1; min-width: 0; }
+    .quiz-card-title { font-size: 14px; font-weight: 800; color: #1E1B4B; margin-bottom: 6px; line-height: 1.3; }
+    .quiz-card-meta  { font-size: 12px; color: #6B7280; font-weight: 500; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .quiz-card-meta i { font-size: 10px; }
+    .quiz-card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .quiz-participants  { font-size: 12px; color: #6B7280; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+
+    /* Responsive Grid */
+    .quiz-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 22px;
+    }
+
+    @media (max-width: 640px) {
+        .quiz-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Status badges */
+    .status-aktif   { background: #7C3AED; color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 800; }
+    .status-selesai { background: #10B981; color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 800; }
+    .status-draft   { background: #F59E0B; color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 800; }
+
+    /* Action bar icons on hover */
+    .quiz-card-actions {
+        display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s;
+    }
+    .quiz-card:hover .quiz-card-actions { opacity: 1; }
+</style>
+@endsection
+
+@section('content')
+@php
+    $totalKuis      = $quizzes->count();
+    $totalPeserta   = $quizzes->sum(fn($q) => $q->participants->count());
+    $totalPertanyaan= $quizzes->sum(fn($q) => $q->questions->count());
+
+    /* Emoji icon pool for quiz cards */
+    $iconPool = ['📝','🧠','🎯','🔥','🧬'];
+@endphp
+
+<!-- Stat Row -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:22px; margin-bottom:22px;" class="fade-up">
+    <div class="big-stat">
+        <div>
+            <div class="big-stat-label">Total Kuis</div>
+            <div class="big-stat-value">{{ $totalKuis }}</div>
+        </div>
+        <div class="big-stat-emoji">📋</div>
+    </div>
+    <div class="big-stat delay-1">
+        <div>
+            <div class="big-stat-label">Total Peserta</div>
+            <div class="big-stat-value">{{ $stats['employees'] }}</div>
+        </div>
+        <div class="big-stat-emoji">👥</div>
+    </div>
+    <div class="big-stat delay-2">
+        <div>
+            <div class="big-stat-label">Total Pertanyaan</div>
+            <div class="big-stat-value">{{ $totalPertanyaan }}</div>
+        </div>
+        <div class="big-stat-emoji">❓</div>
+    </div>
+</div>
+
+<!-- Global Leaderboard Widget -->
+@if(isset($topEmployees) && $topEmployees->count() > 0)
+<div class="card fade-up delay-2" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; margin-bottom: 22px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(90deg, rgba(124,58,237,0.03), transparent);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #F59E0B, #EA580C); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px;">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-primary);">Leaderboard Global</h3>
+                <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Top 5 Karyawan dengan rata-rata skor terbaik</p>
+            </div>
+        </div>
+        <a href="{{ route('admin.employees.index') }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px;">Lihat Semua</a>
+    </div>
+    <div style="padding: 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tbody>
+                @foreach($topEmployees as $idx => $emp)
+                <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='rgba(124,58,237,0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 14px 24px; width: 50px;">
+                        @if($idx === 0) <span style="font-size: 24px;">🥇</span>
+                        @elseif($idx === 1) <span style="font-size: 24px;">🥈</span>
+                        @elseif($idx === 2) <span style="font-size: 24px;">🥉</span>
+                        @else <span style="font-size: 14px; font-weight: 800; color: var(--text-dim);">#{{ $idx + 1 }}</span>
+                        @endif
+                    </td>
+                    <td style="padding: 14px 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--indigo)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; overflow: hidden;">
+                                @if($emp->avatar)
+                                    <img src="{{ asset('storage/' . $emp->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    {{ strtoupper(substr($emp->name, 0, 1)) }}
+                                @endif
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">{{ $emp->name }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ $emp->department }} &bull; {{ $emp->quizzes_taken }} Kuis</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 14px 24px; text-align: right;">
+                        <div style="font-size: 20px; font-weight: 900; color: var(--purple);">{{ $emp->avg_score }}</div>
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Rata-rata</div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+<!-- Quiz Grid -->
+<div class="quiz-grid fade-up delay-1" id="quizGrid">
+    @php $idx = 0; @endphp
+    @forelse($quizzes as $quiz)
+    @php
+        $total    = $quiz->participants->count();
+        $passed   = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+        $icon     = $iconPool[$idx++ % count($iconPool)];
+
+        /* Simple status logic: any participant who hasn't finished = aktif, else selesai */
+        $hasActive = $quiz->participants->whereNull('finished_at')->count() > 0;
+        $statusClass = $hasActive ? 'status-aktif' : 'status-selesai';
+        $statusLabel = $hasActive ? 'Aktif' : 'Selesai';
+    @endphp
+    <div class="quiz-card" data-name="{{ strtolower($quiz->title) }}">
+        <div class="quiz-card-icon">{{ $icon }}</div>
+        <div class="quiz-card-body">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div class="quiz-card-title">{{ $quiz->title }}</div>
+                <div style="display:flex; gap:5px; flex-shrink:0;">
+                    <a href="{{ route('admin.quizzes.show', $quiz->slug) }}"
+                       style="width:26px;height:26px;background:#F3F2FB;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-size:11px;text-decoration:none;transition:background .18s;"
+                       title="Analitik" onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F3F2FB'">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </a>
+                    <a href="{{ route('admin.quizzes.edit', $quiz->slug) }}"
+                       style="width:26px;height:26px;background:#F3F2FB;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#6B7280;font-size:11px;text-decoration:none;transition:background .18s;"
+                       title="Edit" onmouseover="this.style.background='#F9F8FD'" onmouseout="this.style.background='#F3F2FB'">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="quiz-card-meta">
+                <span><i class="fa-regular fa-calendar" style="margin-right:2px;"></i> {{ $quiz->created_at->format('d M Y') }}</span>
+                <span><i class="fa-regular fa-clock" style="margin-right:2px;"></i> {{ $quiz->time_limit }}m</span>
+                <span>Passing: {{ $quiz->passing_score }}%</span>
+            </div>
+            <div class="quiz-card-footer">
+                <div class="quiz-participants">
+                    <i class="fa-solid fa-users" style="font-size:11px;"></i>
+                    {{ $total }}
+                </div>
+                <span class="{{ $statusClass }}">{{ $statusLabel }}</span>
+            </div>
+        </div>
+    </div>
+    @empty
+    <div style="grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 100px 20px; background: var(--bg-card); border: 2px dashed var(--border); border-radius: 24px; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='var(--purple)'; this.style.transform='scale(1.01)'" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='scale(1)'" onclick="window.location.href='{{ route('admin.quizzes.create') }}'">
+        <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(79,70,229,0.1)); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; position: relative;">
+            <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--purple); filter: blur(40px); opacity: 0.2; animation: pulse 2s infinite;"></div>
+            <i class="fa-solid fa-clipboard-list" style="font-size: 52px; color: var(--purple); z-index: 1;"></i>
+        </div>
+        <h3 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 8px;">Katalog Kuis Masih Kosong</h3>
+        <p style="font-size: 14px; color: var(--text-muted); font-weight: 500; text-align: center; max-width: 320px; margin: 0 0 28px;">
+            Buat kuis pertama Anda sekarang. Anda bisa menggunakan AI untuk membuat soal secara otomatis atau membuatnya secara manual.
+        </p>
+        <button class="btn btn-primary" style="padding: 12px 28px; border-radius: 12px; font-size: 14px;" onclick="event.stopPropagation(); window.location.href='{{ route('admin.quizzes.create') }}'">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Mulai Buat Kuis
+        </button>
+    </div>
+    @endforelse
+</div>
+@endsection
+
+@section('scripts')
+<script>
+// Search Integration
+window.addEventListener('pahamaja-search', function (e) {
+    const q = e.detail.toLowerCase().trim();
+    document.querySelectorAll('#quizGrid .quiz-card').forEach(card => {
+        const name = card.dataset.name || '';
+        card.style.display = (!q || name.includes(q)) ? '' : 'none';
+    });
+});
 </script>
-</body>
-</html>
+@endsection

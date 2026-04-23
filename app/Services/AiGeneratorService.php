@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -14,16 +15,19 @@ class AiGeneratorService
 
     public function __construct()
     {
-        $apiKey = (string) (config('services.gemini.key') ?? env('GEMINI_API_KEY'));
+        $dbKey = Setting::get('gemini_api_key');
+        $apiKey = (string) ($dbKey ?? config('services.gemini.key') ?? env('GEMINI_API_KEY'));
+        
         if ($apiKey === '') {
             throw new Exception('Gemini API Key is not configured.');
         }
 
         $this->apiKey = $apiKey;
-        // Use cached last known good model if available
+        
         $cachedModel = (string) cache('gemini_last_good_model');
-        $model = (string) (config('services.gemini.model') ?? env('GEMINI_MODEL', $cachedModel ?: 'gemini-1.5-flash'));
-        // Ensure model name doesn't have 'models/' prefix twice
+        $dbModel = Setting::get('gemini_model');
+        $model = (string) ($dbModel ?? config('services.gemini.model') ?? env('GEMINI_MODEL', $cachedModel ?: 'gemini-1.5-flash'));
+        
         $this->model = trim(preg_replace('/^models\//', '', $model));
         
         Log::info("AiGeneratorService initialized with model: " . $this->model);
@@ -34,10 +38,10 @@ class AiGeneratorService
      *
      * @throws Exception
      */
-    public function generateQuestions(string $text, int $questionCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null, bool $strictMode = false, array $tried = []): array
+    public function generateQuestions(string $text, int $mcqCount, int $essayCount, string $difficulty, ?string $regenToken = null, string $language = 'id', ?array $fileData = null, bool $strictMode = false, array $tried = []): array
     {
-        $prompt = $this->buildPrompt($text, $questionCount, $difficulty, $regenToken, $language, ! empty($fileData), $strictMode);
-        $maxOutputTokens = $this->recommendedMaxOutputTokens($questionCount);
+        $prompt = $this->buildPrompt($text, $mcqCount, $essayCount, $difficulty, $regenToken, $language, ! empty($fileData), $strictMode);
+        $maxOutputTokens = $this->recommendedMaxOutputTokens($mcqCount + $essayCount);
 
         $response = $this->requestGenerateContent($this->model, $prompt, $maxOutputTokens, $fileData);
 
@@ -56,7 +60,7 @@ class AiGeneratorService
                     // Persist for this session and globally for a while
                     cache(['gemini_last_good_model' => $fallbackModel], now()->addDay());
                     
-                    return $this->generateQuestions($text, $questionCount, $difficulty, $regenToken, $language, $fileData, $strictMode, $tried);
+                    return $this->generateQuestions($text, $mcqCount, $essayCount, $difficulty, $regenToken, $language, $fileData, $strictMode, $tried);
                 }
             }
 
@@ -68,7 +72,7 @@ class AiGeneratorService
         } catch (Exception $e) {
             $finishReason = (string) ($response->json('candidates.0.finishReason') ?? '');
             if ($finishReason === 'MAX_TOKENS') {
-                $retry = $this->requestGenerateContent($this->pickFallbackModel() ?: $this->model, $prompt, $this->recommendedMaxOutputTokens($questionCount, true));
+                $retry = $this->requestGenerateContent($this->pickFallbackModel() ?: $this->model, $prompt, $this->recommendedMaxOutputTokens($mcqCount + $essayCount, true));
                 if ($retry->successful()) {
                     return $this->parseQuestionsFromText($this->extractTextFromResponse($retry));
                 }
@@ -76,6 +80,18 @@ class AiGeneratorService
 
             throw $e;
         }
+    }
+
+    public function generateSingleExplanation(string $questionText, string $correctAnswer): string
+    {
+        $prompt = "Sebagai asisten kuis profesional dan teknis, berikan penjelasan mendalam (dalam bahasa Indonesia) mengapa jawaban '{$correctAnswer}' adalah yang paling tepat untuk pertanyaan: '{$questionText}'. 
+        
+        SYARAT PENJELASAN (Wajib):
+        1. Gunakan gaya bahasa teknis dan formal.
+        2. Jika soal melibatkan perhitungan angka, matematika, atau logika, WAJIB sertakan langkah-langkah perhitungan (step-by-step derivation) secara detail.
+        3. Jelaskan konsep dasarnya agar peserta memahami 'mengapa' dan 'bagaimana' jawaban tersebut diperoleh.";
+        
+        return $this->generateInsight($prompt, 768);
     }
 
     public function generateInsight(string $prompt, int $maxOutputTokens = 512, array $tried = [], int $attempt = 1): string
@@ -388,11 +404,11 @@ class AiGeneratorService
             return false;
         }
 
-        if (! array_key_exists('text', $first) || ! array_key_exists('options', $first) || ! array_key_exists('explanation', $first)) {
+        if (! array_key_exists('text', $first) || ! array_key_exists('type', $first)) {
             return false;
         }
 
-        return is_array($first['options']);
+        return true;
     }
 
     private function looksLikeTruncatedJson(string $text): bool
@@ -533,7 +549,7 @@ class AiGeneratorService
     /**
      * Build the prompt for Gemini.
      */
-    private function buildPrompt(string $content, int $count, string $difficulty, ?string $regenToken = null, string $language = 'id', bool $hasAttachedFile = false, bool $strictMode = false): string
+    private function buildPrompt(string $content, int $mcqCount, int $essayCount, string $difficulty, ?string $regenToken = null, string $language = 'id', bool $hasAttachedFile = false, bool $strictMode = false): string
     {
         $content = $this->limitSourceMaterial($content);
         $regenLine = $regenToken ? "\nRegeneration token: {$regenToken}\n" : "\n";
@@ -548,40 +564,96 @@ class AiGeneratorService
             $sourceMaterialBlock = "Source Material (Text):\n{$content}\n";
         }
 
+        $totalCount = $mcqCount + $essayCount;
+
+        $strictInstruction = $strictMode ? "4. STRICT MODE: Use EXACT wording and phrases from the source material.\n" : "";
+
         return <<<PROMPT
-You are a professional quiz generator for a high-stakes corporate training system. Your task is to generate exactly {$count} multiple-choice questions.
+You are a professional quiz generator for a high-stakes corporate training system. Your task is to generate exactly {$totalCount} questions, consisting of:
+- {$mcqCount} Multiple-Choice (PG) questions.
+- {$essayCount} Essay (Esai) questions.
 
 STRICT GROUNDING RULES:
-1. FACTUAL ACCURACY: Questions and options MUST be derived 100% and ONLY from the provided {$sourceInstruction}.
-2. FORBIDDEN: DO NOT use general knowledge, common sense, or real-world procedures (e.g., 'Reporting to police', 'Checking website') UNLESS they are explicitly mentioned in the document.
-3. SPECIFICITY: Use the exact terminology from the document (e.g., 'Petugas Parkir', 'Pakuwon Group', specific form numbers).
-4. NO HALLUCINATION: If the document doesn't mention a step, it doesn't exist for this quiz.
-5. QUALITY DISTRACTORS: Options that are incorrect should still be plausible within the context of the document, but clearly wrong based on the specific rules described. Avoid obviously silly options.
-6. TARGET: Focus on the actual procedures, roles, and rules defined in the document.
-{@$strictMode ? '7. STRICT MODE: Questions and options MUST use EXACT wording and phrases from the source material. Do not paraphrase or reword - copy the exact text where possible.' : ''}
-
+1. FACTUAL ACCURACY: Questions and content MUST be derived 100% and ONLY from the provided {$sourceInstruction}.
+2. FORBIDDEN: DO NOT use general knowledge. Use the exact terminology from the document.
+3. NO HALLUCINATION: If the document doesn't mention something, it doesn't exist for this quiz.
+{$strictInstruction}
 Context Details:
 - Difficulty Level: {$difficulty}
 - {$langLine}
 
 The output MUST be a valid JSON array of objects. Each object must have:
+- "type": String, either "mcq" or "essay".
 - "text": The question string.
-- "explanation": A detailed reasoning (in Indonesian) explaining why the correct answer is right and why the incorrect ones are wrong, derived solely from the source material.
-- "options": An array of at least 4 objects, each with:
-    - "text": The option string.
-    - "is_correct": A boolean (true for exactly one correct option, false otherwise).
+- "explanation": A detailed, technical reasoning (in Indonesian) for the correct/ideal answer.
+- "options" (ONLY for type "mcq"): An array of at least 4 objects with "text" (string) and "is_correct" (boolean).
+- "ideal_answer" (ONLY for type "essay"): A string containing the ideal/complete answer for grading.
 
 Instruction:
 - Return ONLY a JSON array, no markdown, no code fences.
 - Use double quotes for all JSON keys/strings.
 - Do not use trailing commas.
-- Keep questions and options concise yet clear.
+- Mix the order of MCQ and Essay questions naturally OR follow the order they appear in the source material.
 
 {$sourceMaterialBlock}
 {$regenLine}
-
-FINAL WARNING: Read the attached document closely. If the user asks about 'Lost Cards', only provide answers that match the 'Tahapan Aktivitas' described in the document. Return ONLY the JSON array.
 PROMPT;
+    }
+
+    /**
+     * Use AI to grade an essay answer against an ideal answer.
+     */
+    public function gradeEssayAnswer(string $question, string $idealAnswer, string $participantAnswer): array
+    {
+        // --- AI Anti-Prompt Injection Filter ---
+        $injectionKeywords = ['abaikan', 'ignore', 'beri saya nilai', 'berikan saya nilai', 'lupakan', 'forget', 'prompt', 'instruction', 'instruksi', 'aturan', 'rules', 'bypass', 'system message'];
+        $lowerAnswer = strtolower($participantAnswer);
+        foreach ($injectionKeywords as $keyword) {
+            if (str_contains($lowerAnswer, $keyword)) {
+                Log::warning("Prompt Injection detected! Blocked answer: " . $participantAnswer);
+                return [
+                    'score' => 0, 
+                    'feedback' => '⚠️ Sistem mendeteksi upaya manipulasi penilaian otomatis (Prompt Injection). Jawaban tidak valid.'
+                ];
+            }
+        }
+
+        $prompt = <<<PROMPT
+Sebagai asisten penilaian kuis profesional, tugas Anda adalah menilai jawaban esai peserta berdasarkan Kunci Jawaban Ideal yang diberikan.
+
+Pertanyaan: "{$question}"
+Kunci Jawaban Ideal: "{$idealAnswer}"
+Jawaban Peserta: "{$participantAnswer}"
+
+KRITERIA PENILAIAN:
+1. Skor diberikan dalam skala 0 sampai 5 (bilangan bulat).
+2. Berikan skor 5 jika jawaban peserta mencakup poin-poin utama dalam kunci jawaban ideal dengan sangat baik.
+3. Berikan skor 0 jika jawaban salah total atau tidak relevan.
+4. Berikan alasan/umpan balik singkat (maksimal 2 kalimat) dalam Bahasa Indonesia mengapa skor tersebut diberikan.
+
+Format output WAJIB JSON:
+{
+  "score": integer (0-5),
+  "feedback": "string alasan penilaian"
+}
+PROMPT;
+
+        try {
+            $insight = $this->generateInsight($prompt, 256);
+            $normalized = $this->normalizeJson($insight);
+            $decoded = json_decode($normalized, true);
+            
+            if (json_last_error() === JSON_ERROR_NONE && isset($decoded['score'])) {
+                return [
+                    'score' => (int) $decoded['score'],
+                    'feedback' => (string) ($decoded['feedback'] ?? 'Penilaian otomatis oleh AI.')
+                ];
+            }
+        } catch (Exception $e) {
+            Log::error("Essay Grading Error: " . $e->getMessage());
+        }
+
+        return ['score' => 0, 'feedback' => 'Gagal melakukan penilaian otomatis.'];
     }
 
     private function limitSourceMaterial(string $content): string

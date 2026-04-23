@@ -15,6 +15,8 @@ class Question extends Model
         'quiz_id',
         'text',
         'explanation',
+        'type',
+        'ideal_answer',
     ];
 
     /**

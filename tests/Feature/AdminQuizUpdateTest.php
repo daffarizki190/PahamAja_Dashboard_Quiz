@@ -102,7 +102,7 @@ class AdminQuizUpdateTest extends TestCase
             'passing_score' => 80,
         ]);
 
-        $this->assertDatabaseMissing('participants', ['id' => $participant->id]);
+        $this->assertSoftDeleted('participants', ['id' => $participant->id]);
         $this->assertDatabaseMissing('answers', ['id' => $answer->id]);
 
         $this->assertDatabaseMissing('questions', ['id' => $oldQuestion->id]);

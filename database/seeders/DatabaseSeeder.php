@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         // 1. Run Master Data & Professional Restoration Seeders
         // All Quiz logic is now consolidated in ProfessionalQuizSeeder to avoid conflicts.
         $this->call([
+            SettingSeeder::class,
             EmployeeSeeder::class,
             AchievementSeeder::class,
             ProfessionalQuizSeeder::class, // Manages Standar Pelayanan, Incident, and Complaint

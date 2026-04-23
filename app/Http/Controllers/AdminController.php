@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
@@ -55,7 +56,28 @@ class AdminController extends Controller
             'participants' => Participant::whereHas('quiz')->count(),
         ];
 
-        return view('admin.quizzes.index', compact('quizzes', 'stats'));
+        // Global Leaderboard (Top 5 based on average score)
+        $topEmployees = Employee::where('status', 'Active')
+            ->whereHas('participations', function($q) {
+                $q->whereNotNull('score');
+            })
+            ->with(['participations' => function($q) {
+                $q->whereNotNull('score');
+            }])
+            ->get()
+            ->map(function($emp) {
+                $bestScores = $emp->participations->groupBy('quiz_id')->map(function($p) {
+                    return $p->max('score');
+                });
+                $emp->avg_score = $bestScores->count() > 0 ? round($bestScores->avg(), 1) : 0;
+                $emp->quizzes_taken = $bestScores->count();
+                return $emp;
+            })
+            ->sortByDesc('avg_score')
+            ->take(5)
+            ->values();
+
+        return view('admin.quizzes.index', compact('quizzes', 'stats', 'topEmployees'));
     }
 
     public function employeeStore(Request $request)
@@ -65,9 +87,18 @@ class AdminController extends Controller
             'nim' => 'required|string|unique:employees,nim',
             'department' => 'required|string|max:255',
             'position' => 'required|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        Employee::create($request->all() + ['status' => 'Active']);
+        $data = $request->all();
+        $data['status'] = 'Active';
+
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $path;
+        }
+
+        Employee::create($data);
 
         return back()->with('success', 'Employee registered successfully!');
     }
@@ -124,7 +155,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Display the specified quiz.
+     * Display the specified quiz with management and analytics.
      */
     public function show(Quiz $quiz)
     {
@@ -133,7 +164,72 @@ class AdminController extends Controller
         $sessions = QuizSession::where('quiz_id', $quiz->id)->orderBy('start_time')->get();
         $employees = Employee::where('status', 'Active')->orderBy('name')->get();
 
-        return view('admin.quizzes.show', compact('quiz', 'sessions', 'employees'));
+        // --- Analytics Logic: Best Score Consolidation ---
+        $allParticipants = $quiz->participants()->get();
+        
+        // Group by employee and take the best attempt
+        $participants = $allParticipants
+            ->groupBy('employee_id')
+            ->map(function ($group) {
+                return $group->sort(function ($a, $b) {
+                    if ($a->score !== $b->score) return $b->score <=> $a->score;
+                    return $b->updated_at <=> $a->updated_at;
+                })->first();
+            });
+
+        // Advanced Sorting for Leaderboard
+        $sortedParticipants = $participants->sort(function ($a, $b) {
+            $aScoreIsNull = is_null($a->score);
+            $bScoreIsNull = is_null($b->score);
+            if ($aScoreIsNull !== $bScoreIsNull) return $aScoreIsNull <=> $bScoreIsNull;
+            if (!$aScoreIsNull && !$bScoreIsNull) {
+                if ($a->score !== $b->score) return $b->score <=> $a->score;
+            }
+            return ($a->updated_at?->getTimestamp() ?? 0) <=> ($b->updated_at?->getTimestamp() ?? 0);
+        })->values();
+
+        $finishedParticipants = $participants->whereNotNull('score');
+        $avgScore = $finishedParticipants->avg('score') ?? 0;
+        $inProgressCount = $participants->whereNull('score')->count();
+
+        // Question Analytics
+        $finishedIds = $finishedParticipants->pluck('id')->all();
+        $answers = count($finishedIds) > 0 ? Answer::whereIn('participant_id', $finishedIds)->get() : collect();
+        $answersByQuestion = $answers->groupBy('question_id');
+
+        $questionAnalytics = $quiz->questions->map(function ($question) use ($finishedParticipants, $answersByQuestion) {
+            $correctOption = $question->options->firstWhere('is_correct', true);
+            $questionAnswers = $answersByQuestion->get($question->id, collect());
+
+            $answeredCount = $questionAnswers->count();
+            $correctCount = $correctOption ? $questionAnswers->where('option_id', $correctOption->id)->count() : 0;
+            $topOptionId = $questionAnswers->countBy('option_id')->sortDesc()->keys()->first();
+            $topOptionText = $topOptionId ? optional($question->options->firstWhere('id', $topOptionId))->text : null;
+
+            return [
+                'text' => (string) $question->text,
+                'answered' => $answeredCount,
+                'participants' => $finishedParticipants->count(),
+                'correct_rate' => $answeredCount > 0 ? round(($correctCount / $answeredCount) * 100, 1) : null,
+                'top_option' => $topOptionText,
+            ];
+        })->values();
+
+        // Score Distribution for Chart
+        $dist = [
+            'low' => $finishedParticipants->whereBetween('score', [0, 50])->count(),
+            'mid' => $finishedParticipants->whereBetween('score', [51, 75])->count(),
+            'high' => $finishedParticipants->whereBetween('score', [76, 100])->count(),
+        ];
+        $chartData = [
+            'labels' => ['0-50 (Low)', '51-75 (Mid)', '76-100 (High)'],
+            'scores' => [$dist['low'], $dist['mid'], $dist['high']],
+        ];
+
+        return view('admin.quizzes.show', compact(
+            'quiz', 'sessions', 'employees', 'sortedParticipants', 
+            'avgScore', 'inProgressCount', 'questionAnalytics', 'chartData'
+        ));
     }
 
     public function storeSession(Request $request, Quiz $quiz)
@@ -279,9 +375,15 @@ class AdminController extends Controller
                     : null;
 
                 if ($question) {
-                    $question->update(['text' => $qData['text']]);
+                    $question->update([
+                        'text' => $qData['text'],
+                        'explanation' => $qData['explanation'] ?? null
+                    ]);
                 } else {
-                    $question = $quiz->questions()->create(['text' => $qData['text']]);
+                    $question = $quiz->questions()->create([
+                        'text' => $qData['text'],
+                        'explanation' => $qData['explanation'] ?? null
+                    ]);
                 }
 
                 // Sync Options
@@ -338,26 +440,24 @@ class AdminController extends Controller
         $statsByNim = $participations
             ->groupBy('nim')
             ->map(function ($items) {
-                $sorted = $items->sortBy(function ($p) {
-                    return $p->updated_at?->getTimestamp() ?? 0;
-                })->values();
+                // Group by quiz first to find the best score for each quiz
+                $bestByQuiz = $items->groupBy('quiz_id')->map(function($qItems) {
+                    return $qItems->sortByDesc('score')->first();
+                });
 
-                $scores = $sorted->pluck('score')->filter(function ($s) {
-                    return ! is_null($s);
-                })->values();
+                $scores = $bestByQuiz->pluck('score')->values();
+                $allScores = $items->pluck('score')->values();
 
-                $attempts = $scores->count();
-                $avg = $attempts > 0 ? round($scores->avg(), 1) : 0.0;
-                $last = $attempts > 0 ? (float) $scores->last() : null;
-                $prev = $attempts > 1 ? (float) $scores->get($attempts - 2) : null;
-                $delta = (! is_null($last) && ! is_null($prev)) ? round($last - $prev, 1) : null;
-                $lastAt = $sorted->last()?->updated_at;
+                $attempts = $allScores->count();
+                $avg = $scores->count() > 0 ? round($scores->avg(), 1) : 0.0;
+                $highest = $scores->count() > 0 ? (float) $scores->max() : null;
+                $lastAt = $items->sortByDesc('updated_at')->first()?->updated_at;
 
                 return [
                     'attempts' => $attempts,
                     'avg' => $avg,
-                    'last' => $last,
-                    'delta' => $delta,
+                    'last' => $highest, // PRIORITIZE BEST SCORE
+                    'delta' => null, 
                     'last_at' => $lastAt,
                 ];
             });
@@ -378,6 +478,7 @@ class AdminController extends Controller
                     'nim' => (string) $employee->nim,
                     'department' => (string) $employee->department,
                     'position' => (string) $employee->position,
+                    'avatar' => $employee->avatar,
                     'attempts' => (int) $stats['attempts'],
                     'avg' => (float) $stats['avg'],
                     'last' => $stats['last'],
@@ -402,22 +503,26 @@ class AdminController extends Controller
             ->whereHas('quiz')
             ->with('quiz')
             ->whereNotNull('score')
-            ->get();
+            ->get()
+            ->groupBy('quiz_id')
+            ->map(function ($group) {
+                return $group->sortByDesc('score')->first();
+            });
 
         $chartData = [
             'labels' => $participations->pluck('quiz.title')->map(function ($title) {
-                // Buat kode singkat: ambil huruf pertama tiap kata (maks 4 kata), uppercase
                 $words = preg_split('/[\s\-]+/', $title);
-                $words = array_filter($words); // hapus kosong
                 $initials = array_map(fn ($w) => strtoupper(substr($w, 0, 1)), array_slice($words, 0, 4));
-
                 return implode('', $initials);
             })->toArray(),
             'fullLabels' => $participations->pluck('quiz.title')->toArray(),
             'scores' => $participations->pluck('score')->toArray(),
         ];
 
-        return view('admin.employees.show', compact('employee', 'participations', 'chartData'));
+        $completedQuizIds = $participations->pluck('quiz_id')->toArray();
+        $uncompletedQuizzes = Quiz::whereNotIn('id', $completedQuizIds)->orderBy('created_at', 'desc')->get();
+
+        return view('admin.employees.show', compact('employee', 'participations', 'chartData', 'uncompletedQuizzes'));
     }
 
     public function employeeUpdate(Request $request, Employee $employee)
@@ -427,19 +532,45 @@ class AdminController extends Controller
             'department' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'status' => 'required|string|in:Active,Inactive',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        $employee->update($request->only(['name', 'department', 'position', 'status']));
+        $data = $request->only(['name', 'department', 'position', 'status']);
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($employee->avatar) {
+                Storage::disk('public')->delete($employee->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $path;
+        }
+
+        $employee->update($data);
 
         return back()->with('success', 'Employee updated successfully!');
     }
 
     public function employeeDestroy(Employee $employee)
     {
-        // Database nullOnDelete() handles participants. Historical records stay, but linked to NULL employee ID.
+        // Delete avatar if exists
+        if ($employee->avatar) {
+            Storage::disk('public')->delete($employee->avatar);
+        }
+        
+        // Delete related participant records and answers
+        foreach ($employee->participations as $participation) {
+            $participation->answers()->delete();
+            $participation->delete();
+        }
+
+        // Detach achievements
+        $employee->achievements()->detach();
+
+        // Delete the employee
         $employee->delete();
 
-        return redirect()->route('admin.employees.index')->with('success', 'Employee removed. Historical records preserved.');
+        return redirect()->route('admin.employees.index')->with('success', 'Karyawan beserta seluruh riwayat nilainya berhasil dihapus secara permanen.');
     }
 
     public function participantAnswers(Quiz $quiz, Participant $participant)
@@ -477,5 +608,64 @@ class AdminController extends Controller
         $participant->delete();
 
         return back()->with('success', 'Participant record deleted.');
+    }
+
+    /**
+     * Show manual review page for essay questions.
+     */
+    public function reviewEssay(Quiz $quiz, Participant $participant)
+    {
+        if ($participant->quiz_id !== $quiz->id) abort(403);
+        
+        $participant->load(['answers.question', 'answers.option']);
+        $essayAnswers = $participant->answers->filter(fn($a) => $a->question->type === 'essay');
+
+        return view('admin.quizzes.review', compact('quiz', 'participant', 'essayAnswers'));
+    }
+
+    /**
+     * Store manual review scores.
+     */
+    public function storeReview(Request $request, Quiz $quiz, Participant $participant)
+    {
+        $request->validate([
+            'scores' => 'required|array',
+            'scores.*' => 'required|numeric|min:0|max:5',
+            'feedbacks' => 'nullable|array',
+        ]);
+
+        DB::transaction(function() use ($request, $participant) {
+            foreach ($request->scores as $answerId => $score) {
+                $answer = Answer::find($answerId);
+                if ($answer && $answer->participant_id == $participant->id) {
+                    $answer->update([
+                        'score' => $score,
+                        'ai_feedback' => $request->feedbacks[$answerId] ?? null
+                    ]);
+                }
+            }
+
+            // Recalculate Final Score
+            $achieved = 0;
+            $max = 0;
+            $participant->load('answers.question');
+            
+            foreach ($participant->answers as $ans) {
+                if ($ans->question->type === 'essay') {
+                    $max += 5;
+                } else {
+                    $max += 1;
+                }
+                $achieved += (float) $ans->score;
+            }
+
+            $finalScore = $max > 0 ? round(($achieved / $max) * 100) : 0;
+            $participant->update([
+                'score' => $finalScore,
+                'status' => 'completed'
+            ]);
+        });
+
+        return redirect()->route('admin.quizzes.show', $quiz->slug)->with('success', 'Penilaian esai berhasil disimpan!');
     }
 }

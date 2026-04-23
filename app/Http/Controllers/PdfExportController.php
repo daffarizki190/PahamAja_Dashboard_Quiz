@@ -9,17 +9,28 @@ class PdfExportController extends Controller
 {
     public function export(Quiz $quiz)
     {
-        $participants = $quiz->participants()
-            ->orderByRaw('score IS NULL')
-            ->orderByDesc('score')
+        $allParticipants = $quiz->participants()
+            ->whereNotNull('score')
             ->get();
 
-        $finished = $participants->whereNotNull('score');
+        // 🟢 Best Score Consolidation for PDF
+        $participants = $allParticipants
+            ->groupBy('employee_id')
+            ->map(function ($group) {
+                return $group->sort(function ($a, $b) {
+                    if ($a->score !== $b->score) return $b->score <=> $a->score;
+                    return $b->updated_at <=> $a->updated_at;
+                })->first();
+            })
+            ->sortByDesc('score')
+            ->values();
+
+        $finished = $participants;
         $avgScore = round($finished->avg('score') ?? 0, 1);
         $passed = $finished->where('score', '>=', $quiz->passing_score)->count();
         $failed = $finished->where('score', '<', $quiz->passing_score)->count();
         $passRate = $finished->count() > 0 ? round(($passed / $finished->count()) * 100) : 0;
-        $inProgress = $participants->whereNull('score')->count();
+        $inProgress = $quiz->participants()->whereNull('score')->count();
 
         $low = $finished->whereBetween('score', [0, 50])->count();
         $mid = $finished->whereBetween('score', [51, 75])->count();

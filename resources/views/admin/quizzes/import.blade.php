@@ -1,140 +1,230 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import Soal - PahamAja</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
-        .sidebar {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            margin: 16px;
-            height: calc(100vh - 32px);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .delay-100 { animation-delay: 100ms; }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="flex">
-        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
-                </div>
-            </div>
-            <nav class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-medium">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-medium">Employee Insights</span>
-                </a>
-            </nav>
-        </aside>
+@extends('layouts.app')
 
-        <main class="flex-1 p-10">
-            <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-fade-in opacity-0">
-                <div>
-                    <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">Import Assessment</h2>
-                    <p class="text-slate-500 mt-4 font-medium">Batch upload questions via CSV or JSON format.</p>
-                </div>
-                <a href="{{ route('admin.quizzes.index') }}" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2 h-fit shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    <span>Kembali</span>
-                </a>
-            </header>
+@section('title', 'Import Asesmen – PahamAja')
+@section('meta_description', 'Import soal kuis dari file Excel atau CSV')
+@section('page_title', 'Import Asesmen')
+@section('page_subtitle', 'Upload file untuk memuat soal secara massal')
 
-            @if(session('error'))
-                <div class="bg-rose-50 border border-rose-200 text-rose-800 px-6 py-4 rounded-2xl mb-6">
-                    <p class="font-black text-sm">{{ session('error') }}</p>
-                </div>
-            @endif
+@section('topbar_left')
+    <a href="{{ route('admin.quizzes.index') }}" class="btn btn-ghost" style="padding:9px 12px; font-size:12px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); color:var(--purple); margin-right:8px;">
+        <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+@endsection
 
-            @if ($errors->any())
-                <div class="bg-rose-50 border border-rose-200 text-rose-800 px-6 py-4 rounded-2xl mb-6">
-                    <p class="font-black text-sm mb-2">Validasi gagal</p>
-                    <ul class="list-disc pl-5 text-sm font-semibold space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+@section('topbar_actions')
+@endsection
 
-            <form action="{{ route('admin.quizzes.import.store') }}" method="POST" enctype="multipart/form-data" class="max-w-4xl">
-                @csrf
+@section('head_extra')
+<style>
+    .upload-zone {
+        border: 2px dashed rgba(124,58,237,0.35); border-radius: 18px;
+        padding: 52px 32px; text-align: center; cursor: pointer;
+        transition: all 0.22s; background: rgba(124,58,237,0.04); position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragging {
+        border-color: #7C3AED; background: rgba(124,58,237,0.08);
+    }
+    .format-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        border-radius: 7px; padding: 5px 12px; font-size: 12px; font-weight: 800;
+        cursor: default;
+    }
+    .pill-csv  { background: #10B981; color: #fff; }
+    .pill-json { background: #F59E0B; color: #fff; }
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6">Pengaturan Kuis</h3>
+    /* Range slider style */
+    input[type=range] {
+        -webkit-appearance: none; width: 100%; height: 5px;
+        background: #E5E3F0; border-radius: 99px; outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 18px; height: 18px;
+        background: #7C3AED; border-radius: 50%; cursor: pointer;
+        box-shadow: 0 2px 8px rgba(124,58,237,0.4);
+    }
+    .slider-label { display: flex; justify-content: space-between; font-size: 11px; color: #9CA3AF; font-weight: 600; margin-top: 4px; }
+</style>
+@endsection
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Judul Kuis</label>
-                            <input type="text" name="title" required value="{{ old('title') }}" placeholder="Contoh: Ujian Materi Bab 1"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Durasi (Menit)</label>
-                                <input type="number" name="time_limit" required value="{{ old('time_limit', 60) }}" min="1"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Passing (0-100)</label>
-                                <input type="number" name="passing_score" required value="{{ old('passing_score', 70) }}" min="0" max="100"
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6">File Soal</h3>
-
-                    <div class="space-y-3">
-                        <input type="file" name="file" accept=".csv,.json" required
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                        <p class="text-xs text-slate-500 font-semibold">
-                            Format CSV minimal: question, option_a, option_b, option_c, option_d, correct. Nilai correct bisa A/B/C/D atau 1/2/3/4.
-                        </p>
-                        <p class="text-xs text-slate-500 font-semibold">
-                            Format JSON minimal: array berisi { "text": "...", "options": [ { "text": "...", "is_correct": true }, ... ] }.
-                        </p>
-                    </div>
-                </div>
-
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 transition-all flex items-center justify-center space-x-2 w-full md:w-auto">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M4 12l4 4m0 0l4-4m-4 4V4"></path></svg>
-                    <span>Import & Buat Kuis</span>
-                </button>
-            </form>
-        </main>
+@section('content')
+<!-- Page Header with illustration -->
+<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:28px;">
+    <div>
+        <h2 style="font-size:26px; font-weight:900; color:#1E1B4B; margin-bottom:4px;">Import Asesmen</h2>
+        <p style="font-size:13px; color:#6B7280;">Upload file soal CSV atau JSON untuk membuat kuis secara massal</p>
     </div>
+    <!-- Illustration top right -->
+    <div style="flex-shrink:0; margin-left:20px;">
+        <svg viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:160px; height:auto;">
+            <!-- Folders -->
+            <rect x="100" y="20" width="60" height="45" rx="6" fill="#7C3AED" opacity=".8"/>
+            <rect x="95" y="25" width="60" height="50" rx="6" fill="#4F46E5"/>
+            <rect x="90" y="30" width="62" height="52" rx="6" fill="#6D28D9"/>
+            <!-- Arrow up -->
+            <circle cx="155" cy="45" r="14" fill="#F0FFF4" stroke="#10B981" stroke-width="1.5"/>
+            <path d="M155 52 L155 39 M150 44 L155 39 L160 44" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Documents left -->
+            <rect x="20" y="40" width="36" height="48" rx="5" fill="#fff" stroke="#E5E3F0" stroke-width="1.5"/>
+            <rect x="26" y="50" width="24" height="3" rx="1.5" fill="#C4BFDF"/>
+            <rect x="26" y="57" width="20" height="3" rx="1.5" fill="#E5E3F0"/>
+            <rect x="26" y="64" width="22" height="3" rx="1.5" fill="#E5E3F0"/>
+            <rect x="26" y="71" width="18" height="3" rx="1.5" fill="#E5E3F0"/>
+            <!-- Arrow lines connecting -->
+            <path d="M58 65 C75 55, 82 55, 90 52" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="3,2" stroke-linecap="round"/>
+        </svg>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 320px; gap:20px;" class="fade-up">
+
+    <!-- LEFT: Dropzone -->
+    <div>
+        @if(session('error'))
+        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#DC2626; padding:12px 16px; border-radius:10px; margin-bottom:18px; font-size:13px; font-weight:700;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>{{ session('error') }}
+        </div>
+        @endif
+        @if($errors->any())
+        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#DC2626; padding:12px 16px; border-radius:10px; margin-bottom:18px; font-size:13px; font-weight:700;">
+            @foreach($errors->all() as $err)<div>{{ $err }}</div>@endforeach
+        </div>
+        @endif
+
+        <form action="{{ route('admin.quizzes.import.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+
+            <!-- Dropzone -->
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" name="file" id="fileInput" accept=".xlsx,.xls,.csv,.json" required
+                       style="position:absolute; inset:0; opacity:0; cursor:pointer; z-index:10;"
+                       onchange="onFileChange(this)">
+                <!-- Cloud upload illustration -->
+                <div style="margin-bottom:16px;">
+                    <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:80px; height:60px; margin:0 auto; display:block;">
+                        <ellipse cx="40" cy="35" rx="28" ry="18" fill="rgba(56,189,248,0.15)" stroke="rgba(56,189,248,0.4)" stroke-width="1.5"/>
+                        <ellipse cx="25" cy="40" rx="14" ry="10" fill="rgba(124,58,237,0.1)" stroke="rgba(124,58,237,0.3)" stroke-width="1.5"/>
+                        <ellipse cx="55" cy="38" rx="12" ry="8" fill="rgba(56,189,248,0.1)" stroke="rgba(56,189,248,0.3)" stroke-width="1.5"/>
+                        <path d="M40 30 L40 14 M34 20 L40 14 L46 20" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Floating docs -->
+                        <rect x="8" y="12" width="14" height="18" rx="3" fill="#EF4444" opacity=".7" transform="rotate(-15 8 12)"/>
+                        <rect x="58" y="10" width="14" height="18" rx="3" fill="#EF4444" opacity=".7" transform="rotate(15 58 10)"/>
+                        <rect x="12" y="32" width="10" height="13" rx="2" fill="#EF4444" opacity=".5" transform="rotate(-10 12 32)"/>
+                    </svg>
+                </div>
+                <div id="fileName" style="font-size:15px; font-weight:800; color:#1E1B4B; margin-bottom:6px;">
+                    Seret & Lepas file di sini
+                </div>
+                <div style="font-size:12px; color:#6B7280; font-weight:500; margin-bottom:16px;">atau Pilih File</div>
+                <div style="display:flex; gap:8px; justify-content:center; margin-bottom:12px;">
+                    <span class="format-pill pill-csv">CSV</span>
+                    <span class="format-pill pill-json">JSON</span>
+                </div>
+                <a href="#" style="font-size:13px; font-weight:700; color:#7C3AED; text-decoration:none;" onclick="return false;">Unduh Template</a>
+            </div>
+
+            <!-- Import button -->
+            <button type="submit" class="btn btn-primary" id="importBtn"
+                    style="width:100%; justify-content:center; padding:14px; font-size:14px; border-radius:12px; margin-top:16px;">
+                Import Asesmen
+            </button>
+        </form>
+    </div>
+
+    <!-- RIGHT: Detail Asesmen -->
+    <div>
+        <div class="card" style="padding:24px;">
+            <div style="font-size:15px; font-weight:800; color:#1E1B4B; margin-bottom:20px;">Detail Asesmen</div>
+
+            <form>
+                <!-- Judul Asesmen -->
+                <div style="margin-bottom:18px;">
+                    <label style="font-size:12px; font-weight:700; color:#1E1B4B; display:flex; align-items:center; gap:7px; margin-bottom:8px;">
+                        <i class="fa-solid fa-pencil" style="color:#7C3AED; font-size:11px;"></i> Judul Asesmen
+                    </label>
+                    <input type="text" class="form-input" placeholder="Nama kuis..." name="title" value="{{ old('title') }}">
+                </div>
+
+                <!-- Durasi -->
+                <div style="margin-bottom:20px;">
+                    <label style="font-size:12px; font-weight:700; color:#1E1B4B; display:flex; align-items:center; gap:7px; margin-bottom:10px;">
+                        <i class="fa-regular fa-clock" style="color:#F59E0B; font-size:13px;"></i> Durasi (Menit)
+                    </label>
+                    <input type="range" id="durasiSlider" min="5" max="120" value="30" oninput="document.getElementById('durasiVal').textContent=this.value">
+                    <div class="slider-label">
+                        <span>5 menit</span>
+                        <span id="durasiVal" style="font-weight:700; color:#7C3AED; font-size:12px;">30</span>
+                        <span>120 menit</span>
+                    </div>
+                </div>
+
+                <!-- Nilai Kelulusan -->
+                <div style="margin-bottom:8px;">
+                    <label style="font-size:12px; font-weight:700; color:#1E1B4B; display:flex; align-items:center; gap:7px; margin-bottom:10px;">
+                        <i class="fa-solid fa-trophy" style="color:#D97706; font-size:12px;"></i> Nilai Kelulusan (0-100)
+                    </label>
+                    <input type="range" id="nilaiSlider" min="0" max="100" value="70" oninput="document.getElementById('nilaiVal').textContent=this.value">
+                    <div class="slider-label">
+                        <span>0</span>
+                        <span id="nilaiVal" style="font-weight:700; color:#7C3AED; font-size:12px;">70</span>
+                        <span>100</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Format Guide -->
+        <div class="card" style="padding:20px; margin-top:16px;">
+            <div style="font-size:12px; font-weight:800; color:#1E1B4B; margin-bottom:12px;">
+                <i class="fa-solid fa-circle-info" style="color:#7C3AED; margin-right:5px;"></i> Format Kolom
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:11px;">
+                @foreach([
+                    ['question','Pertanyaan',true],
+                    ['option_a','Opsi A',true],
+                    ['option_b','Opsi B',true],
+                    ['correct_answer','Jawaban (A/B/C/D)',true],
+                    ['explanation','Penjelasan',false],
+                ] as [$col, $label, $req])
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <code style="background:#F3F2FB; border:1px solid #E5E3F0; border-radius:5px; padding:2px 7px; font-size:10px; color:#7C3AED; font-family:monospace; flex-shrink:0;">{{ $col }}</code>
+                    <span style="color:#6B7280; flex:1;">{{ $label }}</span>
+                    @if($req)
+                        <span style="font-size:9px; font-weight:800; color:#DC2626; border:1px solid rgba(220,38,38,0.2); border-radius:4px; padding:1px 5px;">REQ</span>
+                    @else
+                        <span style="font-size:9px; font-weight:800; color:#9CA3AF; border:1px solid #E5E3F0; border-radius:4px; padding:1px 5px;">OPT</span>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
-</body>
-</html>
+<script>
+function onFileChange(input) {
+    const zone   = document.getElementById('uploadZone');
+    const nameEl = document.getElementById('fileName');
+    if (input.files[0]) {
+        nameEl.textContent = input.files[0].name;
+        zone.style.borderColor = '#10B981';
+        zone.style.background  = 'rgba(16,185,129,0.06)';
+    } else {
+        nameEl.textContent = 'Seret & Lepas file di sini';
+        zone.style.borderColor = 'rgba(124,58,237,0.35)';
+        zone.style.background  = 'rgba(124,58,237,0.04)';
+    }
+}
+const zone = document.getElementById('uploadZone');
+if (zone) {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragging'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+    zone.addEventListener('drop',      e => { e.preventDefault(); zone.classList.remove('dragging'); });
+}
+// Mobile collapse
+const grid = document.querySelector('[style*="grid-template-columns:1fr 320px"]');
+if (grid && window.innerWidth < 900) grid.style.gridTemplateColumns = '1fr';
+</script>
+@endsection

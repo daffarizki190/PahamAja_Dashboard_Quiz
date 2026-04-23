@@ -46,13 +46,17 @@ class QuizExport implements FromCollection, WithHeadings, WithMapping, WithStyle
         ]);
 
         foreach ($participants as $index => $p) {
+            $isPassed = $p->score >= $this->quiz->passing_score;
+            $statusPrefix = ($p->attempt > 1) ? '[REMEDIAL] ' : '';
+            $status = $statusPrefix . ($isPassed ? 'Lulus' : 'Tidak Lulus');
+
             $data->push([
                 $index + 1,
                 $p->name,
                 $p->nim,
                 $p->score,
                 $p->updated_at->format('Y-m-d H:i:s'),
-                $p->score >= $this->quiz->passing_score ? 'Lulus' : 'Tidak Lulus'
+                $status
             ]);
         }
 

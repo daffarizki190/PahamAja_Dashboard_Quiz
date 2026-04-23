@@ -14,6 +14,9 @@ class Answer extends Model
         'participant_id',
         'question_id',
         'option_id',
+        'essay_answer',
+        'score',
+        'ai_feedback',
     ];
 
     /**

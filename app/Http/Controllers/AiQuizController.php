@@ -40,9 +40,11 @@ class AiQuizController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimes:pdf,docx,pptx|max:10240',
+            'file' => 'nullable|file|mimes:pdf,docx,pptx|max:4096',
             'content_text' => 'nullable|string|min:100',
-            'question_count' => 'required|integer|min:1|max:20',
+            'mcq_count' => 'required|integer|min:0|max:50',
+            'essay_count' => 'required|integer|min:0|max:50',
+            'essay_grading_method' => 'required|in:manual,ai',
             'difficulty' => 'required|in:Easy,Medium,Hard',
             'language' => 'required|in:id,en',
             'time_limit' => 'required|integer|min:1',
@@ -50,6 +52,10 @@ class AiQuizController extends Controller
             'strict_mode' => 'nullable|boolean',
             'qc' => 'nullable|boolean',
         ]);
+
+        if ($request->mcq_count == 0 && $request->essay_count == 0) {
+            return back()->with('error', 'Jumlah soal tidak boleh kosong.')->withInput();
+        }
 
         try {
             $fileData = null;
@@ -83,7 +89,7 @@ class AiQuizController extends Controller
             }
 
             $regenToken = $request->filled('regen_token') ? (string) $request->input('regen_token') : null;
-            $questions = $this->aiGenerator->generateQuestions($text, $request->question_count, $request->difficulty, $regenToken, (string) $request->language, $fileData, $request->boolean('strict_mode'));
+            $questions = $this->aiGenerator->generateQuestions($text, (int) $request->mcq_count, (int) $request->essay_count, $request->difficulty, $regenToken, (string) $request->language, $fileData, $request->boolean('strict_mode'));
             $qc = $request->boolean('qc') ? $this->aiGenerator->qualityCheck($questions) : null;
 
             return view('admin.quizzes.ai-preview', [
@@ -92,7 +98,9 @@ class AiQuizController extends Controller
                 'language' => (string) $request->language,
                 'time_limit' => $request->time_limit,
                 'passing_score' => $request->passing_score,
-                'question_count' => (int) $request->question_count,
+                'mcq_count' => (int) $request->mcq_count,
+                'essay_count' => (int) $request->essay_count,
+                'essay_grading_method' => $request->essay_grading_method,
                 'source_text' => mb_substr($text, 0, 20000),
                 'qc_enabled' => $request->boolean('qc'),
                 'strict_mode' => $request->boolean('strict_mode'),
@@ -131,6 +139,7 @@ class AiQuizController extends Controller
                 'slug' => Str::slug($request->title).'-'.Str::random(5),
                 'time_limit' => $request->time_limit,
                 'passing_score' => $request->passing_score,
+                'essay_grading_method' => $request->essay_grading_method ?? 'manual',
             ]);
 
             foreach ($request->questions as $qData) {
@@ -138,14 +147,18 @@ class AiQuizController extends Controller
                     'quiz_id' => $quiz->id,
                     'text' => $qData['text'],
                     'explanation' => $qData['explanation'] ?? null,
+                    'type' => $qData['type'] ?? 'mcq',
+                    'ideal_answer' => $qData['ideal_answer'] ?? null,
                 ]);
 
-                foreach ($qData['options'] as $oData) {
-                    Option::create([
-                        'question_id' => $question->id,
-                        'text' => $oData['text'],
-                        'is_correct' => isset($oData['is_correct']) && ($oData['is_correct'] == '1' || $oData['is_correct'] === true),
-                    ]);
+                if (isset($qData['options']) && is_array($qData['options'])) {
+                    foreach ($qData['options'] as $oData) {
+                        Option::create([
+                            'question_id' => $question->id,
+                            'text' => $oData['text'],
+                            'is_correct' => isset($oData['is_correct']) && ($oData['is_correct'] == '1' || $oData['is_correct'] === true),
+                        ]);
+                    }
                 }
             }
 
@@ -160,5 +173,20 @@ class AiQuizController extends Controller
         $models = $this->aiGenerator->listAvailableModels();
 
         return view('admin.quizzes.ai-models', compact('models'));
+    }
+
+    public function suggestExplanation(Request $request)
+    {
+        $request->validate([
+            'text' => 'required|string',
+            'correct_answer' => 'required|string',
+        ]);
+
+        try {
+            $explanation = $this->aiGenerator->generateSingleExplanation($request->text, $request->correct_answer);
+            return response()->json(['explanation' => $explanation]);
+        } catch (Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

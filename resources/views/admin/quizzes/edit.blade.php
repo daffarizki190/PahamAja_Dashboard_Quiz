@@ -1,204 +1,335 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Quiz - PahamAja</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f7fb; color: #0f172a; overflow-x: hidden; }
-        .sidebar {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            margin: 16px;
-            height: calc(100vh - 32px);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .delay-100 { animation-delay: 100ms; }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="flex">
-        <!-- Sidebar -->
-        <aside class="w-72 sidebar text-white p-6 hidden md:block sticky top-4 self-start">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="bg-indigo-600 w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg shadow-indigo-900/40">P</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Paham<span class="text-indigo-300">Aja</span></h1>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">Enterprise Suite</p>
+@extends('layouts.app')
+
+@section('title', 'Edit Quiz – PahamAja')
+@section('meta_description', 'Edit kuis assessment yang sudah ada')
+@section('page_title', 'Edit Kuis')
+@section('page_subtitle', 'Assessment Editor – Sesuaikan kuis Anda')
+
+@section('topbar_left')
+    <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="btn btn-ghost" style="padding:9px 12px; font-size:12px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); color:var(--purple); margin-right:8px;">
+        <i class="fa-solid fa-arrow-left"></i> Batal Edit
+    </a>
+@endsection
+
+@section('topbar_actions')
+    <button type="button" class="btn btn-primary" style="padding:8px 14px; font-size:12px;" onclick="document.getElementById('quizForm').requestSubmit()">
+        <i class="fa-solid fa-floppy-disk"></i> Update Kuis
+    </button>
+@endsection
+
+@section('head_extra')
+<style>
+    /* Breadcrumb */
+    .breadcrumb { display:flex; align-items:center; gap:8px; font-size:13px; color:#6B7280; font-weight:600; margin-bottom:20px; }
+    .breadcrumb span { color:#9CA3AF; }
+    .breadcrumb a { color:#7C3AED; text-decoration:none; font-weight:700; }
+
+    /* Question card */
+    .q-card {
+        background: #fff;
+        border: 1px solid #E5E3F0;
+        border-radius: 14px; padding: 22px; position: relative;
+        transition: border-color .2s; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+    }
+    .q-card:hover { border-color: rgba(124,58,237,0.25); }
+    .q-card.active-border { border-left: 4px solid var(--purple); }
+
+    .option-row   { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .option-letter {
+        width:30px; height:30px; flex-shrink:0; border-radius:8px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:12px; font-weight:800; background:#F3F2FB; color:#6B7280;
+        border: 1.5px solid #E5E3F0;
+    }
+    .option-row input[type=radio]:checked ~ .option-letter {
+        background: #7C3AED; color: #fff; border-color: #7C3AED;
+    }
+
+    .add-zone {
+        border: 2px dashed rgba(124,58,237,0.3); border-radius:12px; padding:18px;
+        text-align:center; cursor:pointer; transition:all .2s; font-size:14px; font-weight:700;
+        color:#7C3AED; background:transparent; margin-bottom: 20px;
+    }
+    .add-zone:hover { border-color:#7C3AED; background:rgba(124,58,237,0.05); }
+
+    /* Range slider custom colors */
+    input[type=range] {
+        -webkit-appearance: none; width: 100%; height: 5px;
+        background: #E5E3F0;
+        border-radius: 99px; outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 17px; height: 17px;
+        background: #7C3AED; border-radius: 50%; cursor: pointer;
+        box-shadow: 0 2px 8px rgba(124,58,237,0.4);
+    }
+</style>
+@endsection
+
+@section('content')
+<!-- Breadcrumb -->
+<div class="breadcrumb fade-up">
+    <span>›</span> <a href="{{ route('admin.quizzes.index') }}">Dashboard</a>
+    <span>›</span> <a href="{{ route('admin.quizzes.show', $quiz->slug) }}">{{ $quiz->title }}</a>
+    <span>›</span> Edit Kuis
+</div>
+
+<form action="{{ route('admin.quizzes.update', $quiz->slug) }}" method="POST" id="quizForm" class="fade-up">
+    @csrf
+    @method('PATCH')
+
+    <div style="display:grid; grid-template-columns:1fr 280px; gap:20px; align-items:start;">
+
+        <!-- LEFT: Form -->
+        <div style="display:flex; flex-direction:column; gap:18px;">
+
+            <!-- General Settings -->
+            <div class="card" style="padding:24px;">
+                <div style="font-size:15px; font-weight:800; color:#1E1B4B; margin-bottom:20px;">Pengaturan Umum</div>
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <!-- Quiz Title -->
+                    <div>
+                        <label class="form-label" style="display:flex; align-items:center; gap:7px;">
+                            <i class="fa-solid fa-pencil" style="color:#7C3AED; font-size:11px;"></i> Quiz Title
+                        </label>
+                        <input type="text" name="title" required value="{{ $quiz->title }}" class="form-input"
+                               placeholder="Judul kuis...">
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <!-- Time Limit -->
+                        <div>
+                            <label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">
+                                <span style="display:flex; align-items:center; gap:7px;">
+                                    <i class="fa-regular fa-clock" style="color:#F59E0B; font-size:12px;"></i> Time Limit
+                                </span>
+                                <span id="timeLimitLabel" style="font-weight:700; color:#7C3AED; font-size:13px;">{{ $quiz->time_limit }} menit</span>
+                            </label>
+                            <input type="range" id="timeLimitRange" name="time_limit" min="5" max="180" value="{{ $quiz->time_limit }}"
+                                   oninput="document.getElementById('timeLimitLabel').textContent=this.value+' menit'">
+                        </div>
+                        <!-- Passing Score -->
+                        <div>
+                            <label class="form-label" style="display:flex; align-items:center; justify-content:space-between;">
+                                <span style="display:flex; align-items:center; gap:7px;">
+                                    <i class="fa-solid fa-trophy" style="color:#D97706; font-size:11px;"></i> Passing Score
+                                </span>
+                                <span id="passScoreLabel" style="font-weight:700; color:#7C3AED; font-size:13px;">{{ $quiz->passing_score }}%</span>
+                            </label>
+                            <input type="range" id="passScoreRange" name="passing_score" min="0" max="100" value="{{ $quiz->passing_score }}"
+                                   oninput="document.getElementById('passScoreLabel').textContent=this.value+'%'">
+                        </div>
+                    </div>
                 </div>
             </div>
-            <nav class="space-y-1">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-3">Management</p>
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="text-sm font-medium">Active Assessments</span>
-                </a>
-                <a href="{{ route('admin.employees.index') }}" class="flex items-center gap-3 text-slate-400 hover:bg-white/5 hover:text-white p-3 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="text-sm font-medium">Employee Insights</span>
-                </a>
-            </nav>
-        </aside>
 
-        <!-- Main -->
-        <main class="flex-1 p-10">
-            <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-fade-in opacity-0">
-                <div>
-                    <p class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-3 leading-none bg-indigo-50 inline-block px-3 py-1 rounded-full border border-indigo-100">Assessment • Editor</p>
-                    <h2 class="text-4xl font-black text-slate-900 tracking-tight leading-none">Edit Assessment</h2>
-                    <p class="text-slate-500 mt-4 font-medium">Refine your evaluation criteria and scoring rules.</p>
-                </div>
-                <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2 h-fit shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    <span>Batal Edit</span>
-                </a>
-            </header>
-
-            <form action="{{ route('admin.quizzes.update', $quiz->slug) }}" method="POST" class="max-w-4xl">
-                @csrf
-                @method('PATCH')
-                
-                <!-- Quiz Details -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
-                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </span>
-                        Pengaturan Umum
-                    </h3>
+            <!-- Questions Container -->
+            <div id="questionsContainer" style="display:flex; flex-direction:column;">
+                @foreach($quiz->questions as $qIndex => $question)
+                <div class="q-card question-card active-border">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                        <div style="font-size:12px; font-weight:800; color:#7C3AED;">Pertanyaan #{{ $qIndex + 1 }}</div>
+                        @if($qIndex > 0)
+                        <button type="button" class="btn btn-ghost" style="color:#EF4444; padding:5px 10px;" onclick="this.closest('.question-card').remove()">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        @endif
+                    </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Judul Kuis</label>
-                            <input type="text" name="title" required value="{{ $quiz->title }}" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Waktu (Menit)</label>
-                                <input type="number" name="time_limit" required value="{{ $quiz->time_limit }}" 
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Passing (0-100)</label>
-                                <input type="number" name="passing_score" required value="{{ $quiz->passing_score }}" 
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-                            </div>
-                        </div>
+                    <input type="hidden" name="questions[{{ $qIndex }}][id]" value="{{ $question->id }}">
+                    
+                    <div>
+                        <label class="form-label">Question Text</label>
+                        <textarea name="questions[{{ $qIndex }}][text]" required rows="2" class="form-input" 
+                                  placeholder="Teks pertanyaan..." style="margin-bottom:14px;">{{ $question->text }}</textarea>
                     </div>
-                </div>
 
-                <!-- Questions Area -->
-                <div id="questionsContainer" class="space-y-6 mb-8">
-                    @foreach($quiz->questions as $qIndex => $question)
-                    <div class="question-card bg-white rounded-2xl shadow-sm border border-slate-200 p-8 relative overflow-hidden group">
-                        <div class="absolute left-0 top-0 bottom-0 w-2 bg-indigo-600"></div>
-                        
-                        <div class="flex justify-between items-start mb-6">
-                            <h4 class="text-lg font-bold text-slate-800">Pertanyaan #{{ $qIndex + 1 }}</h4>
-                            @if($qIndex > 0)
-                            <button type="button" class="text-rose-400 hover:text-rose-600" onclick="this.closest('.question-card').remove()">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                        <label class="form-label">Pilihan Jawaban</label>
+                        @foreach($question->options as $oIndex => $option)
+                        <label class="option-row" style="cursor:pointer;">
+                            <input type="hidden" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][id]" value="{{ $option->id }}">
+                            <input type="radio" name="questions[{{ $qIndex }}][correct_option]" value="{{ $oIndex }}" {{ $option->is_correct ? 'checked' : '' }}
+                                   style="accent-color:#7C3AED; width:16px; height:16px; flex-shrink:0;">
+                            <div class="option-letter">{{ chr(65+$oIndex) }}</div>
+                            <input type="text" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][text]" required value="{{ $option->text }}"
+                                   class="form-input" placeholder="Opsi {{ chr(65+$oIndex) }}" style="flex:1;">
+                        </label>
+                        @endforeach
+                    </div>
+
+                    <!-- AI Explanation -->
+                    <div style="background:#F9FAFB; border:1px solid #F3F4F6; padding:16px; border-radius:12px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                            <label class="form-label" style="margin-bottom:0; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-lightbulb" style="color:#F59E0B;"></i> Pembahasan
+                            </label>
+                            <button type="button" onclick="suggestAiExplanation(this)" class="btn btn-ghost" style="font-size:11px; color:#7C3AED; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.1); padding:4px 10px;">
+                                <span class="ai-spinner hidden" style="margin-right:4px;"><span class="dots-wave purple sm"><span></span><span></span><span></span></span></span>
+                                <span class="ai-text">✨ Sugesti AI</span>
                             </button>
-                            @endif
                         </div>
-
-                        <div class="mb-6">
-                            <input type="hidden" name="questions[{{ $qIndex }}][id]" value="{{ $question->id }}">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Teks Pertanyaan</label>
-                            <textarea name="questions[{{ $qIndex }}][text]" required rows="2" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">{{ $question->text }}</textarea>
-                        </div>
-
-                        <div class="space-y-4">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Pilihan Jawaban (Tandai yang benar)</label>
-                            @foreach($question->options as $oIndex => $option)
-                            <div class="flex items-center gap-4">
-                                <input type="hidden" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][id]" value="{{ $option->id }}">
-                                <input type="radio" name="questions[{{ $qIndex }}][correct_option]" value="{{ $oIndex }}" {{ $option->is_correct ? 'checked' : '' }}
-                                    class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-slate-300">
-                                <input type="text" name="questions[{{ $qIndex }}][options][{{ $oIndex }}][text]" required value="{{ $option->text }}"
-                                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
-                            </div>
-                            @endforeach
-                        </div>
+                        <textarea name="questions[{{ $qIndex }}][explanation]" rows="2" class="form-input" 
+                                  placeholder="Penjelasan mengapa jawaban tersebut benar..." style="background:#fff;">{{ $question->explanation }}</textarea>
                     </div>
-                    @endforeach
                 </div>
+                @endforeach
+            </div>
 
-                <div class="flex flex-col gap-4">
-                    <button type="button" id="addQuestionBtn" class="w-full border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:text-indigo-600 text-slate-500 py-4 rounded-2xl font-bold transition-all flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>Tambah Pertanyaan Baru</span>
-                    </button>
+            <!-- Add Question Button -->
+            <div class="add-zone" onclick="addQuestion()" id="addZone">
+                <i class="fa-solid fa-plus-circle" style="margin-right:8px;"></i> Tambah Pertanyaan Baru
+            </div>
 
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 transition-all flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Update Kuis</span>
-                    </button>
+            <!-- Update Button Mobile Only -->
+            <button type="submit" class="btn btn-primary lg-hidden" 
+                    style="justify-content:center; padding:14px; font-size:14px; border-radius:12px; width:100%; margin-top:10px;">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+            </button>
+        </div>
+
+        <!-- RIGHT: Sidebar Info -->
+        <div style="display:flex; flex-direction:column; gap:16px; position:sticky; top:88px;">
+            <div class="card" style="padding:20px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                    <div style="width:36px; height:36px; border-radius:10px; background:rgba(245,158,11,0.1); display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid fa-circle-info" style="color:#D97706; font-size:16px;"></i>
+                    </div>
+                    <div style="font-size:14px; font-weight:800; color:#1E1B4B;">Informasi Editor</div>
                 </div>
-            </form>
-        </main>
+                <p style="font-size:12px; color:#6B7280; line-height:1.7; margin-bottom:12px;">
+                    Anda sedang mengedit kuis yang sudah ada. Perubahan akan langsung berdampak pada peserta yang belum mengerjakan.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:10px; font-size:12px; font-weight:700; color:#4B5563;">
+                        <i class="fa-solid fa-check-circle" style="color:#059669; font-size:14px;"></i> Total Soal: {{ $quiz->questions->count() }}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; font-size:12px; font-weight:700; color:#4B5563;">
+                        <i class="fa-solid fa-clock" style="color:#7C3AED; font-size:14px;"></i> Terakhir Update: {{ $quiz->updated_at->diffForHumans() }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="padding:16px;">
+                <div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:12px; text-transform:uppercase; letter-spacing:.08em;">Bantuan AI</div>
+                <p style="font-size:11px; color:#9CA3AF; margin-bottom:12px;">Gunakan bantuan AI untuk menghasilkan penjelasan jawaban secara otomatis.</p>
+                <button type="button" class="btn btn-ghost" disabled style="justify-content:flex-start; width:100%; font-size:12px; padding:9px 12px;">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color:#7C3AED;"></i> AI Optimizer
+                </button>
+            </div>
+        </div>
     </div>
+</form>
+@endsection
 
-    <script>
-        let questionCount = {{ $quiz->questions->count() }};
-        const container = document.getElementById('questionsContainer');
-        const addBtn = document.getElementById('addQuestionBtn');
+@section('scripts')
+<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
+<script>
+    let questionCount = {{ $quiz->questions->count() }};
+    const container = document.getElementById('questionsContainer');
+    
+    function addQuestion() {
+        const index = questionCount++;
+        const card = document.createElement('div');
+        card.className = 'q-card question-card active-border fade-up';
+        card.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <div style="font-size:12px; font-weight:800; color:#7C3AED;">Pertanyaan #${index + 1}</div>
+                <button type="button" class="btn btn-ghost" style="color:#EF4444; padding:5px 10px;" onclick="this.closest('.question-card').remove()">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
 
-        addBtn.addEventListener('click', () => {
-            const index = questionCount;
-            const card = document.createElement('div');
-            card.className = 'question-card bg-white rounded-2xl shadow-sm border border-slate-200 p-8 relative overflow-hidden group mb-6';
-            card.innerHTML = `
-                <div class="absolute left-0 top-0 bottom-0 w-2 bg-indigo-600"></div>
-                <div class="flex justify-between items-start mb-6">
-                    <h4 class="text-lg font-bold text-slate-800">Pertanyaan #${index + 1}</h4>
-                    <button type="button" class="text-rose-400 hover:text-rose-600" onclick="this.closest('.question-card').remove()">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <div>
+                <label class="form-label">Question Text</label>
+                <textarea name="questions[${index}][text]" required rows="2" class="form-input" placeholder="Teks pertanyaan..." style="margin-bottom:14px;"></textarea>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                <label class="form-label">Pilihan Jawaban</label>
+                ${[0,1,2,3].map(i => `
+                    <label class="option-row" style="cursor:pointer;">
+                        <input type="radio" name="questions[${index}][correct_option]" value="${i}" ${i==0?'checked':''}
+                               style="accent-color:#7C3AED; width:16px; height:16px; flex-shrink:0;">
+                        <div class="option-letter">${String.fromCharCode(65+i)}</div>
+                        <input type="text" name="questions[${index}][options][${i}][text]" required
+                               class="form-input" placeholder="Opsi ${String.fromCharCode(65+i)}" style="flex:1;">
+                    </label>
+                `).join('')}
+            </div>
+
+            <div style="background:#F9FAFB; border:1px solid #F3F4F6; padding:16px; border-radius:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                    <label class="form-label" style="margin-bottom:0; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-lightbulb" style="color:#F59E0B;"></i> Pembahasan
+                    </label>
+                    <button type="button" onclick="suggestAiExplanation(this)" class="btn btn-ghost" style="font-size:11px; color:#7C3AED; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.1); padding:4px 10px;">
+                        <span class="ai-spinner hidden" style="margin-right:4px;"><span class="dots-wave purple sm"><span></span><span></span><span></span></span></span>
+                        <span class="ai-text">✨ Sugesti AI</span>
                     </button>
                 </div>
+                <textarea name="questions[${index}][explanation]" rows="2" class="form-input" 
+                          placeholder="Penjelasan mengapa jawaban tersebut benar..." style="background:#fff;"></textarea>
+            </div>
+        `;
+        container.appendChild(card);
+        card.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
 
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Teks Pertanyaan</label>
-                    <textarea name="questions[${index}][text]" required rows="2" 
-                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
-                </div>
+    async function suggestAiExplanation(btn) {
+        const card = btn.closest('.question-card');
+        const qText = card.querySelector('textarea[name*="[text]"]').value;
+        const correctRadio = card.querySelector('input[type="radio"]:checked');
+        
+        if (!qText || !correctRadio) {
+            alert('Tolong isi teks pertanyaan dan pilih jawaban benar terlebih dahulu.');
+            return;
+        }
 
-                <div class="space-y-4">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Pilihan Jawaban (Tandai yang benar)</label>
-                    ${[0,1,2,3].map(i => `
-                        <div class="flex items-center gap-4">
-                            <input type="radio" name="questions[${index}][correct_option]" value="${i}" ${i==0?'checked':''}
-                                class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-slate-300">
-                            <input type="text" name="questions[${index}][options][${i}][text]" required placeholder="Opsi ${String.fromCharCode(65+i)}"
-                                class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(card);
-            questionCount++;
-        });
-    </script>
-<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
-</body>
-</html>
+        const correctInput = correctRadio.closest('.option-row').querySelector('input[type="text"]');
+        const correctText = correctInput ? correctInput.value : '';
+
+        if (!correctText) {
+            alert('Isi teks pada pilihan jawaban yang benar.');
+            return;
+        }
+
+        const spinner = btn.querySelector('.ai-spinner');
+        const aiText = btn.querySelector('.ai-text');
+        const textarea = card.querySelector('textarea[name*="[explanation]"]');
+
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        aiText.textContent = 'Memproses...';
+
+        try {
+            const response = await fetch('{{ route("admin.quizzes.suggest-explanation") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    text: qText,
+                    correct_answer: correctText
+                })
+            });
+
+            const data = await response.json();
+            if (data.explanation) {
+                textarea.value = data.explanation;
+            } else if (data.error) {
+                alert('Error AI: ' + data.error);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghubungi AI.');
+        } finally {
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            aiText.textContent = '✨ Sugesti AI';
+        }
+    }
+</script>
+@endsection

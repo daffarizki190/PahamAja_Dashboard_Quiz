@@ -7,6 +7,7 @@ use App\Exports\QuizExport;
 use App\Models\Answer;
 use App\Models\Employee;
 use App\Models\Participant;
+use App\Models\Question;
 use App\Models\Quiz;
 use App\Services\NameMatchingService;
 use Illuminate\Http\Request;
@@ -14,13 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class QuizController extends Controller
 {
-    /**
-     * Export quiz results to Excel.
-     */
-    public function exportExcel(Quiz $quiz)
-    {
-        return Excel::download(new QuizExport($quiz), "Hasil-Kuis-{$quiz->slug}.xlsx");
-    }
+
 
     /**
      * Show the form for a participant to join the quiz (enter Name and NIM).
@@ -76,7 +71,7 @@ class QuizController extends Controller
                 ->with('error', 'Maaf, NIK tersebut tidak terdaftar sebagai peserta.');
         }
 
-        // 1. Restriction: Check if already passed (No retakes if above passing grade)
+        // 1. [REMEDIAL POLICY] Retakes are ONLY allowed if the participant has not passed.
         $hasPassed = Participant::where('quiz_id', $quiz->id)
             ->where('employee_id', $employee->id)
             ->where('score', '>=', $quiz->passing_score)
@@ -85,7 +80,7 @@ class QuizController extends Controller
         if ($hasPassed) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Maaf, Anda sudah lulus kuis ini dan tidak diperbolehkan mengulang.');
+                ->with('error', 'Maaf, Anda sudah lulus kuis ini dengan skor yang memadai. Remedial hanya untuk peserta yang belum mencapai nilai kelulusan.');
         }
 
         // 2. Restriction: Check for Session Windows (Conditional)
@@ -141,19 +136,81 @@ class QuizController extends Controller
             return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
         }
 
-        $attemptNumber = Participant::where('quiz_id', $quiz->id)
-            ->where('employee_id', $employee->id)
-            ->count() + 1;
+        // Instead of creating participant, redirect to confirmation page
+        return redirect()->route('quiz.confirm-profile', ['quiz' => $quiz->slug, 'employee' => $employee->id]);
+    }
 
-        $participant = Participant::create([
-            'quiz_id' => $quiz->id,
-            'employee_id' => $employee->id,
-            'name' => $employee->name,
-            'nim' => $employee->nim,
-            'attempt' => $attemptNumber,
-            'started_at' => now(),
-            'quiz_session_id' => $publicSessionId ?? null,
-        ]);
+    /**
+     * Show confirmation page with employee profile data.
+     */
+    public function confirmProfile(Quiz $quiz, Employee $employee)
+    {
+        // Safety check: is there a session/token or just trust the URL?
+        // Since it's a public join, we trust the URL + the fact that NIK matched.
+        
+        return view('quiz.confirm', compact('quiz', 'employee'));
+    }
+
+    /**
+     * Actually start the kuis: Create participant record and redirect to take.
+     */
+    public function startQuiz(Request $request, Quiz $quiz, Employee $employee)
+    {
+        // Re-check sessions just in case time passsed since join page
+        $sessions = $quiz->sessions;
+        if ($sessions->count() > 0) {
+            $now = now();
+            $assignedRecord = Participant::where('quiz_id', $quiz->id)
+                ->where('employee_id', $employee->id)
+                ->where('is_assigned', true)
+                ->first();
+
+            if ($assignedRecord) {
+                $s = $assignedRecord->quizSession;
+                if ($now < $s->start_time || $now > $s->end_time) {
+                    return redirect()->route('quiz.join', $quiz->slug)->with('error', 'Sesi pengerjaan Anda tidak aktif saat ini.');
+                }
+            } else {
+                $activePublicSession = $quiz->sessions()
+                    ->where('start_time', '<=', $now)
+                    ->where('end_time', '>=', $now)
+                    ->whereDoesntHave('participants', function($q) {
+                        $q->where('is_assigned', true);
+                    })
+                    ->first();
+                if (!$activePublicSession) {
+                    return redirect()->route('quiz.join', $quiz->slug)->with('error', 'Tidak ada sesi umum yang sedang aktif.');
+                }
+                $publicSessionId = $activePublicSession->id;
+            }
+        }
+
+        // Create or resume participant
+        $inProgress = Participant::where('quiz_id', $quiz->id)
+            ->where('employee_id', $employee->id)
+            ->whereNull('score')
+            ->first();
+
+        if ($inProgress) {
+            if (is_null($inProgress->started_at)) {
+                $inProgress->update(['started_at' => now()]);
+            }
+            $participant = $inProgress;
+        } else {
+            $attemptNumber = Participant::where('quiz_id', $quiz->id)
+                ->where('employee_id', $employee->id)
+                ->count() + 1;
+
+            $participant = Participant::create([
+                'quiz_id' => $quiz->id,
+                'employee_id' => $employee->id,
+                'name' => $employee->name,
+                'nim' => $employee->nim,
+                'attempt' => $attemptNumber,
+                'started_at' => now(),
+                'quiz_session_id' => $publicSessionId ?? ($assignedRecord->quiz_session_id ?? null),
+            ]);
+        }
 
         session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
 
@@ -189,7 +246,9 @@ class QuizController extends Controller
             })->values());
         });
 
-        $selected = $participant->answers()->get(['question_id', 'option_id'])->pluck('option_id', 'question_id');
+        $selected = $participant->answers()->get(['question_id', 'option_id', 'essay_answer'])->mapWithKeys(function ($ans) {
+            return [$ans->question_id => $ans->option_id ?? $ans->essay_answer];
+        });
 
         return view('quiz.take', compact('quiz', 'participant', 'selected'));
     }
@@ -211,82 +270,90 @@ class QuizController extends Controller
             return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
         }
 
-        $correctCount = 0;
+        $achievedPoints = 0;
+        $maxPoints = 0;
+        $hasEssay = false;
+
         $quiz->load('questions.options');
         $questions = $quiz->questions;
-        $totalQuestions = $questions->count();
         $questionsById = $questions->keyBy('id');
+        $optionsById = $questions->pluck('options')->flatten()->keyBy('id');
 
-        if (count($request->answers) !== $totalQuestions) {
-            abort(422, 'Semua soal harus dijawab.');
-        }
+        $aiGenerator = app(\App\Services\AiGeneratorService::class);
 
-        $optionsById = $questions
-            ->pluck('options')
-            ->flatten()
-            ->keyBy('id');
-
-        foreach ($request->answers as $question_id => $option_id) {
+        foreach ($request->answers as $question_id => $user_answer) {
             $question = $questionsById->get($question_id);
-            if (! $question) {
-                abort(422, 'Jawaban tidak valid.');
-            }
+            if (! $question) continue;
 
-            $option = $optionsById->get($option_id);
-            if (! $option || $option->question_id !== $question->id) {
-                abort(422, 'Jawaban tidak valid.');
-            }
+            if ($question->type === 'essay') {
+                $hasEssay = true;
+                $maxPoints += 5;
+                $essayAnswer = (string) $user_answer;
 
-            if ($option->is_correct) {
-                $correctCount++;
-            }
+                $answerRecord = $participant->answers()->updateOrCreate(
+                    ['question_id' => $question_id],
+                    ['essay_answer' => $essayAnswer]
+                );
 
-            // Record answer for audit
-            $participant->answers()->updateOrCreate(
-                ['question_id' => $question_id],
-                ['option_id' => $option_id]
-            );
+                if ($quiz->essay_grading_method === 'ai') {
+                    $grading = $aiGenerator->gradeEssayAnswer($question->text, $question->ideal_answer ?? '', $essayAnswer);
+                    $essayScore = (float) $grading['score']; // 0-5
+                    $answerRecord->update([
+                        'score' => $essayScore,
+                        'ai_feedback' => $grading['feedback']
+                    ]);
+                    $achievedPoints += $essayScore;
+                }
+            } else {
+                // MCQ logic
+                $maxPoints += 1;
+                $option_id = $user_answer;
+                $option = $optionsById->get($option_id);
+
+                if ($option && $option->question_id == $question->id) {
+                    if ($option->is_correct) {
+                        $achievedPoints += 1;
+                        $qScore = 1;
+                    } else {
+                        $qScore = 0;
+                    }
+
+                    $participant->answers()->updateOrCreate(
+                        ['question_id' => $question_id],
+                        ['option_id' => $option_id, 'score' => $qScore]
+                    );
+                }
+            }
         }
 
-        // Final score on scale 0-100
-        $finalScore = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
+        $participant->update(['finished_at' => now()]);
 
-        $participant->update([
-            'score' => $finalScore,
-            'finished_at' => now(),
-        ]);
+        // Determine Status & Final Score
+        if ($hasEssay && $quiz->essay_grading_method === 'manual') {
+            $participant->update(['status' => 'pending_review', 'score' => null]);
+        } else {
+            $finalScore = $maxPoints > 0 ? round(($achievedPoints / $maxPoints) * 100) : 0;
+            $participant->update(['status' => 'completed', 'score' => $finalScore]);
+            
+            // Unlock achievements
+            if ($participant->employee) {
+                $this->unlockAchievements($participant->employee, $finalScore);
+            }
+        }
 
-        // Unlock achievements
-        $this->unlockAchievements($participant->employee, $finalScore);
-
-        // Broadcast update to dashboard
-        $participants = $quiz->participants()->get();
-        $finished = $participants->whereNotNull('score');
-        $avgScore = round($finished->avg('score') ?? 0, 1);
-        $inProgressCount = $participants->whereNull('score')->count();
-        $completedCount = $finished->count();
-        $liveActivity = $participants->count();
-
-        broadcast(new QuizUpdated($quiz, [
-            'avgScore' => number_format($avgScore, 1),
-            'inProgressCount' => $inProgressCount,
-            'completedCount' => $completedCount,
-            'liveActivity' => $liveActivity,
-            'participants' => $participants->map(function ($p) use ($quiz) {
-                return [
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'nim' => $p->nim,
-                    'score' => $p->score,
-                    'is_passing' => $p->score >= $quiz->passing_score,
-                ];
-            })->toArray(),
+        // Broadcast update (Omit full list for performance)
+        $participantsQuery = $quiz->participants();
+        broadcast(new \App\Events\QuizUpdated($quiz, [
+            'avgScore'        => number_format($participantsQuery->whereNotNull('score')->avg('score') ?? 0, 1),
+            'inProgressCount' => $participantsQuery->where('status', 'in_progress')->count(),
+            'completedCount'  => $participantsQuery->where('status', 'completed')->count(),
+            'liveActivity'    => $participantsQuery->count(),
         ]));
 
         session()->forget("quiz_in_progress.{$quiz->id}");
 
         return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id])
-            ->with('success', 'Quiz submitted successfully!');
+            ->with('success', 'Jawaban berhasil dikumpulkan!');
     }
 
     /**
@@ -304,24 +371,21 @@ class QuizController extends Controller
 
         $request->validate([
             'question_id' => 'required',
-            'option_id' => 'required',
+            'answer' => 'required',
         ]);
 
-        $quiz->load('questions.options');
-        $questions = $quiz->questions->keyBy('id');
-        $options = $quiz->questions->pluck('options')->flatten()->keyBy('id');
+        $question = Question::findOrFail($request->question_id);
+        
+        $data = ['question_id' => $question->id];
+        $update = [];
 
-        $q = $questions->get($request->question_id);
-        $o = $options->get($request->option_id);
-
-        if (! $q || ! $o || (string) $o->question_id !== (string) $q->id) {
-            return response()->json(['ok' => false, 'message' => 'Invalid mapping'], 422);
+        if ($question->type === 'essay') {
+            $update['essay_answer'] = $request->answer;
+        } else {
+            $update['option_id'] = $request->answer;
         }
 
-        $participant->answers()->updateOrCreate(
-            ['question_id' => $q->id],
-            ['option_id' => $o->id]
-        );
+        $participant->answers()->updateOrCreate($data, $update);
 
         return response()->json(['ok' => true]);
     }
@@ -346,20 +410,34 @@ class QuizController extends Controller
             ->get(['score', 'created_at', 'attempt', 'started_at', 'finished_at', 'quiz_session_id'])
             ->load('quizSession');
 
-        // Load details for review if passed
+        // Load details for review
         $reviewData = null;
-        if ($participant->score >= $quiz->passing_score) {
+        if ($participant->status === 'completed') {
             $participant->load(['answers.question.options', 'answers.option']);
             $reviewData = $participant->answers->map(function ($answer) {
                 $question = $answer->question;
+                
+                if ($question->type === 'essay') {
+                    return [
+                        'type' => 'essay',
+                        'question' => $question->text,
+                        'selected' => $answer->essay_answer,
+                        'correct' => $question->ideal_answer,
+                        'score' => $answer->score, // 0-5
+                        'is_correct' => ($answer->score >= 3), // Threshold for green badge
+                        'explanation' => $answer->ai_feedback, // Store AI feedback here
+                    ];
+                }
+
                 $selected = $answer->option;
                 $correct = $question->options->where('is_correct', true)->first();
                 
                 return [
+                    'type' => 'mcq',
                     'question' => $question->text,
-                    'selected' => $selected->text,
+                    'selected' => $selected ? $selected->text : 'N/A',
                     'correct' => $correct ? $correct->text : 'N/A',
-                    'is_correct' => $selected->is_correct,
+                    'is_correct' => $selected ? $selected->is_correct : false,
                     'explanation' => $question->explanation,
                 ];
             });
@@ -369,110 +447,27 @@ class QuizController extends Controller
     }
 
     /**
-     * Display the Admin Dashboard with Advanced Stats.
+     * Disqualify the participant due to integrity violations and restart.
      */
-    public function showDashboard(Quiz $quiz)
+    public function disqualify(Quiz $quiz)
     {
-        $participants = $quiz->participants()->get();
-        $participants = $participants
-            ->sort(function ($a, $b) {
-                $aScoreIsNull = is_null($a->score);
-                $bScoreIsNull = is_null($b->score);
+        $sessionKey = "quiz_in_progress.{$quiz->id}";
+        $participantId = session($sessionKey);
 
-                if ($aScoreIsNull !== $bScoreIsNull) {
-                    return $aScoreIsNull <=> $bScoreIsNull;
-                }
-
-                if (! $aScoreIsNull && ! $bScoreIsNull) {
-                    if ($a->score !== $b->score) {
-                        return $b->score <=> $a->score;
-                    }
-                }
-
-                $aUpdatedAt = $a->updated_at?->getTimestamp() ?? 0;
-                $bUpdatedAt = $b->updated_at?->getTimestamp() ?? 0;
-
-                return $aUpdatedAt <=> $bUpdatedAt;
-            })
-            ->values();
-
-        // Advanced Stats Logic
-        $finishedParticipants = $participants->whereNotNull('score');
-        $avgScore = $finishedParticipants->avg('score') ?? 0;
-        $inProgressCount = $participants->whereNull('score')->count();
-
-        // Score Distribution for Chart.js
-        $dist = [
-            'low' => $finishedParticipants->whereBetween('score', [0, 50])->count(),
-            'mid' => $finishedParticipants->whereBetween('score', [51, 75])->count(),
-            'high' => $finishedParticipants->whereBetween('score', [76, 100])->count(),
-        ];
-
-        $chartData = [
-            'labels' => ['0-50 (Low)', '51-75 (Mid)', '76-100 (High)'],
-            'scores' => [$dist['low'], $dist['mid'], $dist['high']],
-        ];
-
-        $quiz->load('questions.options');
-        $finishedIds = $finishedParticipants->pluck('id')->all();
-        $answers = count($finishedIds) > 0
-            ? Answer::whereIn('participant_id', $finishedIds)->get()
-            : collect();
-
-        $answersByQuestion = $answers->groupBy('question_id');
-
-        $questionAnalytics = $quiz->questions->map(function ($question) use ($finishedParticipants, $answersByQuestion) {
-            $correctOption = $question->options->firstWhere('is_correct', true);
-            $questionAnswers = $answersByQuestion->get($question->id, collect());
-
-            $answeredCount = $questionAnswers->count();
-            $correctCount = $correctOption
-                ? $questionAnswers->where('option_id', $correctOption->id)->count()
-                : 0;
-
-            $distribution = $questionAnswers->countBy('option_id');
-            $topOptionId = $distribution->sortDesc()->keys()->first();
-            $topOptionText = $topOptionId
-                ? (string) optional($question->options->firstWhere('id', $topOptionId))->text
-                : null;
-
-            return [
-                'id' => (string) $question->id,
-                'text' => (string) $question->text,
-                'answered' => $answeredCount,
-                'participants' => $finishedParticipants->count(),
-                'correct' => $correctCount,
-                'correct_rate' => $answeredCount > 0 ? round(($correctCount / $answeredCount) * 100, 1) : null,
-                'top_option' => $topOptionText,
-            ];
-        })->values();
-
-        if (request()->wantsJson()) {
-            return response()->json([
-                'avgScore' => number_format($avgScore, 1),
-                'inProgressCount' => $inProgressCount,
-                'completedCount' => $participants->whereNotNull('score')->count(),
-                'liveActivity' => $participants->count(),
-                'participants' => $participants->map(function ($p) use ($quiz) {
-                    $duration = ($p->started_at && $p->finished_at) 
-                        ? $p->finished_at->diff($p->started_at)->format('%im %ss') 
-                        : null;
-                        
-                    return [
-                        'id' => $p->id,
-                        'name' => $p->name,
-                        'nim' => $p->nim,
-                        'score' => $p->score,
-                        'is_passing' => $p->score >= $quiz->passing_score,
-                        'session' => $p->quizSession ? $p->quizSession->name : '-',
-                        'duration' => $duration,
-                    ];
-                })->toArray(),
-            ]);
+        if ($participantId) {
+            $participant = Participant::find($participantId);
+            if ($participant && is_null($participant->score)) {
+                // Delete participant and its answers (cascade)
+                $participant->delete();
+            }
+            session()->forget($sessionKey);
         }
 
-        return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount', 'questionAnalytics'));
+        return redirect()->route('quiz.join', $quiz->slug)
+            ->with('error', 'Anda didiskualifikasi dari sesi ini karena pelanggaran aturan integritas. Silakan mulai ulang pengerjaan.');
     }
+
+
 
     private function unlockAchievements(Employee $employee, float $score)
     {
