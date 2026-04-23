@@ -89,7 +89,7 @@
 <div class="confirm-card">
     <div class="profile-section avatar-container" data-tilt data-tilt-max="20" data-tilt-speed="400" data-tilt-perspective="1000">
         @if($employee->avatar)
-            <img src="/storage/{{ $employee->avatar }}" class="avatar-main">
+            <img src="{{ asset('storage/' . $employee->avatar) }}" class="avatar-main">
         @else
             <div class="avatar-main">
                 {{ strtoupper(substr($employee->name, 0, 1)) }}

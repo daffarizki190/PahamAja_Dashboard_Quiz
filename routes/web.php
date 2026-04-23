@@ -14,6 +14,7 @@ use App\Models\Quiz;
 use Database\Seeders\EmployeeSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
 
 
 /*
@@ -26,6 +27,15 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+// Fallback route for avatars (Bypasses broken Windows symlinks)
+Route::get('storage/avatars/{filename}', function ($filename) {
+    $path = storage_path('app/public/avatars/' . $filename);
+    if (!File::exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
 
 Route::get('/', function () {
     return view('welcome');
