@@ -288,7 +288,7 @@
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
                 <div class="p-avatar img-3d">
                     @if($emp && $emp->avatar)
-                        <img src="{{ asset('storage/' . $emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="/storage/{{ $emp->avatar }}" style="width:100%; height:100%; object-fit:cover;">
                     @else
                         {{ $pInitials }}
                     @endif
@@ -339,7 +339,7 @@
                             @endphp
                             <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden;">
                                 @if($rowEmp && $rowEmp->avatar)
-                                    <img src="{{ asset('storage/' . $rowEmp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                                    <img src="/storage/{{ $rowEmp->avatar }}" style="width:100%; height:100%; object-fit:cover;">
                                 @else
                                     {{ $rowInitials }}
                                 @endif
@@ -466,7 +466,7 @@
                     <div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #E5E3F0; border-radius:12px; background:#F9F8FD;">
                         <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#9CA3AF,#6B7280); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden;">
                             @if($emp->avatar)
-                                <img src="{{ asset('storage/' . $emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                                <img src="/storage/{{ $emp->avatar }}" style="width:100%; height:100%; object-fit:cover;">
                             @else
                                 {{ strtoupper(substr($emp->name, 0, 1)) }}
                             @endif

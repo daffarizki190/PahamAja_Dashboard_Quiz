@@ -20,7 +20,7 @@
         <div style="width:1px; height:24px; background:#E5E3F0;"></div>
         <div style="background:var(--purple); color:#fff; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; box-shadow:0 4px 12px rgba(124,58,237,0.3); overflow:hidden;">
             @if($employee->avatar)
-                <img src="{{ asset('storage/' . $employee->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                <img src="/storage/{{ $employee->avatar }}" style="width:100%; height:100%; object-fit:cover;">
             @else
                 {{ $employee->name[0] }}
             @endif
@@ -160,9 +160,9 @@
     <div class="emp-header-card shadow-sm">
         @if($employee->avatar)
         <div class="avatar-photo-wrap"
-             onclick="openPhotoLightbox('{{ asset('storage/' . $employee->avatar) }}')"
+             onclick="openPhotoLightbox('/storage/{{ $employee->avatar }}')"
              title="Klik untuk memperbesar foto">
-            <img src="{{ asset('storage/' . $employee->avatar) }}" alt="{{ $employee->name }}">
+            <img src="/storage/{{ $employee->avatar }}" alt="{{ $employee->name }}">
             <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
         </div>
         @else
