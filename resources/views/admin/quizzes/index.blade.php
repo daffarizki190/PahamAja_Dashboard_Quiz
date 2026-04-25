@@ -136,7 +136,7 @@
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--indigo)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; overflow: hidden;">
                                 @if($emp->avatar)
-                                    <img src="{{ asset('storage/' . $emp->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="{{ avatar_url($emp->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
                                     {{ strtoupper(substr($emp->name, 0, 1)) }}
                                 @endif
