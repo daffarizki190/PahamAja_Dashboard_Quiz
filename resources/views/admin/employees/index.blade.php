@@ -289,9 +289,9 @@
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             @if($employee->avatar)
             <div class="avatar-photo-wrap has-photo"
-                 onclick="openPhotoLightbox('{{ asset('storage/' . $employee->avatar) }}', '{{ addslashes($employee->name) }}', '{{ addslashes($employee->position) }} · {{ addslashes($employee->department) }}')"
+                 onclick="openPhotoLightbox('{{ avatar_url($employee->avatar) }}', '{{ addslashes($employee->name) }}', '{{ addslashes($employee->position) }} · {{ addslashes($employee->department) }}')"
                  title="Klik untuk memperbesar foto">
-                <img src="{{ asset('storage/' . $employee->avatar) }}" alt="{{ $employee->name }}" loading="lazy">
+                <img src="{{ avatar_url($employee->avatar) }}" alt="{{ $employee->name }}" loading="lazy">
                 <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
             </div>
             @else

@@ -171,8 +171,9 @@
             <h3>Tingkat Kelulusan</h3>
             <div class="val" style="font-size:38px; color:#7C3AED;">
                 @php
-                    $completed = $participants->whereNotNull('score')->count();
-                    $passed = $participants->whereNotNull('score')->where('score', '>=', $quiz->passing_score)->count();
+                    $passingScore = $quiz->passing_score ?? 70;
+                    $completed = $participants->whereNotNull('score')->unique('employee_id')->count();
+                    $passed = $participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
                     $passRate = $completed > 0 ? round(($passed / $completed) * 100) : 0;
                 @endphp
                 {{ $passRate }}%
@@ -288,7 +289,7 @@
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
                 <div class="p-avatar img-3d">
                     @if($emp && $emp->avatar)
-                        <img src="{{ asset('storage/' . $emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="/storage/{{ $emp->avatar }}" style="width:100%; height:100%; object-fit:cover;">
                     @else
                         {{ $pInitials }}
                     @endif
@@ -333,15 +334,11 @@
                     </td>
                     <td>
                         <div style="display:flex; align-items:center; gap:12px;">
-                            @php
-                                $rowEmp = $participant->employee;
-                                $rowInitials = strtoupper(substr($participant->name, 0, 1));
-                            @endphp
                             <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden;">
-                                @if($rowEmp && $rowEmp->avatar)
-                                    <img src="{{ asset('storage/' . $rowEmp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                                @if($participant->employee && $participant->employee->avatar)
+                                    <img src="{{ avatar_url($participant->employee->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
-                                    {{ $rowInitials }}
+                                    {{ strtoupper(substr($participant->name, 0, 1)) }}
                                 @endif
                             </div>
                             <div>
@@ -462,18 +459,18 @@
         <div style="overflow-y:auto; flex:1; padding-right:4px;">
             @if($unparticipatedEmployees->count() > 0)
                 <div style="display:grid; grid-template-columns:1fr; gap:12px;">
-                    @foreach($unparticipatedEmployees as $emp)
+                    @foreach($unparticipatedEmployees as $employee)
                     <div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #E5E3F0; border-radius:12px; background:#F9F8FD;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#9CA3AF,#6B7280); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden;">
-                            @if($emp->avatar)
-                                <img src="{{ asset('storage/' . $emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--purple), var(--indigo)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(124,58,237,0.3);">
+                            @if($employee->avatar)
+                                <img src="{{ avatar_url($employee->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                             @else
-                                {{ strtoupper(substr($emp->name, 0, 1)) }}
+                                {{ substr($employee->name, 0, 1) }}
                             @endif
                         </div>
                         <div style="flex:1;">
-                            <div style="font-size:14px; font-weight:700; color:#1E1B4B;">{{ $emp->name }}</div>
-                            <div style="font-size:11px; color:#6B7280;">{{ $emp->nim }} &bull; {{ $emp->department ?? 'Tidak ada departemen' }}</div>
+                            <div style="font-size:14px; font-weight:700; color:#1E1B4B;">{{ $employee->name }}</div>
+                            <div style="font-size:11px; color:#6B7280;">{{ $employee->nim }} &bull; {{ $employee->department ?? 'Tidak ada departemen' }}</div>
                         </div>
                     </div>
                     @endforeach

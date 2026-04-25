@@ -100,8 +100,9 @@
                     <div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Tingkat Lulus</div>
                         @php
-                            $completed = $quiz->participants->whereNotNull('score')->count();
-                            $passed = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+                            $passingScore = $quiz->passing_score ?? 70;
+                            $completed = $quiz->participants->whereNotNull('score')->unique('employee_id')->count();
+                            $passed = $quiz->participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
                             $passRate = $completed > 0 ? round(($passed / $completed) * 100) : 0;
                         @endphp
                         <div style="font-size:24px; font-weight:900; color:var(--purple);">{{ $passRate }}%</div>
@@ -113,7 +114,7 @@
                     </div>
                     <div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Total Peserta</div>
-                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->count() }}</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->unique('employee_id')->count() }}</div>
                     </div>
                 </div>
             </div>
@@ -147,7 +148,7 @@
                                         @endphp
                                         <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0; overflow:hidden;">
                                             @if($pEmp && $pEmp->avatar)
-                                                <img src="{{ asset('storage/' . $pEmp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                                                <img src="{{ avatar_url($pEmp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
                                             @else
                                                 {{ $pInit }}
                                             @endif

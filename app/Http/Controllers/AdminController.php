@@ -10,6 +10,7 @@ use App\Models\Question;
 use App\Models\Quiz;
 use App\Models\QuizSession;
 use App\Services\QuizImportService;
+use App\Services\AvatarStorageService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -94,8 +95,8 @@ class AdminController extends Controller
         $data['status'] = 'Active';
 
         if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $data['avatar'] = $path;
+            $avatarService = new AvatarStorageService();
+            $data['avatar'] = $avatarService->upload($request->file('avatar'));
         }
 
         Employee::create($data);
@@ -538,12 +539,10 @@ class AdminController extends Controller
         $data = $request->only(['name', 'department', 'position', 'status']);
 
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($employee->avatar) {
-                Storage::disk('public')->delete($employee->avatar);
-            }
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $data['avatar'] = $path;
+            $avatarService = new AvatarStorageService();
+            // Delete old avatar
+            $avatarService->delete($employee->avatar);
+            $data['avatar'] = $avatarService->upload($request->file('avatar'));
         }
 
         $employee->update($data);
@@ -553,10 +552,8 @@ class AdminController extends Controller
 
     public function employeeDestroy(Employee $employee)
     {
-        // Delete avatar if exists
-        if ($employee->avatar) {
-            Storage::disk('public')->delete($employee->avatar);
-        }
+        // Delete avatar from storage
+        (new AvatarStorageService())->delete($employee->avatar);
         
         // Delete related participant records and answers
         foreach ($employee->participations as $participation) {

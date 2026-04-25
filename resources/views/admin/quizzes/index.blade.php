@@ -136,7 +136,7 @@
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--indigo)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; overflow: hidden;">
                                 @if($emp->avatar)
-                                    <img src="{{ asset('storage/' . $emp->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="{{ avatar_url($emp->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
                                     {{ strtoupper(substr($emp->name, 0, 1)) }}
                                 @endif
@@ -164,8 +164,9 @@
     @php $idx = 0; @endphp
     @forelse($quizzes as $quiz)
     @php
-        $total    = $quiz->participants->count();
-        $passed   = $quiz->participants->filter(fn($p) => !is_null($p->score) && $p->score >= $quiz->passing_score)->count();
+        $total    = $quiz->participants->unique('employee_id')->count();
+        $passingScore = $quiz->passing_score ?? 70;
+        $passed   = $quiz->participants->whereNotNull('score')->groupBy('employee_id')->map(fn($a) => $a->max('score'))->filter(fn($s) => $s >= $passingScore)->count();
         $icon     = $iconPool[$idx++ % count($iconPool)];
 
         /* Simple status logic: any participant who hasn't finished = aktif, else selesai */
