@@ -28,7 +28,7 @@ class Employee extends Model
      */
     public function getAvatarUrlAttribute(): ?string
     {
-        return avatar_url($this->avatar);
+        return avatar_url($this->avatar, $this->name);
     }
     /**
      * Get all of the participant entries for the Employee.

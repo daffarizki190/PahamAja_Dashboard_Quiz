@@ -289,7 +289,7 @@
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
                 <div class="p-avatar img-3d" style="{{ !($emp && $emp->avatar) ? 'background:linear-gradient(135deg,#7C3AED,#4F46E5); color:#fff;' : '' }}">
                     @if($emp && $emp->avatar)
-                        <img src="{{ avatar_url($emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="{{ avatar_url($emp->avatar, $emp->name) }}" style="width:100%; height:100%; object-fit:cover;">
                     @else
                         {{ $pInitials }}
                     @endif
@@ -337,7 +337,7 @@
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden; box-shadow:0 4px 10px rgba(124,58,237,0.2);">
                                 @if($participant->employee && $participant->employee->avatar)
-                                    <img src="{{ avatar_url($participant->employee->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="{{ avatar_url($participant->employee->avatar, $participant->employee->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
                                     {{ strtoupper(substr($participant->name, 0, 1)) }}
                                 @endif
@@ -479,7 +479,7 @@
                     <div style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #E5E3F0; border-radius:12px; background:#F9F8FD;">
                         <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--purple), var(--indigo)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(124,58,237,0.3);">
                             @if($employee->avatar)
-                                <img src="{{ avatar_url($employee->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="{{ avatar_url($employee->avatar, $employee->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
                             @else
                                 {{ substr($employee->name, 0, 1) }}
                             @endif

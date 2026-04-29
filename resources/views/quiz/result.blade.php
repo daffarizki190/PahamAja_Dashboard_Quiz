@@ -178,7 +178,7 @@
         <div style="margin-bottom: 24px;">
             <div class="img-3d" style="width:80px; height:80px; margin:0 auto; overflow:hidden; border:3px solid #fff; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:32px; font-weight:900;">
                 @if($participant->employee && $participant->employee->avatar)
-                    <img src="{{ avatar_url($participant->employee->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
+                    <img src="{{ avatar_url($participant->employee->avatar, $participant->employee->name) }}" style="width:100%; height:100%; object-fit:cover;">
                 @else
                     {{ strtoupper(substr($participant->name, 0, 1)) }}
                 @endif
