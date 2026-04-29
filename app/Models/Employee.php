@@ -20,6 +20,16 @@ class Employee extends Model
         'avatar',
         'status', // Active/Inactive
     ];
+
+    protected $appends = ['avatar_url'];
+
+    /**
+     * Get the public URL for the employee's avatar.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return avatar_url($this->avatar);
+    }
     /**
      * Get all of the participant entries for the Employee.
      * This tracks the employee's history across different quizzes.

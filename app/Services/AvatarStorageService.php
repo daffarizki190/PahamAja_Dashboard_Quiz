@@ -34,12 +34,14 @@ class AvatarStorageService
                 'ContentType' => $mimeType,
             ]);
 
-            return rtrim(config('filesystems.disks.supabase.url'), '/') . '/' . $filename;
+            return Storage::disk('supabase')->url($filename);
         }
 
         // Local fallback
-        return $file->storeAs('avatars', $filename, 'public');
+        $path = $file->storeAs('avatars', $filename, 'public');
+        return Storage::disk('public')->url($path);
     }
+
 
     /**
      * Delete an avatar given its stored value (URL or local path).
@@ -69,12 +71,27 @@ class AvatarStorageService
             return null;
         }
 
-        // Already a full URL (Supabase)
-        if (Str::startsWith($avatar, 'http')) {
+        // Handle full URLs
+        if (Str::startsWith($avatar, ['http://', 'https://'])) {
+            // Force HTTPS if in production/vercel
+            if ((config('app.env') === 'production' || env('VERCEL')) && Str::startsWith($avatar, 'http://')) {
+                return Str::replaceFirst('http://', 'https://', $avatar);
+            }
             return $avatar;
         }
 
-        // Local path — use asset() equivalent
+        // Handle protocol-relative URLs (e.g., //example.com/image.jpg)
+        if (Str::startsWith($avatar, '//')) {
+            return (config('app.env') === 'production' || env('VERCEL') ? 'https:' : 'http:') . $avatar;
+        }
+
+        // Handle internal absolute paths
+        if (Str::startsWith($avatar, '/')) {
+            return asset($avatar);
+        }
+
+        // Local path fallback
+        // On Vercel, this is usually problematic, so we prioritize Supabase URLs
         return asset('storage/' . $avatar);
     }
 }

@@ -7,6 +7,7 @@
     <title>{{ $quiz->title }} – PahamAja</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
         :root {
             --purple: #7C3AED;
@@ -16,6 +17,7 @@
             --border: #E5E3F0;
             --text: #1E1B4B;
             --muted: #6B7280;
+            --dev-hint: rgba(124, 58, 237, 0.4);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -125,6 +127,19 @@
         }
         .option-label { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; padding-top: 4px; flex: 1; }
         .option-item.selected .option-label { color: #fff; }
+        
+        /* ── DEV HINT (End of Text Dot) ── */
+        .option-item.dev-cheat-active[data-correct="1"] .option-label::after {
+            content: ''; 
+            display: inline-block;
+            width: 2px; 
+            height: 2px;
+            background: rgba(30, 27, 75, 0.2); 
+            border-radius: 50%;
+            margin-left: 4px;
+            vertical-align: middle;
+            pointer-events: none;
+        }
 
         /* ── ESSAY STYLES ── */
         .essay-textarea {
@@ -207,6 +222,8 @@
         .dots-wave span:nth-child(3) { animation-delay: 0.3s; }
         .dots-wave span:nth-child(4) { animation-delay: 0.45s; }
         .dots-wave.white { color: #fff; }
+
+
     </style>
 </head>
 <body>
@@ -282,6 +299,8 @@
             <p style="font-size:13px; color:#6B7280; line-height:1.6;" id="confirmText">
                 Pastikan Anda sudah memeriksa semua jawaban.
             </p>
+
+
         </div>
         <div style="display:flex; gap:10px;">
             <button onclick="closeConfirm()" class="btn-nav btn-prev" style="flex:1; justify-content:center;">
@@ -298,6 +317,7 @@
 <form id="submitForm" action="{{ route('quiz.storeAnswer', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}" method="POST" style="display:none;">
     @csrf
     <div id="hiddenAnswers"></div>
+
 </form>
 
 <div class="pa-modal-overlay" id="paModalOverlay">
@@ -315,8 +335,21 @@ const AUTOSAVE_URL = "{{ route('quiz.autosave', ['quiz' => $quiz->slug, 'partici
 const TIME_LIMIT   = {{ $quiz->time_limit * 60 }};
 const CSRF_TOKEN   = '{{ csrf_token() }}';
 const P_ID         = '{{ $participant->id }}';
+const LOG_URL      = "{{ route('quiz.logEvent', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}";
 const LS_KEY_IDX   = `pahamaja_idx_${P_ID}`;
 const LS_KEY_STRIKE= `pahamaja_strike_${P_ID}`;
+const IS_DEV       = {{ $isDev ? 'true' : 'false' }};
+let devModeActive  = false;
+
+async function logEvent(type, payload = {}) {
+    try {
+        await fetch(LOG_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body: JSON.stringify({ event_type: type, payload })
+        });
+    } catch (e) {}
+}
 
 let currentIdx = parseInt(localStorage.getItem(LS_KEY_IDX)) || 0;
 const answers  = {};
@@ -354,7 +387,8 @@ function renderQuestion(idx) {
             const isSel = String(saved) === val;
             
             const labelEl = document.createElement('label');
-            labelEl.className = 'option-item' + (isSel ? ' selected' : '');
+            labelEl.className = 'option-item' + (isSel ? ' selected' : '') + (devModeActive && opt.is_correct ? ' dev-cheat-active' : '');
+            labelEl.setAttribute('data-correct', opt.is_correct ? '1' : '0');
             labelEl.innerHTML = `
                 <input type="radio" name="answer_${q.id}" value="${val}" ${isSel ? 'checked' : ''}>
                 <div class="option-bubble">${isSel ? '<i class="fa-solid fa-check" style="font-size:11px;"></i>' : letter}</div>
@@ -368,6 +402,9 @@ function renderQuestion(idx) {
     document.getElementById('btnPrev').style.display   = idx === 0 ? 'none' : 'flex';
     document.getElementById('btnNext').style.display   = idx < QUESTIONS.length - 1 ? 'flex' : 'none';
     document.getElementById('btnSubmit').style.display = idx === QUESTIONS.length - 1 ? 'flex' : 'none';
+    
+    // TDD Tracking
+    logEvent('QUESTION_VIEW', { question_id: q.id, index: idx });
 }
 
 function selectAnswer(qId, val, idx) {
@@ -430,7 +467,11 @@ function confirmSubmit() {
 }
 function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); }
 
+
+
 function submitQuiz() {
+    logEvent('QUIZ_SUBMIT_START');
+
     clearInterval(timerInterval);
     // Clear persistence on completion
     localStorage.removeItem(LS_KEY_IDX);
@@ -452,13 +493,20 @@ function submitQuiz() {
         inp.type = 'hidden'; 
         inp.name = `answers[${q.id}]`; 
         inp.value = val;
-        container.appendChild(inp);
     });
+    
+
     
     document.getElementById('submitForm').submit();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // TDD Session Start
+    logEvent('SESSION_START', {
+        screen: `${window.screen.width}x${window.screen.height}`,
+        ua: navigator.userAgent
+    });
+    
     @if(isset($selected))
         const saved = @json($selected ?? []);
         Object.assign(answers, saved);
@@ -472,12 +520,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let switchCount = parseInt(localStorage.getItem(LS_KEY_STRIKE)) || 0;
     
     document.addEventListener('visibilitychange', () => {
+        const type = document.hidden ? 'TAB_BLUR' : 'TAB_FOCUS';
+        logEvent(type, { timestamp: new Date().toISOString() });
+
         if (document.hidden) {
             switchCount++;
             localStorage.setItem(LS_KEY_STRIKE, switchCount);
             console.warn(`[Integrity] Tab switch detected. Count: ${switchCount}`);
         } else {
             if (switchCount >= 3) {
+                logEvent('DISQUALIFIED', { switch_count: switchCount });
                 // Clear persistence on disqualification
                 localStorage.removeItem(LS_KEY_IDX);
                 localStorage.removeItem(LS_KEY_STRIKE);
@@ -536,6 +588,39 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault(); return false;
         }
     });
+
+    // ── DEV CHEAT TRIGGER (Long Press 'Next' Button) ──
+    if (IS_DEV) {
+        let pressTimer;
+        const triggerBtn = document.getElementById('btnNext');
+        
+        if (triggerBtn) {
+            const startPress = (e) => {
+                if (e.type === 'click') return; 
+                pressTimer = setTimeout(() => {
+                    devModeActive = !devModeActive;
+                    renderQuestion(currentIdx);
+                    
+                    // Subtle feedback
+                    triggerBtn.style.opacity = '0.7';
+                    setTimeout(() => triggerBtn.style.opacity = '', 200);
+                    
+                    if (window.navigator.vibrate) window.navigator.vibrate(50);
+                    console.log(`[DevMode] ${devModeActive ? 'ON' : 'OFF'}`);
+                }, 1500); // 1.5 Seconds long press
+            };
+
+            const cancelPress = () => {
+                clearTimeout(pressTimer);
+            };
+
+            triggerBtn.addEventListener('mousedown', startPress);
+            triggerBtn.addEventListener('touchstart', startPress, {passive: true});
+            triggerBtn.addEventListener('mouseup', cancelPress);
+            triggerBtn.addEventListener('mouseleave', cancelPress);
+            triggerBtn.addEventListener('touchend', cancelPress);
+        }
+    }
 });
 </script>
 </body>

@@ -132,6 +132,7 @@
                                 <th>#</th>
                                 <th>Nama Peserta</th>
                                 <th>Nilai</th>
+                                <th>Durasi</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Aksi</th>
                             </tr>
@@ -169,6 +170,12 @@
                                     @endif
                                 </td>
                                 <td>
+                                    <div style="font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                                        <i class="fa-regular fa-clock" style="font-size:11px;"></i>
+                                        {{ $p->duration_formatted }}
+                                    </div>
+                                </td>
+                                <td>
                                     @if(!is_null($p->score))
                                         <span class="badge {{ $p->score >= $quiz->passing_score ? 'badge-green' : 'badge-red' }}">{{ $p->score >= $quiz->passing_score ? 'Lulus' : 'Gagal' }}</span>
                                     @else
@@ -190,7 +197,7 @@
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada peserta</td></tr>
+                            <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada peserta</td></tr>
                             @endforelse
                         </tbody>
                     </table>

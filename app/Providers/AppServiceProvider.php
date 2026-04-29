@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -40,5 +42,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ai-generate', function (Request $request) {
             return Limit::perHour(5)->by($request->session()->getId() ?: $request->ip());
         });
+
+        if (config('app.env') === 'production' || env('VERCEL')) {
+            URL::forceScheme('https');
+        }
     }
 }
