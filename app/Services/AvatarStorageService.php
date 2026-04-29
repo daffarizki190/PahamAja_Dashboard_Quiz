@@ -59,22 +59,25 @@ class AvatarStorageService
 
             // If Supabase fails (e.g. RLS policies block the upload because they only used the Anon Key),
             // Vercel cannot write to storage/app/public. We must prevent a 500 crash and broken images.
-            // Emergency fallback: Upload to anonymous public host (Catbox.moe)
+            // Emergency fallback: Upload to anonymous public host (Freeimage.host)
+            // Freeimage.host is much more reliable and does not block Vercel IPs like Catbox does.
             try {
                 $fallbackResponse = \Illuminate\Support\Facades\Http::asMultipart()
-                    ->attach('fileToUpload', file_get_contents($file->getRealPath()), $filename)
-                    ->post('https://catbox.moe/user/api.php', [
-                        'reqtype' => 'fileupload'
+                    ->attach('source', file_get_contents($file->getRealPath()), $filename)
+                    ->post('https://freeimage.host/api/1/upload', [
+                        'key' => '6d207e02198a847aa98d0a2a901485a5',
+                        'action' => 'upload'
                     ]);
 
-                if ($fallbackResponse->successful() && Str::startsWith($fallbackResponse->body(), 'http')) {
-                    return trim($fallbackResponse->body());
+                if ($fallbackResponse->successful() && isset($fallbackResponse->json()['image']['url'])) {
+                    return $fallbackResponse->json()['image']['url'];
                 }
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Emergency fallback upload exception: ' . $e->getMessage());
             }
 
             if (env('VERCEL')) {
+                // If everything fails, prevent 500 error but image will be broken
                 $file->move('/tmp/avatars', $filename);
                 return '/tmp/avatars/' . $filename;
             }
