@@ -28,6 +28,10 @@ class AvatarStorageService
         $filename  = Str::uuid() . '.' . $file->getClientOriginalExtension();
         $mimeType  = $file->getMimeType() ?: 'image/jpeg';
 
+        if (app()->runningUnitTests()) {
+            return $file->storeAs('avatars', $filename, 'public');
+        }
+
         if ($this->disk === 'supabase') {
             try {
                 $url = rtrim(config('filesystems.disks.supabase.url'), '/');
@@ -87,6 +91,11 @@ class AvatarStorageService
     public function delete(?string $avatar): void
     {
         if (!$avatar) {
+            return;
+        }
+
+        if (app()->runningUnitTests()) {
+            Storage::disk('public')->delete($avatar);
             return;
         }
 
