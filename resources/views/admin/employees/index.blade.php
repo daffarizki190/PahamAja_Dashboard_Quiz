@@ -228,6 +228,9 @@
         <a href="{{ route('admin.reports.global-pdf') }}" class="btn btn-ghost" title="Export PDF" style="padding:10px 14px; border-radius:12px;">
             <i class="fa-solid fa-file-pdf" style="color:#EF4444; font-size:16px;"></i>
         </a>
+        <a href="{{ route('admin.employees.clear-avatars') }}" class="btn btn-ghost" title="Hapus Semua Foto Karyawan" style="padding:10px 14px; border-radius:12px;" onclick="return confirm('Apakah Anda yakin ingin menghapus semua foto karyawan? Ini akan mengaktifkan avatar dinamis (UI-Avatars) untuk semua orang.')">
+            <i class="fa-solid fa-image-portrait" style="color:#F59E0B; font-size:16px;"></i>
+        </a>
         <button onclick="openRegisterModal()" class="btn btn-primary" style="padding:10px 20px; font-size:14px; border-radius:12px;">
             <i class="fa-solid fa-plus"></i> <span style="margin-left:6px;">Tambah</span>
         </button>

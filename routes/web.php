@@ -162,6 +162,12 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('global-report/excel', [GlobalReportController::class, 'exportExcel'])->name('reports.global-excel');
     Route::get('global-report/pdf', [GlobalReportController::class, 'exportPdf'])->name('reports.global-pdf');
 
+    // Utility Route to clear all avatars (Requested by User)
+    Route::get('clear-avatars', function () {
+        \App\Models\Employee::whereNotNull('avatar')->update(['avatar' => null]);
+        return redirect()->route('admin.employees.index')->with('success', 'Semua foto karyawan berhasil dihapus. Avatar dinamis (UI-Avatars) kini aktif untuk semua karyawan.');
+    })->name('employees.clear-avatars');
+
     // Settings
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');

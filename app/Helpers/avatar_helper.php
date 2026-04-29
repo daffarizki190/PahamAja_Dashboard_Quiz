@@ -16,7 +16,7 @@ if (!function_exists('avatar_url')) {
 
         // If no avatar is set, or if the avatar is broken (like a /tmp/ file on Vercel),
         // fallback to a dynamic generated avatar based on the employee's name.
-        if (!$url || \Illuminate\Support\Str::startsWith($url, 'http://localhost/tmp/')) {
+        if (!$url || \Illuminate\Support\Str::contains($url, '/tmp/avatars/')) {
             if ($name) {
                 // Generate a beautiful, colorful avatar based on the name
                 return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=random&color=fff&size=256&bold=true';
