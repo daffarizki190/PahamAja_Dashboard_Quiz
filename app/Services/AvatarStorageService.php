@@ -38,8 +38,7 @@ class AvatarStorageService
         }
 
         // Local fallback
-        $path = $file->storeAs('avatars', $filename, 'public');
-        return Storage::disk('public')->url($path);
+        return $file->storeAs('avatars', $filename, 'public');
     }
 
 
