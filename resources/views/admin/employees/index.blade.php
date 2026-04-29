@@ -530,8 +530,8 @@ function openEditModal(employee) {
     
     // Avatar Preview in Edit
     const preview = document.getElementById('editAvatarPreview');
-    if (employee.avatar) {
-        preview.innerHTML = `<img src="/storage/${employee.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
+    if (employee.avatar_url) {
+        preview.innerHTML = `<img src="${employee.avatar_url}" style="width:100%; height:100%; object-fit:cover;">`;
     } else {
         preview.innerHTML = '<i class="fa-solid fa-user"></i>';
     }

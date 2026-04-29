@@ -98,6 +98,10 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
     Route::post('{quiz:slug}/participant/{participant}/autosave', [QuizController::class, 'autosaveAnswer'])
         ->name('autosave');
 
+    // TDD Logging Endpoint
+    Route::post('{quiz:slug}/participant/{participant}/log-event', [QuizController::class, 'logEvent'])
+        ->name('logEvent');
+
     // Result page after submission
     Route::get('{quiz:slug}/participant/{participant}/result', [QuizController::class, 'showResult'])->name('result');
 

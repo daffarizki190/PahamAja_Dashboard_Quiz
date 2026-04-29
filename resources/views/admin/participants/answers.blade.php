@@ -65,6 +65,13 @@
         
         <div style="display:flex; align-items:center; gap:32px;">
             <div style="text-align:right;">
+                <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Metadata Sesi</div>
+                <div style="font-size:12px; font-weight:700; color:#475569;">
+                    <i class="fa-solid fa-network-wired" style="color:var(--purple); margin-right:4px;"></i> {{ $participant->ip_address ?? 'N/A' }}<br>
+                    <span style="font-size:10px; color:#94A3B8; font-weight:600;">{{ Str::limit($participant->user_agent, 40) }}</span>
+                </div>
+            </div>
+            <div style="text-align:right;">
                 <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Hasil Skor</div>
                 <div style="font-size:28px; font-weight:900; color:var(--purple);">{{ $participant->score ?? '-' }}</div>
             </div>
@@ -112,6 +119,27 @@
                         @endif
                     </td>
                 </tr>
+                @if($row['explanation'] || $row['ai_feedback'])
+                <tr style="background:#F9FAFB;">
+                    <td></td>
+                    <td colspan="4" style="padding:12px 20px;">
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            @if($row['explanation'])
+                            <div style="font-size:12px; color:#4B5563;">
+                                <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase;">Pembahasan:</strong>
+                                {{ $row['explanation'] }}
+                            </div>
+                            @endif
+                            @if($row['ai_feedback'])
+                            <div style="padding:10px; background:rgba(124,58,237,0.05); border-left:3px solid var(--purple); border-radius:4px; font-size:12px; color:#1E1B4B;">
+                                <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Insight:</strong>
+                                {{ $row['ai_feedback'] }}
+                            </div>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
         </table>
@@ -138,13 +166,90 @@
                     <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Jawaban Peserta</div>
                     <div style="font-size:13px; font-weight:700; color:{{ is_null($row['is_correct']) ? '#94A3B8' : ($row['is_correct'] ? '#059669' : '#DC2626') }};">{{ $row['selected'] ?: 'Tidak dijawab' }}</div>
                 </div>
-                <div style="padding:10px 14px; background:#F0FDF4; border:1px solid #DCFCE7; border-radius:10px;">
-                    <div style="font-size:10px; font-weight:800; color:#15803D; text-transform:uppercase; margin-bottom:4px;">Kunci Jawaban</div>
-                    <div style="font-size:13px; font-weight:700; color:#15803D;">{{ $row['correct'] ?: '-' }}</div>
+            </div>
+
+            @if($row['explanation'] || $row['ai_feedback'])
+            <div style="margin-top:16px; padding-top:16px; border-top:1px dashed #E5E3F0; display:flex; flex-direction:column; gap:12px;">
+                @if($row['explanation'])
+                <div>
+                    <div style="font-size:10px; font-weight:800; color:var(--purple); text-transform:uppercase; margin-bottom:4px;">Pembahasan</div>
+                    <div style="font-size:12px; color:#4B5563; line-height:1.6;">{{ $row['explanation'] }}</div>
+                </div>
+                @endif
+                @if($row['ai_feedback'])
+                <div style="padding:12px; background:rgba(124,58,237,0.05); border-radius:10px; border:1px solid rgba(124,58,237,0.1);">
+                    <div style="font-size:10px; font-weight:800; color:var(--purple); text-transform:uppercase; margin-bottom:6px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Feedback</div>
+                    <div style="font-size:12px; color:#1E1B4B; line-height:1.6;">{{ $row['ai_feedback'] }}</div>
+                </div>
+                @endif
+            </div>
+            @endif
+        </div>
+        @endforeach
+    </div>
+
+    <!-- TDD Audit Trail Section -->
+    <div class="card shadow-sm" style="margin-top:24px; padding:24px; border:1px solid rgba(124,58,237,0.15); background:linear-gradient(to bottom, #fff, #FBFBFF);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #F3F2FB; padding-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:10px; background:rgba(124,58,237,0.1); color:var(--purple); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h4 style="font-size:15px; font-weight:900; color:#1E1B4B; margin:0;">TDD Audit Trail</h4>
+                    <p style="font-size:11px; color:#94A3B8; font-weight:700; margin:0; text-transform:uppercase;">Tracking, Documentation, and Diagnostics</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:16px;">
+                <div style="text-align:right;">
+                    <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Tab Switches</div>
+                    <div style="font-size:16px; font-weight:900; color:{{ $logs->where('event_type', 'TAB_BLUR')->count() > 0 ? '#DC2626' : '#059669' }};">
+                        {{ $logs->where('event_type', 'TAB_BLUR')->count() }}
+                    </div>
                 </div>
             </div>
         </div>
-        @endforeach
+
+        <div style="max-height:400px; overflow-y:auto; padding-right:10px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                @forelse($logs as $log)
+                    <div style="display:flex; align-items:flex-start; gap:14px; padding:12px; background:#fff; border:1px solid #F3F2FB; border-radius:12px; transition:all .2s;">
+                        <div style="width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
+                            @if($log->event_type == 'SESSION_START') background:rgba(16,185,129,0.1); color:#10B981;
+                            @elseif($log->event_type == 'TAB_BLUR') background:rgba(239,68,68,0.1); color:#EF4444;
+                            @elseif($log->event_type == 'TAB_FOCUS') background:rgba(59,130,246,0.1); color:#3B82F6;
+                            @elseif($log->event_type == 'DISQUALIFIED') background:#1E1B4B; color:#fff;
+                            @else background:#F3F2FB; color:#64748B; @endif">
+                            @if($log->event_type == 'SESSION_START') <i class="fa-solid fa-play"></i>
+                            @elseif($log->event_type == 'TAB_BLUR') <i class="fa-solid fa-eye-slash"></i>
+                            @elseif($log->event_type == 'TAB_FOCUS') <i class="fa-solid fa-eye"></i>
+                            @elseif($log->event_type == 'QUESTION_VIEW') <i class="fa-solid fa-file-lines"></i>
+                            @elseif($log->event_type == 'QUIZ_SUBMIT_START') <i class="fa-solid fa-paper-plane"></i>
+                            @elseif($log->event_type == 'DISQUALIFIED') <i class="fa-solid fa-ban"></i>
+                            @else <i class="fa-solid fa-circle-dot"></i> @endif
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span style="font-size:12px; font-weight:800; color:#1E1B4B;">{{ str_replace('_', ' ', $log->event_type) }}</span>
+                                <span style="font-size:10px; font-weight:700; color:#94A3B8;">{{ $log->created_at->format('H:i:s') }}</span>
+                            </div>
+                            @if($log->payload)
+                                <div style="font-size:11px; color:#64748B; font-weight:600; font-family:monospace; background:#F8FAFC; padding:4px 8px; border-radius:6px; margin-top:4px;">
+                                    @foreach($log->payload as $key => $val)
+                                        <span style="color:var(--purple)">{{ $key }}:</span> {{ is_array($val) ? json_encode($val) : $val }}@if(!$loop->last) · @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div style="text-align:center; padding:32px; color:#94A3B8;">
+                        <i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:12px; display:block;"></i>
+                        <p style="font-size:12px; font-weight:700;">Belum ada log aktivitas untuk peserta ini.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
     </div>
 </div>
 @endsection

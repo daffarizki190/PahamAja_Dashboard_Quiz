@@ -24,13 +24,25 @@ class Participant extends Model
         'finished_at',
         'is_assigned',
         'status',
+        'ip_address',
+        'user_agent',
+        'device_info',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'is_assigned' => 'boolean',
+        'device_info' => 'array',
     ];
+
+    /**
+     * Get the logs associated with this participant.
+     */
+    public function logs(): HasMany
+    {
+        return $this->hasMany(ParticipantLog::class);
+    }
 
     /**
      * Get the session associated with this participation.

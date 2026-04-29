@@ -37,9 +37,10 @@ class AvatarStorageService
             return rtrim(config('filesystems.disks.supabase.url'), '/') . '/' . $filename;
         }
 
-        // Local fallback
+    // Local fallback
         return $file->storeAs('avatars', $filename, 'public');
     }
+
 
     /**
      * Delete an avatar given its stored value (URL or local path).

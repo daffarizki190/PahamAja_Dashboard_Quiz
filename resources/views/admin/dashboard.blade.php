@@ -289,7 +289,7 @@
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
                 <div class="p-avatar img-3d">
                     @if($emp && $emp->avatar)
-                        <img src="/storage/{{ $emp->avatar }}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="{{ avatar_url($emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
                     @else
                         {{ $pInitials }}
                     @endif

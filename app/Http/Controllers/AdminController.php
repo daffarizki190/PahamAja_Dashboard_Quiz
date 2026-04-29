@@ -178,16 +178,41 @@ class AdminController extends Controller
                 })->first();
             });
 
-        // Advanced Sorting for Leaderboard
+        // Advanced Sorting for Leaderboard (Score DESC, Duration ASC)
         $sortedParticipants = $participants->sort(function ($a, $b) {
             $aScoreIsNull = is_null($a->score);
             $bScoreIsNull = is_null($b->score);
+            
+            // 1. Put finished participants at the top
             if ($aScoreIsNull !== $bScoreIsNull) return $aScoreIsNull <=> $bScoreIsNull;
+            
             if (!$aScoreIsNull && !$bScoreIsNull) {
+                // 2. Primary Sort: Score (Descending)
                 if ($a->score !== $b->score) return $b->score <=> $a->score;
+                
+                // 3. Secondary Sort: Speed (Duration Ascending)
+                if ($a->started_at && $a->finished_at && $b->started_at && $b->finished_at) {
+                    $aDur = $a->finished_at->diffInSeconds($a->started_at);
+                    $bDur = $b->finished_at->diffInSeconds($b->started_at);
+                    if ($aDur !== $bDur) return $aDur <=> $bDur;
+                }
             }
+            
+            // 4. Tertiary Sort: Earlier absolute finish time
             return ($a->updated_at?->getTimestamp() ?? 0) <=> ($b->updated_at?->getTimestamp() ?? 0);
         })->values();
+
+        // Calculate human-readable duration for display
+        $sortedParticipants->each(function($p) {
+            if ($p->started_at && $p->finished_at) {
+                $seconds = $p->finished_at->diffInSeconds($p->started_at);
+                $m = floor($seconds / 60);
+                $s = $seconds % 60;
+                $p->duration_formatted = sprintf('%02d:%02d', $m, $s);
+            } else {
+                $p->duration_formatted = '--:--';
+            }
+        });
 
         $finishedParticipants = $participants->whereNotNull('score');
         $avgScore = $finishedParticipants->avg('score') ?? 0;
@@ -480,6 +505,7 @@ class AdminController extends Controller
                     'department' => (string) $employee->department,
                     'position' => (string) $employee->position,
                     'avatar' => $employee->avatar,
+                    'avatar_url' => avatar_url($employee->avatar),
                     'attempts' => (int) $stats['attempts'],
                     'avg' => (float) $stats['avg'],
                     'last' => $stats['last'],
@@ -577,6 +603,7 @@ class AdminController extends Controller
         }
 
         $quiz->load('questions.options');
+        $participant->load('logs');
         $answers = Answer::where('participant_id', $participant->id)->get();
         $answersByQuestion = $answers->keyBy('question_id');
 
@@ -587,13 +614,17 @@ class AdminController extends Controller
 
             return [
                 'question' => (string) $question->text,
-                'selected' => $selectedOption?->text,
-                'correct' => $correctOption?->text,
-                'is_correct' => $selectedOption && $correctOption ? ((string) $selectedOption->id === (string) $correctOption->id) : null,
+                'explanation' => (string) $question->explanation,
+                'selected' => $selectedOption?->text ?? $answer?->essay_answer,
+                'correct' => $correctOption?->text ?? $question->ideal_answer,
+                'is_correct' => $selectedOption && $correctOption ? ((string) $selectedOption->id === (string) $correctOption->id) : ($answer ? (float)$answer->score > 0 : null),
+                'ai_feedback' => $answer?->ai_feedback,
             ];
         })->values();
 
-        return view('admin.participants.answers', compact('quiz', 'participant', 'rows'));
+        $logs = $participant->logs()->latest()->get();
+
+        return view('admin.participants.answers', compact('quiz', 'participant', 'rows', 'logs'));
     }
 
     /**
