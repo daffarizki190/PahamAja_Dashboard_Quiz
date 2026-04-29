@@ -53,8 +53,23 @@ class AvatarStorageService
                 \Illuminate\Support\Facades\Log::error('Supabase upload exception: ' . $e->getMessage());
             }
 
-            // If Supabase fails or is misconfigured, Vercel cannot write to storage/app/public.
-            // We must prevent a 500 crash by using /tmp on Vercel.
+            // If Supabase fails (e.g. RLS policies block the upload because they only used the Anon Key),
+            // Vercel cannot write to storage/app/public. We must prevent a 500 crash and broken images.
+            // Emergency fallback: Upload to anonymous public host (Catbox.moe)
+            try {
+                $fallbackResponse = \Illuminate\Support\Facades\Http::asMultipart()
+                    ->attach('fileToUpload', file_get_contents($file->getRealPath()), $filename)
+                    ->post('https://catbox.moe/user/api.php', [
+                        'reqtype' => 'fileupload'
+                    ]);
+
+                if ($fallbackResponse->successful() && Str::startsWith($fallbackResponse->body(), 'http')) {
+                    return trim($fallbackResponse->body());
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Emergency fallback upload exception: ' . $e->getMessage());
+            }
+
             if (env('VERCEL')) {
                 $file->move('/tmp/avatars', $filename);
                 return '/tmp/avatars/' . $filename;
