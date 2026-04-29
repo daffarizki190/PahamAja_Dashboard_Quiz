@@ -174,6 +174,12 @@ class AdminController extends Controller
             ->map(function ($group) {
                 return $group->sort(function ($a, $b) {
                     if ($a->score !== $b->score) return $b->score <=> $a->score;
+                    
+                    // Break tie by speed
+                    $aDur = ($a->finished_at && $a->started_at) ? $a->finished_at->diffInSeconds($a->started_at) : 999999;
+                    $bDur = ($b->finished_at && $b->started_at) ? $b->finished_at->diffInSeconds($b->started_at) : 999999;
+                    if ($aDur !== $bDur) return $aDur <=> $bDur;
+
                     return $b->updated_at <=> $a->updated_at;
                 })->first();
             });

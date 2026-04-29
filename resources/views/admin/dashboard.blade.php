@@ -287,7 +287,7 @@
             @endphp
             <div class="podium-item podium-{{ $rank }}" data-tilt data-tilt-max="15">
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
-                <div class="p-avatar img-3d">
+                <div class="p-avatar img-3d" style="{{ !($emp && $emp->avatar) ? 'background:linear-gradient(135deg,#7C3AED,#4F46E5); color:#fff;' : '' }}">
                     @if($emp && $emp->avatar)
                         <img src="{{ avatar_url($emp->avatar) }}" style="width:100%; height:100%; object-fit:cover;">
                     @else
@@ -312,6 +312,7 @@
                     <th>Peringkat</th>
                     <th>Identitas</th>
                     <th>Sesi</th>
+                    <th>Kecepatan</th>
                     <th>Nilai</th>
                     <th>Status</th>
                     <th style="text-align:right;">Aksi</th>
@@ -334,7 +335,7 @@
                     </td>
                     <td>
                         <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden;">
+                            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden; box-shadow:0 4px 10px rgba(124,58,237,0.2);">
                                 @if($participant->employee && $participant->employee->avatar)
                                     <img src="{{ avatar_url($participant->employee->avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
@@ -349,6 +350,21 @@
                     </td>
                     <td>
                         <span style="font-size:12px; color:#6B7280; font-weight:600;">{{ $participant->quizSession ? $participant->quizSession->name : '—' }}</span>
+                    </td>
+                    <td>
+                        @if($participant->started_at && $participant->finished_at)
+                            @php 
+                                $seconds = $participant->finished_at->diffInSeconds($participant->started_at);
+                                $m = floor($seconds / 60);
+                                $s = $seconds % 60;
+                            @endphp
+                            <div style="font-size:12px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:5px;">
+                                <i class="fa-regular fa-clock" style="font-size:11px;"></i>
+                                {{ sprintf('%02d:%02d', $m, $s) }}
+                            </div>
+                        @else
+                            <span style="color:#9CA3AF; font-size:11px;">—</span>
+                        @endif
                     </td>
                     <td>
                         @if($hasScore)

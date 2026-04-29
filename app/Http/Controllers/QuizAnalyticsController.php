@@ -31,10 +31,19 @@ class QuizAnalyticsController extends Controller
         $participants = $allParticipants
             ->groupBy('employee_id')
             ->map(function ($group) {
-                // Find the best attempt (Highest score)
-                // If scores are equal, take the most recent one
+                // Find the best attempt (Highest score + Fastest time)
                 return $group->sort(function ($a, $b) {
+                    // 1. Higher score wins
                     if ($a->score !== $b->score) return $b->score <=> $a->score;
+
+                    // 2. Faster completion wins (if both have scores)
+                    if ($a->score !== null && $b->score !== null) {
+                        $aDur = ($a->finished_at && $a->started_at) ? $a->finished_at->diffInSeconds($a->started_at) : 999999;
+                        $bDur = ($b->finished_at && $b->started_at) ? $b->finished_at->diffInSeconds($b->started_at) : 999999;
+                        if ($aDur !== $bDur) return $aDur <=> $bDur;
+                    }
+
+                    // 3. Most recent first
                     return $b->updated_at <=> $a->updated_at;
                 })->first();
             })
@@ -42,20 +51,25 @@ class QuizAnalyticsController extends Controller
                 $aScoreIsNull = is_null($a->score);
                 $bScoreIsNull = is_null($b->score);
 
+                // In-progress at the bottom
                 if ($aScoreIsNull !== $bScoreIsNull) {
                     return $aScoreIsNull <=> $bScoreIsNull;
                 }
 
                 if (! $aScoreIsNull && ! $bScoreIsNull) {
+                    // 1. Higher score wins
                     if ($a->score !== $b->score) {
                         return $b->score <=> $a->score;
                     }
+
+                    // 2. Faster completion wins
+                    $aDur = ($a->finished_at && $a->started_at) ? $a->finished_at->diffInSeconds($a->started_at) : 999999;
+                    $bDur = ($b->finished_at && $b->started_at) ? $b->finished_at->diffInSeconds($b->started_at) : 999999;
+                    if ($aDur !== $bDur) return $aDur <=> $bDur;
                 }
 
-                $aUpdatedAt = $a->updated_at?->getTimestamp() ?? 0;
-                $bUpdatedAt = $b->updated_at?->getTimestamp() ?? 0;
-
-                return $aUpdatedAt <=> $bUpdatedAt;
+                // 3. Most recent first
+                return $b->updated_at <=> $a->updated_at;
             })
             ->values();
 
