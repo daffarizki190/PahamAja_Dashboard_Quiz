@@ -88,13 +88,9 @@
 
 <div class="confirm-card">
     <div class="profile-section avatar-container" data-tilt data-tilt-max="20" data-tilt-speed="400" data-tilt-perspective="1000">
-        @if($employee->avatar)
+        
             <img src="{{ avatar_url($employee->avatar, $employee->name) }}" class="avatar-main">
-        @else
-            <div class="avatar-main">
-                {{ strtoupper(substr($employee->name, 0, 1)) }}
-            </div>
-        @endif
+        
         <div class="check-badge"><i class="fa-solid fa-check"></i></div>
     </div>
 

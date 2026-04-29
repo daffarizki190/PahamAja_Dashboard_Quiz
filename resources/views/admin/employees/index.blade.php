@@ -287,18 +287,12 @@
     <div class="emp-card card-3d" data-name="{{ strtolower($employee->name) }}" data-nim="{{ strtolower($employee->nim) }}" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-glare="true" data-tilt-max-glare="0.1">
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            @if($employee->avatar)
             <div class="avatar-photo-wrap has-photo"
                  onclick="openPhotoLightbox('{{ avatar_url($employee->avatar, $employee->name) }}', '{{ addslashes($employee->name) }}', '{{ addslashes($employee->position) }} · {{ addslashes($employee->department) }}')"
                  title="Klik untuk memperbesar foto">
                 <img src="{{ avatar_url($employee->avatar, $employee->name) }}" alt="{{ $employee->name }}" loading="lazy">
                 <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
             </div>
-            @else
-            <div class="emp-avatar" style="background:{{ $theme['bg'] }}; box-shadow:0 4px 14px {{ $theme['bg'] }}40; display:flex; align-items:center; justify-content:center;">
-                {{ $initials }}
-            </div>
-            @endif
             <div class="card-actions">
                 <a href="{{ route('admin.employees.show', $employee->id) }}" class="btn-icon" title="Lihat Analitik"><i class="fa-solid fa-chart-column"></i></a>
                 <button onclick="openEditModalFromButton(this)" data-employee='@json($employee)' class="btn-icon" title="Edit"><i class="fa-solid fa-pen" style="font-size:11px;"></i></button>

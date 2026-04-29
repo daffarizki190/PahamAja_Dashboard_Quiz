@@ -148,11 +148,9 @@
                                             $pInit = strtoupper(substr($p->name, 0, 1));
                                         @endphp
                                         <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0; overflow:hidden;">
-                                            @if($pEmp && $pEmp->avatar)
+                                            
                                                 <img src="{{ avatar_url($pEmp->avatar, $pEmp->name) }}" style="width:100%; height:100%; object-fit:cover;">
-                                            @else
-                                                {{ $pInit }}
-                                            @endif
+                                            
                                         </div>
                                         <div>
                                             <div style="font-size:13px; font-weight:700; color:var(--text-primary);">{{ $p->name }}</div>
