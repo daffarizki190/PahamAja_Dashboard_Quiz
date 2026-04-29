@@ -29,12 +29,36 @@ class AvatarStorageService
         $mimeType  = $file->getMimeType() ?: 'image/jpeg';
 
         if ($this->disk === 'supabase') {
-            Storage::disk('supabase')->put($filename, file_get_contents($file->getRealPath()), [
-                'visibility'  => 'public',
-                'ContentType' => $mimeType,
-            ]);
+            try {
+                $url = rtrim(config('filesystems.disks.supabase.url'), '/');
+                $bucket = config('filesystems.disks.supabase.bucket', 'avatars');
+                $key = config('filesystems.disks.supabase.secret') ?: config('filesystems.disks.supabase.key');
 
-            return Storage::disk('supabase')->url($filename);
+                $baseStorageUrl = Str::contains($url, '/storage/v1') ? $url : "{$url}/storage/v1";
+                $endpoint = "{$baseStorageUrl}/object/{$bucket}/{$filename}";
+                $publicUrl = "{$baseStorageUrl}/object/public/{$bucket}/{$filename}";
+
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $key,
+                    'apikey' => $key,
+                    'Content-Type' => $mimeType,
+                ])->withBody(file_get_contents($file->getRealPath()), $mimeType)->post($endpoint);
+
+                if ($response->successful()) {
+                    return $publicUrl;
+                }
+                
+                \Illuminate\Support\Facades\Log::error('Supabase HTTP upload failed: ' . $response->body());
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Supabase upload exception: ' . $e->getMessage());
+            }
+
+            // If Supabase fails or is misconfigured, Vercel cannot write to storage/app/public.
+            // We must prevent a 500 crash by using /tmp on Vercel.
+            if (env('VERCEL')) {
+                $file->move('/tmp/avatars', $filename);
+                return '/tmp/avatars/' . $filename;
+            }
         }
 
         // Local fallback
@@ -52,11 +76,26 @@ class AvatarStorageService
         }
 
         if (Str::startsWith($avatar, 'http')) {
-            // Extract just the filename from the public URL
-            $filename = basename(parse_url($avatar, PHP_URL_PATH));
-            Storage::disk('supabase')->delete($filename);
+            try {
+                $filename = basename(parse_url($avatar, PHP_URL_PATH));
+                $url = rtrim(config('filesystems.disks.supabase.url'), '/');
+                $bucket = config('filesystems.disks.supabase.bucket', 'avatars');
+                $key = config('filesystems.disks.supabase.secret') ?: config('filesystems.disks.supabase.key');
+
+                $baseStorageUrl = Str::contains($url, '/storage/v1') ? $url : "{$url}/storage/v1";
+                $endpoint = "{$baseStorageUrl}/object/{$bucket}/{$filename}";
+
+                \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $key,
+                    'apikey' => $key,
+                ])->delete($endpoint);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Supabase delete exception: ' . $e->getMessage());
+            }
         } else {
-            Storage::disk('public')->delete($avatar);
+            if (!env('VERCEL') || !Str::startsWith($avatar, '/tmp')) {
+                Storage::disk('public')->delete($avatar);
+            }
         }
     }
 
