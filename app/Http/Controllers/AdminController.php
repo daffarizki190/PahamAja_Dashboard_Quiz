@@ -210,14 +210,7 @@ class AdminController extends Controller
 
         // Calculate human-readable duration for display
         $sortedParticipants->each(function($p) {
-            if ($p->started_at && $p->finished_at) {
-                $seconds = $p->finished_at->diffInSeconds($p->started_at);
-                $m = floor($seconds / 60);
-                $s = $seconds % 60;
-                $p->duration_formatted = sprintf('%02d:%02d', $m, $s);
-            } else {
-                $p->duration_formatted = '--:--';
-            }
+            $p->duration_formatted = $p->duration ?? '--:--';
         });
 
         $finishedParticipants = $participants->whereNotNull('score');

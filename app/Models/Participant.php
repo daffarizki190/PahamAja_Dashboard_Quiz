@@ -68,11 +68,24 @@ class Participant extends Model
         return $this->belongsTo(Quiz::class);
     }
 
-    /**
-     * Get all of the answers for the Participant
-     */
     public function answers(): HasMany
     {
         return $this->hasMany(Answer::class);
+    }
+
+    /**
+     * Get the duration of the quiz in minutes and seconds.
+     */
+    public function getDurationAttribute(): ?string
+    {
+        if (!$this->started_at || !$this->finished_at) {
+            return null;
+        }
+
+        $seconds = abs($this->finished_at->diffInSeconds($this->started_at));
+        $m = floor($seconds / 60);
+        $s = $seconds % 60;
+
+        return ($m > 0 ? "{$m} Menit " : "") . "{$s} Detik";
     }
 }

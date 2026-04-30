@@ -266,7 +266,11 @@ class QuizController extends Controller
             });
         });
 
-        return view('quiz.take', compact('quiz', 'participant', 'selected', 'isDev'));
+        // Calculate remaining time
+        $elapsed = $participant->started_at ? now()->diffInSeconds($participant->started_at) : 0;
+        $remainingSeconds = max(0, ($quiz->time_limit * 60) - $elapsed);
+
+        return view('quiz.take', compact('quiz', 'participant', 'selected', 'isDev', 'remainingSeconds'));
     }
 
     /**

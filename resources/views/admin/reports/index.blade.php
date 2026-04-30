@@ -104,6 +104,7 @@
                         <th>Peserta</th>
                         <th>Kuis</th>
                         <th>Skor</th>
+                        <th>Durasi</th>
                         <th>Status</th>
                         <th>Tanggal Selesai</th>
                         <th style="text-align:right;">Aksi</th>
@@ -122,6 +123,11 @@
                         <td>
                             <div style="font-size:18px; font-weight:900; color:{{ $p->score >= (optional($p->quiz)->passing_score ?? 70) ? '#059669' : '#DC2626' }}">
                                 {{ $p->score }}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size:12px; color:#D97706; font-weight:700;">
+                                {{ $p->duration ?? '--' }}
                             </div>
                         </td>
                         <td>

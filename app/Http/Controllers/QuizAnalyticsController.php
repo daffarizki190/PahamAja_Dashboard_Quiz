@@ -131,9 +131,7 @@ class QuizAnalyticsController extends Controller
                 'completedCount' => $participants->whereNotNull('score')->count(),
                 'liveActivity' => $participants->count(),
                 'participants' => $participants->map(function ($p) use ($quiz) {
-                    $duration = ($p->started_at && $p->finished_at) 
-                        ? $p->finished_at->diff($p->started_at)->format('%im %ss') 
-                        : null;
+                    $duration = $p->duration;
                         
                     return [
                         'id' => $p->id,

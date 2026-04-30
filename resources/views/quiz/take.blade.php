@@ -53,15 +53,17 @@
         }
 
         .timer-pill {
-            display: flex; align-items: center; gap: 7px;
-            background: #EF4444; color: #fff;
-            border-radius: 10px; padding: 8px 16px;
-            font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums;
+            display: flex; align-items: center; gap: 8px;
+            background: #F3F4F6; color: #374151;
+            border-radius: 12px; padding: 10px 18px;
+            font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums;
+            border: 2px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .timer-pill.warning { background: #F59E0B; }
-        .timer-pill.safe    { background: #EF4444; }
-        @keyframes timerPulse { 0%,100%{opacity:1;} 50%{opacity:.65;} }
-        .timer-pill.danger  { animation: timerPulse 1s ease-in-out infinite; }
+        .timer-pill i { font-size: 14px; margin-right: 2px; opacity: 0.7; }
+        .timer-pill.warning { background: #FFFBEB; color: #B45309; border-color: #FCD34D; }
+        .timer-pill.danger { background: #FEF2F2; color: #B91C1C; border-color: #FCA5A5; animation: timerPulse 1.5s ease-in-out infinite; }
+        @keyframes timerPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
 
         /* ── PROGRESS ── */
         .progress-bar-wrap {
@@ -242,8 +244,8 @@
         </div>
     </div>
 
-    <div id="timerEl" class="timer-pill safe">
-        <span id="timerDisplay">--:--</span>
+    <div id="timerEl" class="timer-pill">
+        <i class="fa-solid fa-clock"></i> <span id="timerDisplay">--:--</span>
     </div>
 </header>
 
@@ -332,7 +334,7 @@
 <script>
 const QUESTIONS = @json($quiz->questions);
 const AUTOSAVE_URL = "{{ route('quiz.autosave', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}";
-const TIME_LIMIT   = {{ $quiz->time_limit * 60 }};
+const TIME_LIMIT   = {{ $remainingSeconds }};
 const CSRF_TOKEN   = '{{ csrf_token() }}';
 const P_ID         = '{{ $participant->id }}';
 const LOG_URL      = "{{ route('quiz.logEvent', ['quiz' => $quiz->slug, 'participant' => $participant->id]) }}";
@@ -445,14 +447,31 @@ async function autosave(questionId, answer) {
 function startTimer() {
     const el   = document.getElementById('timerDisplay');
     const pill = document.getElementById('timerEl');
+    
+    const updateDisplay = () => {
+        if (timeLeft < 0) timeLeft = 0;
+        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        const s = String(timeLeft % 60).padStart(2, '0');
+        el.textContent = `${m}:${s}`;
+
+        if (timeLeft <= 60) {
+            pill.className = 'timer-pill danger';
+        } else if (timeLeft <= 300) {
+            pill.className = 'timer-pill warning';
+        } else {
+            pill.className = 'timer-pill';
+        }
+    };
+
+    updateDisplay();
+
     timerInterval = setInterval(() => {
         timeLeft--;
-        const m = String(Math.floor(timeLeft / 60)).padStart(2,'0');
-        const s = String(timeLeft % 60).padStart(2,'0');
-        el.textContent = `${m}:${s}`;
-        if (timeLeft <= 60)   { pill.className = 'timer-pill danger'; }
-        else if (timeLeft <= 300) { pill.className = 'timer-pill warning'; }
-        if (timeLeft <= 0)    { clearInterval(timerInterval); submitQuiz(); }
+        updateDisplay();
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitQuiz();
+        }
     }, 1000);
 }
 
@@ -493,6 +512,7 @@ function submitQuiz() {
         inp.type = 'hidden'; 
         inp.name = `answers[${q.id}]`; 
         inp.value = val;
+        container.appendChild(inp);
     });
     
 

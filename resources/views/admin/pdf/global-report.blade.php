@@ -110,6 +110,7 @@
                 <th>NIK</th>
                 <th>Kuis</th>
                 <th>Skor</th>
+                <th>Durasi</th>
                 <th>Status</th>
                 <th>Tanggal</th>
             </tr>
@@ -120,7 +121,8 @@
                 <td><strong>{{ $p->name }}</strong></td>
                 <td>{{ $p->nim }}</td>
                 <td>{{ $p->quiz->title ?? 'N/A' }}</td>
-                <td style="font-weight: bold;">{{ $p->score }}%</td>
+                <td style="font-weight: bold;">{{ $p->score }}</td>
+                <td>{{ $p->duration ?? '-' }}</td>
                 <td>
                     @if($p->score >= ($p->quiz->passing_score ?? 70))
                         <span class="status-tag status-pass">LULUS</span>

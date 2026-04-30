@@ -161,11 +161,7 @@
     $ringColor    = $passed ? '#10B981' : '#EF4444';
     $ringTrack    = $passed ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)';
 
-    $duration = null;
-    if ($participant->started_at && $participant->finished_at) {
-        $dur = \Carbon\Carbon::parse($participant->finished_at)->diff(\Carbon\Carbon::parse($participant->started_at));
-        $duration = $dur->format('%im %ss');
-    }
+    $duration = $participant->duration;
 @endphp
 
 <div class="page-wrap">

@@ -42,10 +42,7 @@ class GlobalParticipantExport implements FromCollection, WithHeadings, WithMappi
      */
     public function map($participant): array
     {
-        $duration = '-';
-        if ($participant->started_at && $participant->finished_at) {
-            $duration = $participant->finished_at->diff($participant->started_at)->format('%im %ss');
-        }
+        $duration = $participant->duration ?? '-';
 
         $status = ($participant->score >= ($participant->quiz->passing_score ?? 70)) ? 'LULU' : 'TIDAK LULUS';
 
