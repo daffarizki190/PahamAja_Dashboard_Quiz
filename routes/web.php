@@ -49,7 +49,7 @@ Route::post('/dev/logout', [AdminAuthController::class, 'logout'])->name('dev.lo
 // Redirect old dev login to unified login
 Route::get('/dev/login', function () {
     return redirect()->route('admin.login');
-});
+})->name('dev.login');
 
 Route::prefix('dev')->name('dev.')->middleware(['dev.auth', 'nocache'])->group(function () {
     Route::get('/', [DevController::class, 'health'])->name('health');
