@@ -168,13 +168,33 @@
             @csrf
 
             <div class="field-group">
-                <label class="field-label" for="nim">ID Karyawan / NIM</label>
+                <label class="field-label" for="nim">NIK</label>
                 <div class="field-wrap">
                     <i class="fa-solid fa-id-badge"></i>
                     <input class="field-input" type="text" id="nim" name="nim"
-                           value="{{ old('nim') }}" required placeholder="Ketik ID Karyawan Anda" autofocus>
+                           value="{{ old('nim') }}" required placeholder="Ketik NIK Anda" autofocus>
                 </div>
             </div>
+
+            @if($quiz->is_public)
+            <div class="field-group">
+                <label class="field-label" for="name">Nama Lengkap</label>
+                <div class="field-wrap">
+                    <i class="fa-solid fa-user"></i>
+                    <input class="field-input" type="text" id="name" name="name"
+                           value="{{ old('name') }}" required placeholder="Ketik nama lengkap Anda">
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="location">Lokasi</label>
+                <div class="field-wrap">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <input class="field-input" type="text" id="location" name="location"
+                           value="{{ old('location') }}" required placeholder="Ketik lokasi Anda">
+                </div>
+            </div>
+            @endif
 
             @if(isset($sessions) && $sessions->count() > 0)
             <div class="field-group">
@@ -196,7 +216,11 @@
             @endif
 
             <button type="submit" class="btn-join" id="joinBtn">
+                @if($quiz->is_public)
+                <i class="fa-solid fa-person-walking-arrow-right"></i> Masuk Ruang Tunggu
+                @else
                 <i class="fa-solid fa-play"></i> Mulai Kuis Sekarang
+                @endif
             </button>
         </form>
     </div>

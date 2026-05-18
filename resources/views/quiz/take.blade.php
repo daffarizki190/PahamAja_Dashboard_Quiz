@@ -450,13 +450,24 @@ function startTimer() {
     
     const updateDisplay = () => {
         if (timeLeft < 0) timeLeft = 0;
-        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const s = String(timeLeft % 60).padStart(2, '0');
-        el.textContent = `${m}:${s}`;
+        
+        // Ensure timer doesn't show crazy values due to server time mismatch
+        const maxSeconds = (QUESTIONS.length > 0) ? ({{ $quiz->time_limit }} * 60) : timeLeft;
+        const displayTime = Math.min(timeLeft, maxSeconds);
 
-        if (timeLeft <= 60) {
+        const h = Math.floor(displayTime / 3600);
+        const m = Math.floor((displayTime % 3600) / 60);
+        const s = Math.floor(displayTime % 60);
+        
+        if (h > 0) {
+            el.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        } else {
+            el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        if (displayTime <= 60) {
             pill.className = 'timer-pill danger';
-        } else if (timeLeft <= 300) {
+        } else if (displayTime <= 300) {
             pill.className = 'timer-pill warning';
         } else {
             pill.className = 'timer-pill';

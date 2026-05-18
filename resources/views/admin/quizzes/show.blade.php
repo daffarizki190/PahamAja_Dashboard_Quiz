@@ -31,15 +31,20 @@
     .tab-btn.active { background:var(--white); color:var(--purple); box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid #E5E3F0; }
     .tab-btn:not(.active):hover { color:var(--text-primary); background:rgba(124,58,237,0.05); }
 
-    /* Responsive Grid */
-    .show-main-grid { display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
-    .show-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    .sub-tab-btn { transition: all .2s; }
+    .sub-tab-btn.active { background:white !important; color:var(--purple) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important; }
+
+    /* Full Width Layout */
+    .show-main-grid { display: grid; grid-template-columns: 1fr; gap: 24px; width: 100%; align-items: start; }
+    .show-main-panel { min-width: 0; }
+    .show-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
     .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1200px) {
         .show-main-grid { grid-template-columns: 1fr; }
-        .show-sidebar { order: 2; }
-        .show-main-panel { order: 1; }
+    }
+    @media (max-width: 1100px) {
+        .show-stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 768px) {
         .show-stats-grid { grid-template-columns: 1fr; }
@@ -80,6 +85,11 @@
             <button class="tab-btn" id="tab-sessions" onclick="switchTab('sessions')">
                 <i class="fa-solid fa-calendar-days" style="margin-right:6px;"></i> Sesi
             </button>
+            @if($quiz->is_public)
+            <button class="tab-btn" id="tab-live" onclick="switchTab('live')">
+                <i class="fa-solid fa-satellite-dish" style="margin-right:6px;"></i> Live Control
+            </button>
+            @endif
         </div>
 
         <!-- ANALYTICS TAB -->
@@ -114,43 +124,55 @@
                     </div>
                     <div>
                         <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;">Total Peserta</div>
-                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $quiz->participants->unique('employee_id')->count() }}</div>
+                        <div style="font-size:24px; font-weight:900; color:var(--indigo);">{{ $totalUnique }}</div>
                     </div>
                 </div>
             </div>
 
             <!-- Participant Analytics (Leaderboard) -->
-            <div class="card" style="margin-bottom:24px;">
-                <div style="padding:18px 24px; border-bottom:1px solid #E5E3F0; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0;">Peringkat Peserta</h3>
-                    <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" style="font-size:12px; font-weight:700; color:var(--purple); text-decoration:none;">Lihat Semua</a>
+            <div class="card" style="margin-bottom:24px; width:100%; border-top: 4px solid var(--purple);">
+                <div style="padding:18px 24px; border-bottom:1px solid #E5E3F0; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0;">Rekapitulasi Hasil</h3>
+                        <div style="display:flex; gap:8px; margin-left:10px;">
+                            <button onclick="downloadPdf(event, '{{ route('admin.quiz.export-pdf', $quiz->slug) }}', '{{ 'Laporan-Kuis-' . \Illuminate\Support\Str::slug($quiz->title) . '.pdf' }}')" class="btn btn-ghost" style="padding:6px 12px; font-size:11px; border-radius:8px; display:flex; align-items:center; gap:5px; border:1px solid #E2E8F0; cursor:pointer;">
+                                <i class="fa-solid fa-file-pdf" style="color:#EF4444;"></i> PDF
+                            </button>
+                            <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="btn btn-ghost" style="padding:6px 12px; font-size:11px; border-radius:8px; display:flex; align-items:center; gap:5px; border:1px solid #E2E8F0;">
+                                <i class="fa-solid fa-file-excel" style="color:#10B981;"></i> Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div style="display:flex; background:#F1F5F9; padding:5px; border-radius:14px; gap:6px; border:1px solid #E2E8F0;">
+                        <button class="sub-tab-btn active" onclick="switchSubTab('public')" id="btn-sub-public" style="padding:8px 18px; font-size:12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-satellite-dish"></i> Hasil Live (Umum)
+                        </button>
+                        <button class="sub-tab-btn" onclick="switchSubTab('internal')" id="btn-sub-internal" style="padding:8px 18px; font-size:12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; background:transparent; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-user-shield"></i> Data Karyawan (Internal)
+                        </button>
+                    </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="data-table" style="border:none;">
+                    <table class="data-table" style="border:none; width:100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Nama Peserta</th>
-                                <th>Nilai</th>
+                                <th>Peserta</th>
+                                <th>Skor</th>
                                 <th>Durasi</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @forelse($sortedParticipants->take(5) as $idx => $p)
+                        <!-- PUBLIC TABLE -->
+                        <tbody id="sub-content-public">
+                            @forelse($sortedPublic as $idx => $p)
                             <tr>
-                                <td style="width:40px; font-weight:800; color:var(--text-muted);">{{ $idx + 1 }}</td>
+                                <td style="width:40px; font-weight:800; color:var(--text-muted);">#{{ $idx + 1 }}</td>
                                 <td>
                                     <div style="display:flex; align-items:center; gap:10px;">
-                                        @php
-                                            $pEmp = $p->employee;
-                                            $pInit = strtoupper(substr($p->name, 0, 1));
-                                        @endphp
-                                        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0; overflow:hidden;">
-                                            
-                                                <img src="{{ avatar_url($pEmp->avatar, $pEmp->name) }}" style="width:100%; height:100%; object-fit:cover;">
-                                            
+                                        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; flex-shrink:0;">
+                                            {{ strtoupper(substr($p->name, 0, 1)) }}
                                         </div>
                                         <div>
                                             <div style="font-size:13px; font-weight:700; color:var(--text-primary);">{{ $p->name }}</div>
@@ -159,73 +181,93 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($p->status === 'pending_review')
-                                        <span class="badge badge-yellow" onclick="window.location.href='{{ route('admin.participant.review', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}'" style="cursor:pointer;">Review Esai</span>
-                                    @elseif(!is_null($p->score))
+                                    @if(!is_null($p->score))
                                         <span style="font-size:15px; font-weight:900; color:{{ $p->score >= $quiz->passing_score ? '#059669' : '#DC2626' }};">{{ $p->score }}</span>
                                     @else
                                         <span class="badge badge-purple">Mengerjakan</span>
                                     @endif
                                 </td>
-                                <td>
-                                    <div style="font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-                                        <i class="fa-regular fa-clock" style="font-size:11px;"></i>
-                                        {{ $p->duration_formatted }}
-                                    </div>
-                                </td>
+                                <td>{{ $p->duration_formatted }}</td>
                                 <td>
                                     @if(!is_null($p->score))
                                         <span class="badge {{ $p->score >= $quiz->passing_score ? 'badge-green' : 'badge-red' }}">{{ $p->score >= $quiz->passing_score ? 'Lulus' : 'Gagal' }}</span>
                                     @else
-                                        <span style="color:var(--text-muted); font-size:11px;">—</span>
+                                        <span style="color:var(--text-muted); font-size:11px;">Aktif</span>
                                     @endif
                                 </td>
                                 <td style="text-align:right;">
-                                    @if($p->status === 'pending_review')
-                                        <a href="{{ route('admin.participant.review', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" 
-                                           class="btn btn-primary" style="padding:4px 12px; font-size:11px;">
-                                            <i class="fa-solid fa-pen-nib"></i> Nilai
-                                        </a>
-                                    @else
-                                        <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" 
-                                           class="btn btn-ghost" style="padding:4px 8px; font-size:11px;" title="Lihat Jawaban">
-                                            <i class="fa-solid fa-eye" style="color:var(--purple);"></i>
-                                        </a>
-                                    @endif
+                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;"><i class="fa-solid fa-eye"></i></a>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada peserta</td></tr>
+                            <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada hasil publik</td></tr>
+                            @endforelse
+                        </tbody>
+
+                        <!-- INTERNAL TABLE -->
+                        <tbody id="sub-content-internal" style="display:none;">
+                            @forelse($sortedInternal as $idx => $p)
+                            <tr>
+                                <td style="width:40px; font-weight:800; color:var(--text-muted);">#{{ $idx + 1 }}</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <div style="width:32px; height:32px; border-radius:8px; background:#F1F5F9; color:#64748B; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">
+                                            {{ strtoupper(substr($p->name, 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">{{ $p->name }}</div>
+                                            <div style="font-size:11px; color:var(--text-muted);">{{ $p->nim }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-size:15px; font-weight:900; color:{{ $p->score >= $quiz->passing_score ? '#059669' : '#DC2626' }};">{{ $p->score ?? '-' }}</span>
+                                </td>
+                                <td>{{ $p->duration_formatted }}</td>
+                                <td>
+                                    @if(!is_null($p->score))
+                                        <span class="badge {{ $p->score >= $quiz->passing_score ? 'badge-green' : 'badge-red' }}">{{ $p->score >= $quiz->passing_score ? 'Lulus' : 'Gagal' }}</span>
+                                    @else
+                                        <span class="badge badge-purple">Pending</span>
+                                    @endif
+                                </td>
+                                <td style="text-align:right;">
+                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;"><i class="fa-solid fa-eye"></i></a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada riwayat internal</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
+            </div>
 
             <!-- Question Analytics -->
-            <div class="card">
+            <div class="card" style="width: 100%;">
                 <div style="padding:18px 24px; border-bottom:1px solid #E5E3F0;">
                     <h3 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0;">Analisis Soal</h3>
                 </div>
                 <div class="table-responsive">
-                    <table class="data-table" style="border:none;">
+                    <table class="data-table" style="border:none; width:100%; table-layout:fixed;">
                         <thead>
                             <tr>
-                                <th>Soal</th>
-                                <th>Tingkat Benar</th>
+                                <th style="width:75%;">Soal</th>
+                                <th style="width:25%; text-align:right;">Tingkat Benar</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($questionAnalytics->take(5) as $idx => $row)
                             <tr>
                                 <td>
-                                    <div style="font-size:13px; color:var(--text-primary); line-height:1.4; max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <div style="font-size:13px; color:var(--text-primary); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                         <span style="color:var(--purple); font-weight:800; margin-right:4px;">#{{ $idx+1 }}</span> {{ $row['text'] }}
                                     </div>
                                 </td>
-                                <td>
+                                <td style="text-align:right;">
                                     @if(!is_null($row['correct_rate']))
-                                        <div style="display:flex; align-items:center; gap:10px;">
+                                        <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px;">
                                             <div class="progress-bar-track" style="width:80px; height:6px;">
                                                 <div class="progress-bar-fill" style="width:{{ $row['correct_rate'] }}%; background:{{ $row['correct_rate'] >= 70 ? '#059669' : ($row['correct_rate'] >= 40 ? '#D97706' : '#DC2626') }};"></div>
                                             </div>
@@ -387,6 +429,67 @@
                 </div>
             </div>
         </div>
+
+        <!-- LIVE CONTROL TAB -->
+        @if($quiz->is_public)
+        <div id="content-live" style="display:none;">
+            <div class="card" style="border-radius:20px; overflow:hidden; padding:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-bottom:1px solid #E5E3F0; padding-bottom:16px;">
+                    <div>
+                        <h2 style="font-size:20px; font-weight:900; margin:0;"><i class="fa-solid fa-satellite-dish" style="color:var(--indigo);"></i> Live Quiz Control Panel</h2>
+                        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Kelola status kuis publik dan pantau ruang tunggu secara real-time.</p>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        @php
+                            $statusColors = [
+                                'ready' => 'background:#E5E3F0; color:#64748B;',
+                                'waiting' => 'background:rgba(245,158,11,0.1); color:#D97706; border:1px solid rgba(245,158,11,0.2);',
+                                'active' => 'background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.2);',
+                                'closed' => 'background:rgba(239,68,68,0.1); color:#DC2626; border:1px solid rgba(239,68,68,0.2);'
+                            ];
+                            $currentStyle = $statusColors[$quiz->status] ?? $statusColors['ready'];
+                        @endphp
+                        Status: <span id="quizLiveStatusBadge" style="font-size:13px; padding:6px 14px; font-weight:900; text-transform:uppercase; border-radius:10px; {{ $currentStyle }}">
+                            {{ $quiz->status }}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-bottom:32px; justify-content:center;">
+                    <button onclick="setQuizStatus('waiting')" class="btn btn-ghost" style="padding:12px 28px; background:rgba(245,158,11,0.1); color:#D97706; border:1px solid rgba(245,158,11,0.3); font-weight:800;">
+                        <i class="fa-solid fa-door-open"></i> BUKA PENDAFTARAN (RUANG TUNGGU)
+                    </button>
+                    <button onclick="setQuizStatus('active')" class="btn btn-primary" style="padding:12px 28px; background:linear-gradient(135deg, #10B981, #059669); border:none; font-weight:900; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                        <i class="fa-solid fa-play"></i> MULAI KUIS SEKARANG
+                    </button>
+                </div>
+
+                <div style="background:#F9F8FD; border-radius:16px; padding:20px; border:1px solid #E5E3F0;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+                        <h3 style="font-size:16px; font-weight:800; margin:0;">Peserta di Ruang Tunggu (<span id="waitingCount">0</span>)</h3>
+                        <button onclick="fetchWaitingParticipants()" class="btn btn-ghost" style="padding:4px 8px; font-size:11px;">
+                            <i class="fa-solid fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" style="border:none; width:100%; text-align:left;">
+                            <thead>
+                                <tr>
+                                    <th style="padding-bottom:10px;">Nama</th>
+                                    <th style="padding-bottom:10px;">NIK</th>
+                                    <th style="padding-bottom:10px;">Lokasi</th>
+                                    <th style="padding-bottom:10px;">Waktu Masuk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waitingParticipantsList">
+                                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Memuat data peserta...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 
     <!-- Right Sidebar -->
@@ -415,6 +518,12 @@
             <div class="info-row-r">
                 <span style="color:var(--text-muted);">Peserta</span>
                 <span style="font-weight:800; color:var(--text-primary);">{{ $quiz->participants_count ?? $quiz->participants->count() }}</span>
+            </div>
+            <div class="info-row-r">
+                <span style="color:var(--text-muted);">Akses Kuis</span>
+                <span style="font-weight:800; color:{{ $quiz->is_public ? '#059669' : 'var(--indigo)' }};">
+                    {{ $quiz->is_public ? 'Publik / Terbuka' : 'Internal Saja' }}
+                </span>
             </div>
         </div>
 
@@ -449,9 +558,9 @@
             <a href="{{ route('admin.quiz.export', $quiz->slug) }}" class="btn btn-ghost" style="justify-content:flex-start; width:100%;">
                 <i class="fa-solid fa-file-excel" style="width:14px; color:#34D399;"></i> Export Excel
             </a>
-            <a href="{{ route('admin.quiz.export-pdf', $quiz->slug) }}" class="btn btn-ghost" style="justify-content:flex-start; width:100%;">
+            <button onclick="downloadPdf(event, '{{ route('admin.quiz.export-pdf', $quiz->slug) }}', '{{ 'Laporan-Kuis-' . \Illuminate\Support\Str::slug($quiz->title) . '.pdf' }}')" class="btn btn-ghost" style="justify-content:flex-start; width:100%; cursor:pointer;">
                 <i class="fa-solid fa-file-pdf" style="width:14px; color:#F87171;"></i> Export PDF
-            </a>
+            </button>
             <div style="height:1px; background:rgba(255,255,255,0.07);"></div>
             <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST"
                   onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Kuis', 'Hapus kuis ini secara permanen? Data peserta dan sesi akan hilang.', 'danger', () => this.submit())">
@@ -551,13 +660,29 @@
 <script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 <script>
 function switchTab(tab) {
-    ['analytics','questions','sessions'].forEach(t => {
+    let tabs = ['analytics','questions','sessions'];
+    @if($quiz->is_public)
+        tabs.push('live');
+    @endif
+    tabs.forEach(t => {
         const content = document.getElementById('content-' + t);
         if (content) content.style.display = t === tab ? '' : 'none';
         
         const btn = document.getElementById('tab-' + t);
         if (btn) btn.className = 'tab-btn' + (t === tab ? ' active' : '');
     });
+
+    if (tab === 'live') {
+        fetchWaitingParticipants();
+        if(!window.liveInterval) {
+            window.liveInterval = setInterval(fetchWaitingParticipants, 30000);
+        }
+    } else {
+        if(window.liveInterval) {
+            clearInterval(window.liveInterval);
+            window.liveInterval = null;
+        }
+    }
 }
 
 // Analytics Charts
@@ -623,5 +748,182 @@ function copyLink() {
 // Mobile grid collapse
 const grid = document.querySelector('[style*="grid-template-columns:1fr 300px"]');
 if (grid && window.innerWidth < 900) grid.style.gridTemplateColumns = '1fr';
+
+function switchSubTab(target) {
+    const pubBtn = document.getElementById('btn-sub-public');
+    const intBtn = document.getElementById('btn-sub-internal');
+    const pubContent = document.getElementById('sub-content-public');
+    const intContent = document.getElementById('sub-content-internal');
+
+    if (target === 'public') {
+        pubBtn.classList.add('active');
+        pubBtn.style.background = 'white';
+        pubBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        intBtn.classList.remove('active');
+        intBtn.style.background = 'transparent';
+        intBtn.style.boxShadow = 'none';
+        pubContent.style.display = 'table-row-group';
+        intContent.style.display = 'none';
+    } else {
+        intBtn.classList.add('active');
+        intBtn.style.background = 'white';
+        intBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        pubBtn.classList.remove('active');
+        pubBtn.style.background = 'transparent';
+        pubBtn.style.boxShadow = 'none';
+        intContent.style.display = 'table-row-group';
+        pubContent.style.display = 'none';
+    }
+}
+
+@if($quiz->is_public)
+function setQuizStatus(status) {
+    const doUpdate = () => {
+        fetch(`{{ route('admin.quizzes.live-status', $quiz->slug, false) }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Gagal memperbarui status');
+            return res.json();
+        })
+        .then(data => {
+            if (data.ok) {
+                const badge = document.getElementById('quizLiveStatusBadge');
+                badge.textContent = data.status;
+                
+                // Update badge style
+                const styles = {
+                    'ready': 'background:#E5E3F0; color:#64748B; border:none;',
+                    'waiting': 'background:rgba(245,158,11,0.1); color:#D97706; border:1px solid rgba(245,158,11,0.2);',
+                    'active': 'background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.2);',
+                    'closed': 'background:rgba(239,68,68,0.1); color:#DC2626; border:1px solid rgba(239,68,68,0.2);'
+                };
+                badge.style.cssText = 'font-size:13px; padding:6px 14px; font-weight:900; text-transform:uppercase; border-radius:10px; ' + (styles[data.status] || styles['ready']);
+
+                if (typeof PahamAja !== 'undefined' && PahamAja.toast) {
+                    PahamAja.toast('Status kuis: ' + data.status, 'success');
+                } else {
+                    alert('Status kuis: ' + data.status);
+                }
+                
+                // Refresh list if status is active to see who was in waiting room
+                if (status === 'active') fetchWaitingParticipants();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error: ' + err.message);
+        });
+    };
+
+    if (status === 'active') {
+        if (typeof PahamAja !== 'undefined' && PahamAja.confirm) {
+            PahamAja.confirm(
+                'Mulai Kuis?', 
+                'Semua peserta di ruang tunggu akan langsung dialihkan ke halaman soal secara bersamaan.', 
+                'primary', 
+                doUpdate
+            );
+        } else if (confirm('Yakin ingin MEMULAI kuis sekarang?')) {
+            doUpdate();
+        }
+    } else {
+        doUpdate();
+    }
+}
+
+let isFetchingParticipants = false;
+function fetchWaitingParticipants() {
+    if (isFetchingParticipants) return;
+    isFetchingParticipants = true;
+
+    fetch(`{{ route('admin.quizzes.live-participants', $quiz->slug, false) }}`, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Network error');
+        return res.json();
+    })
+    .then(data => {
+        document.getElementById('waitingCount').textContent = data.count;
+        const tbody = document.getElementById('waitingParticipantsList');
+        if (data.count === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Belum ada peserta di ruang tunggu</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        data.participants.forEach(p => {
+            const date = new Date(p.created_at);
+            const timeStr = date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            html += `
+                <tr>
+                    <td style="font-weight:700;">${p.name}</td>
+                    <td>${p.nim}</td>
+                    <td><span class="badge badge-yellow" style="font-size:10px;"><i class="fa-solid fa-location-dot"></i> ${p.location || 'N/A'}</span></td>
+                    <td style="font-size:11px; color:var(--text-muted);">${timeStr}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    })
+    .catch(err => console.error('Admin monitoring error:', err))
+    .finally(() => {
+        isFetchingParticipants = false;
+    });
+}
+@endif
+    function downloadPdf(e, url, filename) {
+        e.preventDefault();
+        const btn = e.currentTarget;
+        const originalHtml = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.blob();
+            })
+            .then(blob => {
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(blobUrl);
+                a.remove();
+                
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                
+                if (typeof PahamAja !== 'undefined') {
+                    PahamAja.toast('Berhasil mengunduh PDF', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error downloading PDF:', error);
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                if (typeof PahamAja !== 'undefined') {
+                    PahamAja.alert('Gagal', 'Terjadi kesalahan saat mengunduh PDF.', 'danger');
+                } else {
+                    alert('Gagal mengunduh PDF.');
+                }
+            });
+    }
 </script>
 @endsection

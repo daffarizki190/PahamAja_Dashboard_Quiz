@@ -17,6 +17,14 @@ class ForceNoCache
     {
         $response = $next($request);
 
+        // Do not apply no-cache headers to file downloads, as it breaks browser download managers (e.g. Edge/IDM)
+        if ($response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse || 
+            $response instanceof \Symfony\Component\HttpFoundation\StreamedResponse ||
+            $response->headers->has('Content-Disposition')
+        ) {
+            return $response;
+        }
+
         // Forces the browser and any intermediate caches to NOT cache the response.
         // This is critical for preventing "Back" button from showing sensitive authenticated content.
         $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');

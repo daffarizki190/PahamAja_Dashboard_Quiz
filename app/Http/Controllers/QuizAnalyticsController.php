@@ -16,7 +16,11 @@ class QuizAnalyticsController extends Controller
      */
     public function exportExcel(Quiz $quiz)
     {
-        return Excel::download(new QuizExport($quiz), "Hasil-Kuis-{$quiz->slug}.xlsx");
+        if (session()->isStarted()) session()->save();
+        
+        $filename = "Laporan-Kuis-" . \Illuminate\Support\Str::slug($quiz->title) . "-" . now()->format('d-M-Y') . ".xlsx";
+        
+        return Excel::download(new QuizExport($quiz), $filename);
     }
 
     /**
@@ -141,6 +145,7 @@ class QuizAnalyticsController extends Controller
                         'is_passing' => $p->score >= $quiz->passing_score,
                         'session' => $p->quizSession ? $p->quizSession->name : '-',
                         'duration' => $duration,
+                        'location' => $p->location,
                     ];
                 })->toArray(),
             ]);
@@ -150,6 +155,25 @@ class QuizAnalyticsController extends Controller
             ->whereNotIn('id', $participants->pluck('employee_id')->filter())
             ->get();
 
-        return view('admin.dashboard', compact('quiz', 'participants', 'chartData', 'avgScore', 'inProgressCount', 'questionAnalytics', 'unparticipatedEmployees'));
+        // Location-based stats for public quizzes
+        $locationStats = collect();
+        if ($quiz->is_public) {
+            $locationStats = $participants
+                ->whereNotNull('location')
+                ->groupBy('location')
+                ->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'avg_score' => round($group->avg('score'), 1),
+                    ];
+                })
+                ->sortByDesc('count');
+        }
+
+        return view('admin.dashboard', compact(
+            'quiz', 'participants', 'chartData', 'avgScore', 
+            'inProgressCount', 'questionAnalytics', 'unparticipatedEmployees',
+            'locationStats'
+        ));
     }
 }

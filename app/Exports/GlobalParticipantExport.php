@@ -34,6 +34,7 @@ class GlobalParticipantExport implements FromCollection, WithHeadings, WithMappi
             'Mulai',
             'Selesai',
             'Durasi',
+            'Lokasi',
         ];
     }
 
@@ -57,6 +58,7 @@ class GlobalParticipantExport implements FromCollection, WithHeadings, WithMappi
             $participant->started_at?->format('d/m/Y H:i') ?? '-',
             $participant->finished_at?->format('d/m/Y H:i') ?? '-',
             $duration,
+            $participant->location ?? '-',
         ];
     }
 
