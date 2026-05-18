@@ -1,285 +1,281 @@
 @extends('layouts.app')
 
-@section('title', 'Jawaban Peserta – ' . $quiz->title)
-@section('meta_description', 'Detail jawaban dan analisis skor peserta kuis')
-@section('page_title', 'Jawaban Peserta')
-@section('page_subtitle', $quiz->title)
-
-@section('topbar_left')
-    <a href="{{ route('admin.quiz.dashboard', $quiz->slug) }}" class="btn btn-ghost" style="padding:9px 12px; font-size:12px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.15); color:var(--purple); margin-right:8px;">
-        <i class="fa-solid fa-arrow-left"></i> Dashboard Kuis
-    </a>
-@endsection
-
-@section('topbar_actions')
-    <div style="background:#fff; border:1px solid #E5E3F0; border-radius:10px; padding:4px; display:flex; align-items:center; gap:4px; shadow:0 1px 2px rgba(0,0,0,0.05);">
-        <button type="button" id="btnTable" class="btn btn-primary" style="padding:6px 14px; font-size:11px; border-radius:7px;">Table View</button>
-        <button type="button" id="btnCard" class="btn btn-ghost" style="padding:6px 14px; font-size:11px; border-radius:7px;">Card View</button>
-    </div>
-@endsection
+@section('title', 'Detail Hasil – ' . $participant->name)
 
 @section('head_extra')
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    .score-card {
-        background: #fff; border: 1px solid #E5E3F0; border-radius: 16px; padding: 24px;
-        display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+    :root {
+        --purple: #7C3AED;
+        --bg: #F8FAFC;
+        --white: #FFFFFF;
+        --border: #E2E8F0;
+        --text: #1E1B4B;
+        --muted: #64748B;
     }
-    .participant-info { display: flex; align-items: center; gap: 16px; }
-    .avatar-circle {
-        width: 48px; height: 48px; border-radius: 50%; background: #F3F2FB; color: var(--purple);
-        display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;
+
+    .result-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* SCORE HERO SECTION */
+    .score-hero {
+        background: #fff;
+        border-radius: 32px;
+        padding: 48px 32px;
+        text-align: center;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.04);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
     }
     
-    .status-pill {
-        padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+    .score-hero::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 6px;
+        background: linear-gradient(90deg, #7C3AED, #4F46E5);
     }
-    .status-qualified { background: rgba(16,185,129,0.1); color: #059669; }
-    .status-failed { background: rgba(239,68,68,0.1); color: #DC2626; }
-    
-    table { width: 100%; border-collapse: collapse; }
-    th { padding: 14px 20px; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; text-align: left; border-bottom: 1px solid #F3F2FB; }
-    td { padding: 18px 20px; font-size: 14px; color: #1E1B4B; border-bottom: 1px solid #F3F2FB; vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    
-    .ans-card {
-        background: #fff; border: 1px solid #E5E3F0; border-radius: 14px; padding: 20px; margin-bottom: 16px;
+
+    .score-ring-wrap {
+        position: relative;
+        width: 180px; height: 180px;
+        margin: 0 auto 24px;
     }
-    .status-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
-    .status-correct { background: rgba(16,185,129,0.1); color: #10B981; }
-    .status-wrong { background: rgba(239,68,68,0.1); color: #EF4444; }
-    .status-empty { background: #F3F4F6; color: #9CA3AF; }
+    
+    .score-ring-svg { transform: rotate(-90deg); }
+    
+    .score-display {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .score-val { font-size: 52px; font-weight: 900; color: var(--text); line-height: 1; }
+    .score-lbl { font-size: 13px; font-weight: 800; color: var(--muted); margin-top: 4px; letter-spacing: 0.1em; }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        border-radius: 99px;
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 24px;
+    }
+    .status-pass { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+    .status-fail { background: rgba(239,68,68,0.1); color: #DC2626; border: 1px solid rgba(239,68,68,0.2); }
+
+    /* STATS GRID */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-val { font-size: 24px; font-weight: 900; color: var(--text); }
+    .stat-lbl { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+    /* REVIEW SECTION */
+    .review-card {
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    
+    .review-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        background: #F8FAFC;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .q-item {
+        padding: 24px;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    .q-item:last-child { border-bottom: none; }
+    
+    .q-badge {
+        width: 32px; height: 32px; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 800; margin-bottom: 12px;
+    }
+    .q-correct { background: rgba(16,185,129,0.1); color: #059669; }
+    .q-wrong   { background: rgba(239,68,68,0.1); color: #DC2626; }
+
+    .ans-box {
+        padding: 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .ans-selected { background: #F8FAFC; border: 1px solid var(--border); }
+    .ans-correct  { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.1); color: #059669; }
+    
+    /* AUDIT LOG */
+    .audit-log {
+        background: #1E1B4B;
+        border-radius: 24px;
+        padding: 24px;
+        color: #fff;
+    }
 </style>
 @endsection
 
 @section('content')
-<div class="fade-up">
-    <!-- Header Summary -->
-    <div class="score-card shadow-sm">
-        <div class="participant-info">
-            <div class="avatar-circle">{{ $participant->name[0] }}</div>
-            <div>
-                <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin:0;">{{ $participant->name }}</h3>
-                <p style="font-size:12px; font-weight:700; color:#94A3B8; margin:2px 0 0 0;">NIM: {{ $participant->nim }} · Attempt: {{ $participant->attempt ?? '1' }}</p>
-            </div>
-        </div>
-        
-        <div style="display:flex; align-items:center; gap:32px;">
-            <div style="text-align:right;">
-                <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Metadata Sesi</div>
-                <div style="font-size:12px; font-weight:700; color:#475569;">
-                    <i class="fa-solid fa-network-wired" style="color:var(--purple); margin-right:4px;"></i> {{ $participant->ip_address ?? 'N/A' }}<br>
-                    <span style="font-size:10px; color:#94A3B8; font-weight:600;">{{ Str::limit($participant->user_agent, 40) }}</span>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Hasil Skor</div>
-                <div style="font-size:28px; font-weight:900; color:var(--purple);">{{ $participant->score ?? '-' }}</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Status</div>
-                @if(($participant->score ?? 0) >= ($quiz->passing_score ?? 70))
-                    <span class="status-pill status-qualified">Qualified</span>
-                @else
-                    <span class="status-pill status-failed">Failed</span>
-                @endif
-            </div>
+<div class="result-container">
+    <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+        <a href="{{ route('admin.quizzes.show', $quiz->slug) }}" class="btn btn-ghost" style="color: var(--muted);">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
+        </a>
+        <div style="font-size: 13px; font-weight: 800; color: var(--muted); text-transform: uppercase;">
+            Detail Pengerjaan Peserta
         </div>
     </div>
 
-    <!-- Table View -->
-    <div id="tableView" class="card" style="padding:0; overflow-x:auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:50px;">#</th>
-                    <th>Pertanyaan</th>
-                    <th style="width:200px;">Jawaban Peserta</th>
-                    <th style="width:200px;">Kunci Jawaban</th>
-                    <th style="width:100px; text-align:right;">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($rows as $i => $row)
-                <tr>
-                    <td style="font-weight:700; color:#94A3B8;">{{ $i + 1 }}</td>
-                    <td style="font-weight:700; line-height:1.5;">{{ $row['question'] }}</td>
-                    <td style="font-size:13px; font-weight:600;">{{ $row['selected'] ?: '-' }}</td>
-                    <td style="font-size:13px; font-weight:600; color:#059669;">{{ $row['correct'] ?: '-' }}</td>
-                    <td style="text-align:right;">
-                        @if(is_null($row['is_correct']))
-                            <span style="font-size:11px; font-weight:800; color:#94A3B8;">-</span>
-                        @elseif($row['is_correct'])
-                            <div style="display:inline-flex; align-items:center; gap:6px; color:#059669; font-weight:800; font-size:12px;">
-                                <i class="fa-solid fa-check"></i> BENAR
-                            </div>
-                        @else
-                            <div style="display:inline-flex; align-items:center; gap:6px; color:#DC2626; font-weight:800; font-size:12px;">
-                                <i class="fa-solid fa-xmark"></i> SALAH
-                            </div>
-                        @endif
-                    </td>
-                </tr>
-                @if($row['explanation'] || $row['ai_feedback'])
-                <tr style="background:#F9FAFB;">
-                    <td></td>
-                    <td colspan="4" style="padding:12px 20px;">
-                        <div style="display:flex; flex-direction:column; gap:10px;">
-                            @if($row['explanation'])
-                            <div style="font-size:12px; color:#4B5563;">
-                                <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase;">Pembahasan:</strong>
-                                {{ $row['explanation'] }}
-                            </div>
-                            @endif
-                            @if($row['ai_feedback'])
-                            <div style="padding:10px; background:rgba(124,58,237,0.05); border-left:3px solid var(--purple); border-radius:4px; font-size:12px; color:#1E1B4B;">
-                                <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Insight:</strong>
-                                {{ $row['ai_feedback'] }}
-                            </div>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-                @endif
-                @endforeach
-            </tbody>
-        </table>
+    @php
+        $score = $participant->score ?? 0;
+        $passing = $quiz->passing_score ?? 70;
+        $isPassed = $score >= $passing;
+        $strokeCirc = 2 * M_PI * 75;
+        $strokeOffset = $strokeCirc - (($score/100) * $strokeCirc);
+        $totalQuestions = $quiz->questions->count();
+        $correctCount = $rows->where('is_correct', true)->count();
+    @endphp
+
+    <!-- SCORE HERO -->
+    <div class="score-hero">
+        <div class="score-ring-wrap">
+            <svg class="score-ring-svg" width="180" height="180" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r="75" fill="none" stroke="#F1F5F9" stroke-width="12"/>
+                <circle cx="90" cy="90" r="75" fill="none" stroke="{{ $isPassed ? '#10B981' : '#EF4444' }}" stroke-width="12"
+                        stroke-linecap="round" stroke-dasharray="{{ $strokeCirc }}"
+                        stroke-dashoffset="{{ $strokeOffset }}" style="transition: stroke-dashoffset 1s ease;"/>
+            </svg>
+            <div class="score-display">
+                <div class="score-val">{{ $score }}</div>
+                <div class="score-lbl">SCORE</div>
+            </div>
+        </div>
+
+        <div class="status-badge {{ $isPassed ? 'status-pass' : 'status-fail' }}">
+            <i class="fa-solid {{ $isPassed ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+            {{ $isPassed ? 'Dinyatakan Lulus' : 'Belum Lulus' }}
+        </div>
+
+        <h2 style="font-size: 28px; font-weight: 900; color: var(--text); margin-bottom: 8px;">{{ $participant->name }}</h2>
+        <p style="font-size: 15px; color: var(--muted); font-weight: 600;">NIK: {{ $participant->nim }} · {{ $quiz->title }}</p>
     </div>
 
-    <!-- Card View (Hidden by default) -->
-    <div id="cardView" style="display:none; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:20px;">
-        @foreach($rows as $i => $row)
-        <div class="ans-card shadow-sm">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-                <span style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Soal #{{ $i + 1 }}</span>
-                @if(is_null($row['is_correct']))
-                    <div class="status-icon status-empty"><i class="fa-solid fa-minus"></i></div>
-                @elseif($row['is_correct'])
-                    <div class="status-icon status-correct"><i class="fa-solid fa-check"></i></div>
-                @else
-                    <div class="status-icon status-wrong"><i class="fa-solid fa-xmark"></i></div>
-                @endif
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-val" style="color: #10B981;">{{ $correctCount }}</div>
+            <div class="stat-lbl">Benar</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" style="color: #EF4444;">{{ $totalQuestions - $correctCount }}</div>
+            <div class="stat-lbl">Salah</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val">{{ $totalQuestions }}</div>
+            <div class="stat-lbl">Total Soal</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" style="color: #F59E0B;">{{ $participant->duration ?? '--:--' }}</div>
+            <div class="stat-lbl">Durasi</div>
+        </div>
+    </div>
+
+    <!-- REVIEW SECTION -->
+    <div class="review-card">
+        <div class="review-header">
+            <i class="fa-solid fa-list-check" style="color: var(--purple);"></i>
+            <h3 style="font-size: 16px; font-weight: 900; margin: 0;">Review Jawaban</h3>
+        </div>
+
+        @foreach($rows as $idx => $r)
+        <div class="q-item">
+            <div class="q-badge {{ $r['is_correct'] ? 'q-correct' : 'q-wrong' }}">
+                {{ $idx + 1 }}
             </div>
-            <p style="font-size:15px; font-weight:800; color:#1E1B4B; line-height:1.5; margin-bottom:16px;">{{ $row['question'] }}</p>
-            
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <div style="padding:10px 14px; background:#F9FAFB; border:1px solid #F3F2FB; border-radius:10px;">
-                    <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:4px;">Jawaban Peserta</div>
-                    <div style="font-size:13px; font-weight:700; color:{{ is_null($row['is_correct']) ? '#94A3B8' : ($row['is_correct'] ? '#059669' : '#DC2626') }};">{{ $row['selected'] ?: 'Tidak dijawab' }}</div>
-                </div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.5; margin-bottom: 16px;">
+                {!! $r['question'] !!}
             </div>
 
-            @if($row['explanation'] || $row['ai_feedback'])
-            <div style="margin-top:16px; padding-top:16px; border-top:1px dashed #E5E3F0; display:flex; flex-direction:column; gap:12px;">
-                @if($row['explanation'])
+            <div class="ans-box ans-selected">
                 <div>
-                    <div style="font-size:10px; font-weight:800; color:var(--purple); text-transform:uppercase; margin-bottom:4px;">Pembahasan</div>
-                    <div style="font-size:12px; color:#4B5563; line-height:1.6;">{{ $row['explanation'] }}</div>
+                    <span style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 4px;">Jawaban Peserta</span>
+                    {{ $r['selected'] ?: 'Tidak Dijawab' }}
                 </div>
-                @endif
-                @if($row['ai_feedback'])
-                <div style="padding:12px; background:rgba(124,58,237,0.05); border-radius:10px; border:1px solid rgba(124,58,237,0.1);">
-                    <div style="font-size:10px; font-weight:800; color:var(--purple); text-transform:uppercase; margin-bottom:6px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Feedback</div>
-                    <div style="font-size:12px; color:#1E1B4B; line-height:1.6;">{{ $row['ai_feedback'] }}</div>
+                <i class="fa-solid {{ $r['is_correct'] ? 'fa-check-circle' : 'fa-times-circle' }}" style="color: {{ $r['is_correct'] ? '#10B981' : '#EF4444' }}; font-size: 18px;"></i>
+            </div>
+
+            @if(!$r['is_correct'])
+            <div class="ans-box ans-correct" style="margin-top: 8px;">
+                <div>
+                    <span style="font-size: 11px; font-weight: 800; color: #059669; text-transform: uppercase; display: block; margin-bottom: 4px;">Jawaban Benar</span>
+                    {{ $r['correct'] }}
                 </div>
-                @endif
+                <i class="fa-solid fa-shield-check" style="font-size: 18px;"></i>
+            </div>
+            @endif
+
+            @if($r['explanation'])
+            <div style="margin-top: 12px; padding: 12px 16px; background: rgba(124,58,237,0.04); border-left: 4px solid var(--purple); border-radius: 4px; font-size: 13px; color: #4B5563; font-style: italic;">
+                "{{ $r['explanation'] }}"
             </div>
             @endif
         </div>
         @endforeach
     </div>
 
-    <!-- TDD Audit Trail Section -->
-    <div class="card shadow-sm" style="margin-top:24px; padding:24px; border:1px solid rgba(124,58,237,0.15); background:linear-gradient(to bottom, #fff, #FBFBFF);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #F3F2FB; padding-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:40px; height:40px; border-radius:10px; background:rgba(124,58,237,0.1); color:var(--purple); display:flex; align-items:center; justify-content:center; font-size:18px;">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div>
-                    <h4 style="font-size:15px; font-weight:900; color:#1E1B4B; margin:0;">TDD Audit Trail</h4>
-                    <p style="font-size:11px; color:#94A3B8; font-weight:700; margin:0; text-transform:uppercase;">Tracking, Documentation, and Diagnostics</p>
-                </div>
-            </div>
-            <div style="display:flex; gap:16px;">
-                <div style="text-align:right;">
-                    <div style="font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">Tab Switches</div>
-                    <div style="font-size:16px; font-weight:900; color:{{ $logs->where('event_type', 'TAB_BLUR')->count() > 0 ? '#DC2626' : '#059669' }};">
-                        {{ $logs->where('event_type', 'TAB_BLUR')->count() }}
-                    </div>
-                </div>
-            </div>
+    <!-- AUDIT TRAIL -->
+    <div class="audit-log">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+            <i class="fa-solid fa-shield-halved" style="font-size: 20px; color: #A78BFA;"></i>
+            <h3 style="font-size: 16px; font-weight: 900; margin: 0;">Integrity Audit Trail (TDD)</h3>
         </div>
-
-        <div style="max-height:400px; overflow-y:auto; padding-right:10px;">
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                @forelse($logs as $log)
-                    <div style="display:flex; align-items:flex-start; gap:14px; padding:12px; background:#fff; border:1px solid #F3F2FB; border-radius:12px; transition:all .2s;">
-                        <div style="width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
-                            @if($log->event_type == 'SESSION_START') background:rgba(16,185,129,0.1); color:#10B981;
-                            @elseif($log->event_type == 'TAB_BLUR') background:rgba(239,68,68,0.1); color:#EF4444;
-                            @elseif($log->event_type == 'TAB_FOCUS') background:rgba(59,130,246,0.1); color:#3B82F6;
-                            @elseif($log->event_type == 'DISQUALIFIED') background:#1E1B4B; color:#fff;
-                            @else background:#F3F2FB; color:#64748B; @endif">
-                            @if($log->event_type == 'SESSION_START') <i class="fa-solid fa-play"></i>
-                            @elseif($log->event_type == 'TAB_BLUR') <i class="fa-solid fa-eye-slash"></i>
-                            @elseif($log->event_type == 'TAB_FOCUS') <i class="fa-solid fa-eye"></i>
-                            @elseif($log->event_type == 'QUESTION_VIEW') <i class="fa-solid fa-file-lines"></i>
-                            @elseif($log->event_type == 'QUIZ_SUBMIT_START') <i class="fa-solid fa-paper-plane"></i>
-                            @elseif($log->event_type == 'DISQUALIFIED') <i class="fa-solid fa-ban"></i>
-                            @else <i class="fa-solid fa-circle-dot"></i> @endif
-                        </div>
-                        <div style="flex:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                                <span style="font-size:12px; font-weight:800; color:#1E1B4B;">{{ str_replace('_', ' ', $log->event_type) }}</span>
-                                <span style="font-size:10px; font-weight:700; color:#94A3B8;">{{ $log->created_at->format('H:i:s') }}</span>
-                            </div>
-                            @if($log->payload)
-                                <div style="font-size:11px; color:#64748B; font-weight:600; font-family:monospace; background:#F8FAFC; padding:4px 8px; border-radius:6px; margin-top:4px;">
-                                    @foreach($log->payload as $key => $val)
-                                        <span style="color:var(--purple)">{{ $key }}:</span> {{ is_array($val) ? json_encode($val) : $val }}@if(!$loop->last) · @endif
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @empty
-                    <div style="text-align:center; padding:32px; color:#94A3B8;">
-                        <i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:12px; display:block;"></i>
-                        <p style="font-size:12px; font-weight:700;">Belum ada log aktivitas untuk peserta ini.</p>
-                    </div>
-                @endforelse
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            @foreach($logs as $log)
+            <div style="background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 12px; font-weight: 800; color: #A78BFA; text-transform: uppercase;">{{ str_replace('_', ' ', $log->event_type) }}</span>
+                    <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0;">{{ $log->created_at->format('H:i:s') }} · IP: {{ $log->ip_address }}</p>
+                </div>
+                @if($log->event_type === 'TAB_BLUR')
+                <span style="background: #EF4444; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 900;">PELANGGARAN</span>
+                @endif
             </div>
+            @endforeach
         </div>
     </div>
 </div>
-@endsection
-
-@section('scripts')
-<script>
-    const btnTable = document.getElementById('btnTable');
-    const btnCard = document.getElementById('btnCard');
-    const tableView = document.getElementById('tableView');
-    const cardView = document.getElementById('cardView');
-
-    function setView(mode) {
-        if (mode === 'table') {
-            tableView.style.display = 'block';
-            cardView.style.display = 'none';
-            btnTable.className = 'btn btn-primary';
-            btnCard.className = 'btn btn-ghost';
-        } else {
-            tableView.style.display = 'none';
-            cardView.style.display = 'grid';
-            btnTable.className = 'btn btn-ghost';
-            btnCard.className = 'btn btn-primary';
-        }
-    }
-
-    btnTable.addEventListener('click', () => setView('table'));
-    btnCard.addEventListener('click', () => setView('card'));
-
-    // Default view
-    setView('table');
-</script>
-<script src="{{ asset('js/prevent-double-submit.js') }}"></script>
 @endsection

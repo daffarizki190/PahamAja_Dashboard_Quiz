@@ -257,6 +257,35 @@
     </div>
 </div>
 
+@if($quiz->is_public && $locationStats->count() > 0)
+<!-- Lokasi Stats -->
+<div class="card fade-up delay-3" style="margin-bottom:22px; padding:20px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+        <div style="width:36px; height:36px; border-radius:10px; background:rgba(16,185,129,0.1); color:#10B981; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        <div>
+            <div style="font-size:14px; font-weight:800; color:#1E1B4B;">Persebaran Lokasi</div>
+            <div style="font-size:11px; color:#6B7280;">Berdasarkan input peserta publik</div>
+        </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;">
+        @foreach($locationStats as $loc => $stat)
+        <div style="background:#F9F8FD; border:1px solid #E5E3F0; border-radius:12px; padding:14px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <div style="font-size:12px; font-weight:800; color:#1E1B4B;">{{ $loc }}</div>
+                <div style="font-size:11px; color:#6B7280;">{{ $stat['count'] }} Peserta</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:14px; font-weight:900; color:#7C3AED;">{{ $stat['avg_score'] }}</div>
+                <div style="font-size:10px; font-weight:700; color:#9CA3AF; text-transform:uppercase;">Avg Score</div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <!-- Leaderboard -->
 <div class="card fade-up delay-4" style="overflow:hidden;">
     <div style="padding:18px 22px; border-bottom:1px solid #E5E3F0; display:flex; align-items:center; gap:12px;">
@@ -288,9 +317,11 @@
             <div class="podium-item podium-{{ $rank }}" data-tilt data-tilt-max="15">
                 @if($rank == 1) <div class="p-crown float-3d"><i class="fa-solid fa-crown"></i></div> @endif
                 <div class="p-avatar img-3d" style="{{ !($emp && $emp->avatar) ? 'background:linear-gradient(135deg,#7C3AED,#4F46E5); color:#fff;' : '' }}">
-                    
+                    @if($emp && $emp->avatar)
                         <img src="{{ avatar_url($emp->avatar, $emp->name) }}" style="width:100%; height:100%; object-fit:cover;">
-                    
+                    @else
+                        {{ $pInitials }}
+                    @endif
                 </div>
                 <div class="p-name">{{ $topP->name }}</div>
                 <div class="p-score">{{ $topP->score }} pts</div>
@@ -309,6 +340,7 @@
                 <tr>
                     <th>Peringkat</th>
                     <th>Identitas</th>
+                    <th>Lokasi</th>
                     <th>Sesi</th>
                     <th>Kecepatan</th>
                     <th>Nilai</th>
@@ -334,15 +366,21 @@
                     <td>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7C3AED,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:800; flex-shrink:0; overflow:hidden; box-shadow:0 4px 10px rgba(124,58,237,0.2);">
-                                
+                                @if($participant->employee && $participant->employee->avatar)
                                     <img src="{{ avatar_url($participant->employee->avatar, $participant->employee->name) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                
+                                @else
+                                    {{ strtoupper(substr($participant->name, 0, 1)) }}
+                                @endif
                             </div>
                             <div>
                                 <div style="font-size:14px; font-weight:700; color:#1E1B4B;">{{ $participant->name }}</div>
                                 <div style="font-size:11px; color:#6B7280;">{{ $participant->nim }}</div>
                             </div>
                         </div>
+                    </td>
+                    <td>
+                        <div style="font-size:12px; font-weight:700; color:#4B5563;">{{ $participant->location ?: '—' }}</div>
+                        <div style="font-size:10px; color:#9CA3AF;">{{ $participant->employee_id ? 'Internal' : 'Publik' }}</div>
                     </td>
                     <td>
                         <span style="font-size:12px; color:#6B7280; font-weight:600;">{{ $participant->quizSession ? $participant->quizSession->name : '—' }}</span>

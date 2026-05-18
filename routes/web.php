@@ -84,6 +84,10 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
     // Confirm profile before starting
     Route::get('{quiz:slug}/confirm/{employee}', [QuizController::class, 'confirmProfile'])->name('confirm-profile');
 
+    // Waiting Room (for Public Quizzes)
+    Route::get('{quiz:slug}/waiting', [QuizController::class, 'waitingRoom'])->name('waiting');
+    Route::get('{quiz:slug}/waiting-status', [QuizController::class, 'waitingStatus'])->name('waiting.status');
+
     // Start quiz after confirmation
     Route::post('{quiz:slug}/start/{employee}', [QuizController::class, 'startQuiz'])->name('start');
 
@@ -109,7 +113,9 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
     Route::get('{quiz:slug}/disqualify', [QuizController::class, 'disqualify'])->name('disqualify');
 });
 
-// Admin Management & Dashboard Routes
+Route::get('test-simple', function() { return "SERVER IS ALIVE"; });
+ 
+ // Admin Management & Dashboard Routes
 Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->group(function () {
     // Quiz Management (CRUD)
     Route::get('/', [AdminController::class, 'index'])->name('dashboard');
@@ -135,6 +141,10 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::patch('quizzes/{quiz:slug}', [AdminController::class, 'update'])->name('quizzes.update');
     Route::delete('quizzes/{quiz}', [AdminController::class, 'destroy'])->name('quizzes.destroy');
 
+    // Live Quiz Control
+    Route::post('quizzes/{quiz:slug}/live-status', [\App\Http\Controllers\AdminQuizController::class, 'updateLiveStatus'])->name('quizzes.live-status');
+    Route::get('quizzes/{quiz:slug}/live-participants', [\App\Http\Controllers\AdminQuizController::class, 'liveParticipants'])->name('quizzes.live-participants');
+
     // Real-time Monitoring Dashboard for a specific Quiz
     Route::get('quiz/{quiz:slug}/dashboard', [QuizAnalyticsController::class, 'showDashboard'])
         ->name('quiz.dashboard');
@@ -144,7 +154,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
         ->name('quiz.export');
 
     // Export PDF Route
-    Route::get('quiz/{quiz:slug}/export-pdf', [PdfExportController::class, 'export'])
+    Route::get('quiz/{quiz:slug}/export-pdf/{filename?}', [PdfExportController::class, 'export'])
         ->name('quiz.export-pdf');
 
     // AI Insight Route

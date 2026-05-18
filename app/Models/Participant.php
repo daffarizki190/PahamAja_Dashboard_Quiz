@@ -18,6 +18,7 @@ class Participant extends Model
         'employee_id',
         'name',
         'nim',
+        'location',
         'score',
         'attempt',
         'started_at',

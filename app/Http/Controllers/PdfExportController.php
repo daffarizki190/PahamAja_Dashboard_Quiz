@@ -9,41 +9,41 @@ class PdfExportController extends Controller
 {
     public function export(Quiz $quiz)
     {
-        $allParticipants = $quiz->participants()
-            ->whereNotNull('score')
-            ->get();
+        ini_set('max_execution_time', 120);
+        ini_set('memory_limit', '512M');
 
-        // 🟢 Best Score Consolidation for PDF
-        $participants = $allParticipants
-            ->groupBy('employee_id')
-            ->map(function ($group) {
-                return $group->sort(function ($a, $b) {
-                    if ($a->score !== $b->score) return $b->score <=> $a->score;
-                    return $b->updated_at <=> $a->updated_at;
-                })->first();
-            })
-            ->sortByDesc('score')
-            ->values();
+        try {
+            $allParticipants = $quiz->participants()->whereNotNull('score')->get();
+            $internal = $allParticipants->whereNotNull('employee_id')->groupBy('employee_id')->map(fn($g) => $g->first());
+            $public = $allParticipants->whereNull('employee_id')->groupBy('nim')->map(fn($g) => $g->first());
+            $participants = $internal->concat($public)->sortByDesc('score')->values();
+            $finished = $participants;
+            
+            $avgScore = round($finished->avg('score') ?? 0, 1);
+            $passed = $finished->where('score', '>=', $quiz->passing_score)->count();
+            $failed = $finished->where('score', '<', $quiz->passing_score)->count();
+            $passRate = $finished->count() > 0 ? round(($passed / $finished->count()) * 100) : 0;
+            $inProgress = $quiz->participants()->whereNull('score')->count();
+            $low = $finished->whereBetween('score', [0, 50])->count();
+            $mid = $finished->whereBetween('score', [51, 75])->count();
+            $high = $finished->whereBetween('score', [76, 100])->count();
 
-        $finished = $participants;
-        $avgScore = round($finished->avg('score') ?? 0, 1);
-        $passed = $finished->where('score', '>=', $quiz->passing_score)->count();
-        $failed = $finished->where('score', '<', $quiz->passing_score)->count();
-        $passRate = $finished->count() > 0 ? round(($passed / $finished->count()) * 100) : 0;
-        $inProgress = $quiz->participants()->whereNull('score')->count();
-
-        $low = $finished->whereBetween('score', [0, 50])->count();
-        $mid = $finished->whereBetween('score', [51, 75])->count();
-        $high = $finished->whereBetween('score', [76, 100])->count();
-
-        $pdf = Pdf::loadView('admin.pdf.quiz-report', compact(
-            'quiz', 'participants', 'finished',
-            'avgScore', 'passed', 'failed', 'passRate',
-            'inProgress', 'low', 'mid', 'high'
-        ))->setPaper('a4', 'portrait');
-
-        $filename = 'Laporan-'.str_replace(' ', '-', $quiz->title).'-'.now()->format('Ymd').'.pdf';
-
-        return $pdf->download($filename);
+            $pdf = Pdf::loadView('admin.pdf.quiz-report', compact(
+                'quiz', 'participants', 'finished',
+                'avgScore', 'passed', 'failed', 'passRate',
+                'inProgress', 'low', 'mid', 'high'
+            ))->setPaper('a4', 'portrait');
+            
+            $filename = "Laporan-Kuis-" . \Illuminate\Support\Str::slug($quiz->title) . "-" . now()->format('d-M-Y') . ".pdf";
+            
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => strlen($pdf->output())
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("PDF Export Error: " . $e->getMessage());
+            return back()->with('error', 'Gagal menghasilkan PDF: ' . $e->getMessage());
+        }
     }
 }

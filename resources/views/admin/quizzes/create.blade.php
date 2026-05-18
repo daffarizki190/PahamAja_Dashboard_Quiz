@@ -147,6 +147,23 @@
                     <input type="range" id="passScoreRange" name="passing_score" min="0" max="100" value="{{ old('passing_score', $defaultPass) }}"
                            oninput="document.getElementById('passScoreLabel').textContent=this.value+'%'">
                     </div>
+                    <!-- Is Public -->
+                    <div>
+                        <label class="form-label" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                            <span style="display:flex; align-items:center; gap:7px;">
+                                <i class="fa-solid fa-globe" style="color:#059669; font-size:12px;"></i> Mode Kuis Umum (Public)
+                            </span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:11px; color:#6B7280; font-weight:600;">Izinkan siapapun ikut</span>
+                                <label style="position:relative; display:inline-block; width:36px; height:20px;">
+                                    <input type="checkbox" name="is_public" value="1" {{ old('is_public') ? 'checked' : '' }} style="opacity:0; width:0; height:0;" onchange="this.nextElementSibling.style.background = this.checked ? '#10B981' : '#E5E3F0'; this.nextElementSibling.querySelector('span').style.transform = this.checked ? 'translateX(16px)' : 'translateX(2px)';">
+                                    <div style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#E5E3F0; border-radius:34px; transition:.4s;">
+                                        <span style="position:absolute; content:''; height:16px; width:16px; left:0px; bottom:2px; background-color:white; border-radius:50%; transition:.4s; transform:translateX(2px); box-shadow:0 1px 3px rgba(0,0,0,0.1);"></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
 

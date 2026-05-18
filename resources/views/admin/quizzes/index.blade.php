@@ -176,7 +176,15 @@
         <div class="quiz-card-icon">{{ $icon }}</div>
         <div class="quiz-card-body">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                <div class="quiz-card-title">{{ $quiz->title }}</div>
+                <div>
+                    <div class="quiz-card-title">{{ $quiz->title }}</div>
+                    @if($quiz->is_public)
+                    <div style="display:inline-flex; align-items:center; gap:5px; background:rgba(245,158,11,0.1); color:#D97706; border:1px solid rgba(245,158,11,0.2); padding:2px 8px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; margin-bottom:4px;">
+                        <span style="width:5px; height:5px; border-radius:50%; background:#F59E0B; animation:pulse 1.5s infinite;"></span>
+                        Kuis Live
+                    </div>
+                    @endif
+                </div>
                 <div style="display:flex; gap:5px; flex-shrink:0;">
                     <a href="{{ route('admin.quizzes.show', $quiz->slug) }}"
                        style="width:26px;height:26px;background:#F3F2FB;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-size:11px;text-decoration:none;transition:background .18s;"

@@ -45,6 +45,58 @@ class QuizController extends Controller
      */
     public function joinQuiz(Request $request, Quiz $quiz, NameMatchingService $matchingService)
     {
+        if ($quiz->is_public) {
+            $request->validate([
+                'nim' => 'required|string|max:50',
+                'name' => 'required|string|max:100',
+                'location' => 'required|string|max:100',
+            ]);
+            
+            $nik = trim((string) $request->input('nim'));
+            $name = trim((string) $request->input('name'));
+            $location = trim((string) $request->input('location'));
+
+            $inProgress = Participant::where('quiz_id', $quiz->id)
+                ->where('nim', $nik)
+                ->whereNull('score')
+                ->first();
+
+            if (!$inProgress) {
+                $attemptNumber = Participant::where('quiz_id', $quiz->id)
+                    ->where('nim', $nik)
+                    ->count() + 1;
+
+                $inProgress = Participant::create([
+                    'quiz_id' => $quiz->id,
+                    'employee_id' => null,
+                    'name' => $name,
+                    'nim' => $nik,
+                    'location' => $location,
+                    'attempt' => $attemptNumber,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ]);
+            } else {
+                $inProgress->update(['name' => $name, 'location' => $location]);
+            }
+
+            session()->put("quiz_in_progress.{$quiz->id}", (string) $inProgress->id);
+
+            if ($quiz->status === 'waiting') {
+                return redirect()->route('quiz.waiting', $quiz->slug);
+            }
+            
+            if ($quiz->status === 'ready' || $quiz->status === 'closed') {
+                return redirect()->back()->with('error', 'Kuis ini belum dibuka atau sudah ditutup oleh Admin.');
+            }
+
+            if (is_null($inProgress->started_at)) {
+                $inProgress->update(['started_at' => now()]);
+            }
+            return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
+        }
+
+        // Standard Internal Quiz Logic
         $request->validate([
             'nim' => 'required|string|max:50',
         ]);
@@ -234,7 +286,20 @@ class QuizController extends Controller
             return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
         }
 
+        // If they are in the waiting room and the quiz is waiting, redirect them to waiting room
+        if ($quiz->is_public && $quiz->status === 'waiting') {
+            return redirect()->route('quiz.waiting', $quiz->slug);
+        }
+
+        if ($quiz->is_public && ($quiz->status === 'ready' || $quiz->status === 'closed')) {
+            return redirect()->route('quiz.join', $quiz->slug)->with('error', 'Kuis ini belum dibuka atau sudah ditutup.');
+        }
+
         session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
+
+        if (is_null($participant->started_at)) {
+            $participant->update(['started_at' => now()]);
+        }
 
         // Eager load questions, options, and existing answers; apply deterministic randomization per participant
         $quiz->load('questions.options');
@@ -266,9 +331,11 @@ class QuizController extends Controller
             });
         });
 
-        // Calculate remaining time
-        $elapsed = $participant->started_at ? now()->diffInSeconds($participant->started_at) : 0;
-        $remainingSeconds = max(0, ($quiz->time_limit * 60) - $elapsed);
+        // Calculate remaining time robustly
+        $startTime = $participant->started_at ?? now();
+        $elapsed = $startTime->diffInSeconds(now(), false); // false to allow negative if server clock is weird
+        $totalLimit = $quiz->time_limit * 60;
+        $remainingSeconds = min($totalLimit, max(0, $totalLimit - $elapsed));
 
         return view('quiz.take', compact('quiz', 'participant', 'selected', 'isDev', 'remainingSeconds'));
     }
@@ -454,7 +521,7 @@ class QuizController extends Controller
             ->load('quizSession');
 
         // Load details for review
-        $reviewData = null;
+        $reviewData = collect();
         if ($participant->status === 'completed') {
             $participant->load(['answers.question.options', 'answers.option']);
             $reviewData = $participant->answers->map(function ($answer) {
@@ -541,5 +608,40 @@ class QuizController extends Controller
                 $employee->achievements()->attach($achievement->id, ['unlocked_at' => now()]);
             }
         }
+    }
+
+    /**
+     * Show waiting room.
+     */
+    public function waitingRoom(Quiz $quiz)
+    {
+        $sessionKey = "quiz_in_progress.{$quiz->id}";
+        $participantId = session($sessionKey);
+
+        if (!$participantId) {
+            return redirect()->route('quiz.join', $quiz->slug);
+        }
+
+        // If quiz is active, redirect to take immediately
+        if ($quiz->status === 'active') {
+            return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $participantId]);
+        }
+
+        return view('quiz.waiting', compact('quiz'));
+    }
+
+    /**
+     * API for waiting room to check quiz status.
+     */
+    public function waitingStatus(Quiz $quiz)
+    {
+        // Release session lock immediately to allow parallel polling requests
+        if (session()->isStarted()) {
+            session()->save();
+        }
+
+        return response()->json([
+            'status' => $quiz->status
+        ]);
     }
 }

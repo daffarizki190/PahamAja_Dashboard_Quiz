@@ -160,100 +160,84 @@ class AdminController extends Controller
      */
     public function show(Quiz $quiz)
     {
-        $quiz->load(['questions.options', 'participants.quizSession']);
+        // 1. Eager Load with selective columns
+        $quiz->load(['questions' => function($q) {
+            $q->with('options');
+        }]);
         
         $sessions = QuizSession::where('quiz_id', $quiz->id)->orderBy('start_time')->get();
-        $employees = Employee::where('status', 'Active')->orderBy('name')->get();
+        $employees = Employee::where('status', 'Active')->select('id', 'name', 'avatar')->get();
 
-        // --- Analytics Logic: Best Score Consolidation ---
-        $allParticipants = $quiz->participants()->get();
+        // 2. Optimized Participant Loading
+        $allParticipants = $quiz->participants()
+            ->with('employee:id,name,avatar')
+            ->orderBy('score', 'desc')
+            ->orderBy('updated_at', 'asc') // Faster duration as tie-breaker
+            ->get();
         
-        // Group by employee and take the best attempt
-        $participants = $allParticipants
-            ->groupBy('employee_id')
-            ->map(function ($group) {
-                return $group->sort(function ($a, $b) {
-                    if ($a->score !== $b->score) return $b->score <=> $a->score;
-                    
-                    // Break tie by speed
-                    $aDur = ($a->finished_at && $a->started_at) ? $a->finished_at->diffInSeconds($a->started_at) : 999999;
-                    $bDur = ($b->finished_at && $b->started_at) ? $b->finished_at->diffInSeconds($b->started_at) : 999999;
-                    if ($aDur !== $bDur) return $aDur <=> $bDur;
+        // Group Internal by employee_id, Public by nim (Unique Participants)
+        $internalRaw = $allParticipants->whereNotNull('employee_id')->groupBy('employee_id')->map(fn($group) => $group->first());
+        $publicRaw = $allParticipants->whereNull('employee_id')->groupBy('nim')->map(fn($group) => $group->first());
+        
+        $participants = $internalRaw->concat($publicRaw);
 
-                    return $b->updated_at <=> $a->updated_at;
-                })->first();
-            });
+        // 3. Separate Public vs Internal (Basic Filter)
+        $internalParticipants = $participants->filter(fn($p) => !is_null($p->employee_id));
+        $publicParticipants = $participants->filter(fn($p) => is_null($p->employee_id));
 
-        // Advanced Sorting for Leaderboard (Score DESC, Duration ASC)
-        $sortedParticipants = $participants->sort(function ($a, $b) {
-            $aScoreIsNull = is_null($a->score);
-            $bScoreIsNull = is_null($b->score);
-            
-            // 1. Put finished participants at the top
-            if ($aScoreIsNull !== $bScoreIsNull) return $aScoreIsNull <=> $bScoreIsNull;
-            
-            if (!$aScoreIsNull && !$bScoreIsNull) {
-                // 2. Primary Sort: Score (Descending)
-                if ($a->score !== $b->score) return $b->score <=> $a->score;
-                
-                // 3. Secondary Sort: Speed (Duration Ascending)
-                if ($a->started_at && $a->finished_at && $b->started_at && $b->finished_at) {
-                    $aDur = $a->finished_at->diffInSeconds($a->started_at);
-                    $bDur = $b->finished_at->diffInSeconds($b->started_at);
-                    if ($aDur !== $bDur) return $aDur <=> $bDur;
-                }
-            }
-            
-            // 4. Tertiary Sort: Earlier absolute finish time
+        $sorter = function ($a, $b) {
+            if (is_null($a->score) && is_null($b->score)) return 0;
+            if (is_null($a->score)) return 1;
+            if (is_null($b->score)) return -1;
+            if ($a->score !== $b->score) return $b->score <=> $a->score;
             return ($a->updated_at?->getTimestamp() ?? 0) <=> ($b->updated_at?->getTimestamp() ?? 0);
-        })->values();
+        };
 
-        // Calculate human-readable duration for display
-        $sortedParticipants->each(function($p) {
-            $p->duration_formatted = $p->duration ?? '--:--';
-        });
+        $sortedPublic = $publicParticipants->sort($sorter)->values();
+        $sortedInternal = $internalParticipants->sort($sorter)->values();
 
+        // Format durations
+        $sortedPublic->each(fn($p) => $p->duration_formatted = $p->duration ?? '--:--');
+        $sortedInternal->each(fn($p) => $p->duration_formatted = $p->duration ?? '--:--');
+
+        // 4. Correct Summary Analytics
+        $totalUnique = $participants->count();
         $finishedParticipants = $participants->whereNotNull('score');
         $avgScore = $finishedParticipants->avg('score') ?? 0;
         $inProgressCount = $participants->whereNull('score')->count();
 
-        // Question Analytics
-        $finishedIds = $finishedParticipants->pluck('id')->all();
-        $answers = count($finishedIds) > 0 ? Answer::whereIn('participant_id', $finishedIds)->get() : collect();
-        $answersByQuestion = $answers->groupBy('question_id');
+        // 5. Optimized Question Analytics (Single Pass)
+        $finishedIds = $finishedParticipants->pluck('id')->toArray();
+        $answersCount = Answer::whereIn('participant_id', $finishedIds)
+            ->selectRaw('question_id, COUNT(*) as total, SUM(score) as correct')
+            ->groupBy('question_id')
+            ->get()
+            ->keyBy('question_id');
 
-        $questionAnalytics = $quiz->questions->map(function ($question) use ($finishedParticipants, $answersByQuestion) {
-            $correctOption = $question->options->firstWhere('is_correct', true);
-            $questionAnswers = $answersByQuestion->get($question->id, collect());
-
-            $answeredCount = $questionAnswers->count();
-            $correctCount = $correctOption ? $questionAnswers->where('option_id', $correctOption->id)->count() : 0;
-            $topOptionId = $questionAnswers->countBy('option_id')->sortDesc()->keys()->first();
-            $topOptionText = $topOptionId ? optional($question->options->firstWhere('id', $topOptionId))->text : null;
-
+        $questionAnalytics = $quiz->questions->map(function ($q) use ($answersCount, $finishedParticipants) {
+            $stat = $answersCount->get($q->id);
+            $total = $stat ? $stat->total : 0;
+            $correct = $stat ? $stat->correct : 0;
             return [
-                'text' => (string) $question->text,
-                'answered' => $answeredCount,
+                'text' => $q->text,
+                'answered' => $total,
                 'participants' => $finishedParticipants->count(),
-                'correct_rate' => $answeredCount > 0 ? round(($correctCount / $answeredCount) * 100, 1) : null,
-                'top_option' => $topOptionText,
+                'correct_rate' => $total > 0 ? round(($correct / $total) * 100, 1) : 0,
             ];
-        })->values();
+        });
 
-        // Score Distribution for Chart
-        $dist = [
-            'low' => $finishedParticipants->whereBetween('score', [0, 50])->count(),
-            'mid' => $finishedParticipants->whereBetween('score', [51, 75])->count(),
-            'high' => $finishedParticipants->whereBetween('score', [76, 100])->count(),
-        ];
         $chartData = [
-            'labels' => ['0-50 (Low)', '51-75 (Mid)', '76-100 (High)'],
-            'scores' => [$dist['low'], $dist['mid'], $dist['high']],
+            'labels' => ['0-50', '51-75', '76-100'],
+            'data' => [
+                $finishedParticipants->whereBetween('score', [0, 50])->count(),
+                $finishedParticipants->whereBetween('score', [51, 75])->count(),
+                $finishedParticipants->whereBetween('score', [76, 100])->count(),
+            ]
         ];
 
         return view('admin.quizzes.show', compact(
-            'quiz', 'sessions', 'employees', 'sortedParticipants', 
-            'avgScore', 'inProgressCount', 'questionAnalytics', 'chartData'
+            'quiz', 'sessions', 'employees', 'sortedPublic', 'sortedInternal', 
+            'avgScore', 'inProgressCount', 'questionAnalytics', 'chartData', 'totalUnique'
         ));
     }
 
@@ -330,6 +314,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'time_limit' => 'required|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
+            'is_public' => 'nullable|boolean',
             'questions' => 'required|array|min:1',
             'questions.*.text' => 'required|string',
             'questions.*.options' => 'required|array|min:2',
@@ -342,6 +327,8 @@ class AdminController extends Controller
             'slug' => Str::slug($request->title).'-'.Str::random(5),
             'time_limit' => $request->time_limit,
             'passing_score' => $request->passing_score,
+            'is_public' => $request->has('is_public'),
+            'status' => $request->has('is_public') ? 'waiting' : 'ready',
         ]);
 
         foreach ($request->questions as $qData) {
@@ -369,6 +356,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'time_limit' => 'required|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
+            'is_public' => 'nullable|boolean',
             'questions' => 'required|array|min:1',
             'questions.*.id' => 'nullable|integer',
             'questions.*.text' => 'required|string',
@@ -383,6 +371,8 @@ class AdminController extends Controller
                 'title' => $request->title,
                 'time_limit' => $request->time_limit,
                 'passing_score' => $request->passing_score,
+                'is_public' => $request->has('is_public'),
+                'status' => ($request->has('is_public') && $quiz->status === 'ready') ? 'waiting' : $quiz->status,
             ]);
 
             $quiz->participants()->delete();

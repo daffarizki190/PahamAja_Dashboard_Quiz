@@ -21,6 +21,12 @@ class Quiz extends Model
         'time_limit',
         'passing_score',
         'essay_grading_method',
+        'is_public',
+        'status',
+    ];
+
+    protected $casts = [
+        'is_public' => 'boolean',
     ];
 
     /**
