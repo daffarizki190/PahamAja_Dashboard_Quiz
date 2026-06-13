@@ -33,9 +33,25 @@ class Participant extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
-        'is_assigned' => 'boolean',
+        // removed is_assigned due to pgsql pgbouncer emulated prepares issue
         'device_info' => 'array',
     ];
+
+    /**
+     * Set the is_assigned attribute to a string for Postgres.
+     */
+    public function setIsAssignedAttribute($value)
+    {
+        $this->attributes['is_assigned'] = $value ? 'true' : 'false';
+    }
+
+    /**
+     * Get the is_assigned attribute as a boolean.
+     */
+    public function getIsAssignedAttribute($value)
+    {
+        return $value === 'true' || $value === true || $value === 1 || $value === '1' || $value === 't';
+    }
 
     /**
      * Get the logs associated with this participant.

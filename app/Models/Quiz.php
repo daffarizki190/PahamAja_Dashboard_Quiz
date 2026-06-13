@@ -26,8 +26,24 @@ class Quiz extends Model
     ];
 
     protected $casts = [
-        'is_public' => 'boolean',
+        // removed is_public due to pgsql pgbouncer emulated prepares issue
     ];
+
+    /**
+     * Set the is_public attribute to a string for Postgres.
+     */
+    public function setIsPublicAttribute($value)
+    {
+        $this->attributes['is_public'] = $value ? 'true' : 'false';
+    }
+
+    /**
+     * Get the is_public attribute as a boolean.
+     */
+    public function getIsPublicAttribute($value)
+    {
+        return $value === 'true' || $value === true || $value === 1 || $value === '1' || $value === 't';
+    }
 
     /**
      * Get the count of participants — uses pre-loaded value if available (avoids N+1).
