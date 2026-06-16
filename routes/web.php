@@ -38,7 +38,7 @@ Route::get('storage/avatars/{filename}', function ($filename) {
 });
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('admin.login');
 });
 
 Route::get('/admin/login', [AdminAuthController::class, 'show'])->name('admin.login');
