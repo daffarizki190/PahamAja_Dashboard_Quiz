@@ -93,7 +93,7 @@ class QuizController extends Controller
             if (is_null($inProgress->started_at)) {
                 $inProgress->update(['started_at' => now()]);
             }
-            return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
+            return redirect()->route('quiz.take-live', ['quiz' => $quiz->slug, 'participant' => $inProgress->id]);
         }
 
         // Standard Internal Quiz Logic
@@ -341,6 +341,71 @@ class QuizController extends Controller
     }
 
     /**
+     * Show the live gamified quiz questions to the participant.
+     */
+    public function takeLiveQuiz(Quiz $quiz, Participant $participant)
+    {
+        // Ensure the participant belongs to this quiz
+        if ($participant->quiz_id !== $quiz->id) {
+            abort(403, 'Unauthorized access to this quiz.');
+        }
+
+        // If they already have a score, they've finished.
+        if (! is_null($participant->score)) {
+            return redirect()->route('quiz.result', ['quiz' => $quiz->slug, 'participant' => $participant->id]);
+        }
+
+        // If they are in the waiting room and the quiz is waiting, redirect them to waiting room
+        if ($quiz->is_public && $quiz->status === 'waiting') {
+            return redirect()->route('quiz.waiting', $quiz->slug);
+        }
+
+        if ($quiz->is_public && ($quiz->status === 'ready' || $quiz->status === 'closed')) {
+            return redirect()->route('quiz.join', $quiz->slug)->with('error', 'Kuis ini belum dibuka atau sudah ditutup.');
+        }
+
+        session()->put("quiz_in_progress.{$quiz->id}", (string) $participant->id);
+
+        if (is_null($participant->started_at)) {
+            $participant->update(['started_at' => now()]);
+        }
+
+        // Eager load questions, options, and existing answers; apply deterministic randomization per participant
+        $quiz->load('questions.options');
+        $pid = (string) $participant->id;
+        $quiz->setRelation('questions', $quiz->questions->sortBy(function ($q) use ($pid) {
+            return sha1($pid.'|'.$q->id);
+        })->values());
+        $quiz->questions->each(function ($q) use ($pid) {
+            $q->setRelation('options', $q->options->sortBy(function ($o) use ($pid) {
+                return sha1($pid.'|'.$o->id);
+            })->values());
+        });
+
+        $selected = $participant->answers()->get(['question_id', 'option_id', 'essay_answer'])->mapWithKeys(function ($ans) {
+            return [$ans->question_id => $ans->option_id ?? $ans->essay_answer];
+        });
+
+        $isDev = ($participant->nim === '01-2024060107');
+        
+        // For Live Mode, we MUST expose 'is_correct' so the frontend can do instant feedback animations.
+        // In a real production app for high-stakes, this should be an AJAX validation call to avoid cheating.
+        $quiz->questions->each(function($q) {
+            $q->options->each(function($opt) {
+                $opt->makeVisible(['is_correct']);
+            });
+        });
+
+        // Calculate remaining time robustly
+        $startTime = $participant->started_at ?? now();
+        $elapsed = $startTime->diffInSeconds(now(), false); // false to allow negative if server clock is weird
+        $totalLimit = $quiz->time_limit * 60;
+        $remainingSeconds = min($totalLimit, max(0, $totalLimit - $elapsed));
+
+        return view('quiz.take-live', compact('quiz', 'participant', 'selected', 'isDev', 'remainingSeconds'));
+    }
+
+    /**
      * Store answers submitted by a participant and calculate the score automatically.
      */
     public function storeAnswer(Request $request, Quiz $quiz, Participant $participant)
@@ -500,6 +565,72 @@ class QuizController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function getActiveTargets(Quiz $quiz, Participant $participant)
+    {
+        $targets = Participant::where('quiz_id', $quiz->id)
+            ->where('id', '!=', $participant->id)
+            ->whereNull('score') // still playing
+            ->select('id', 'name')
+            ->get();
+        return response()->json($targets);
+    }
+
+    /**
+     * Trigger a multiplayer attack on another participant.
+     */
+    public function triggerAttack(Request $request, Quiz $quiz, Participant $participant)
+    {
+        if ($participant->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'attack_type' => 'required|in:freeze,glitch,blind',
+            'target_id'   => 'required|exists:participants,id',
+        ]);
+
+        $target = Participant::where('quiz_id', $quiz->id)
+            ->where('id', $request->target_id)
+            ->first();
+
+        if (!$target) {
+            return response()->json(['ok' => false, 'message' => 'Target tidak valid atau tidak aktif.']);
+        }
+
+        $duration = $request->input('duration', 5000); // default 5s if not provided
+
+        // Instead of WebSocket, we'll use Cache for simple polling
+        \Illuminate\Support\Facades\Cache::put("attack_for_{$target->id}", [
+            'attacker_name' => $participant->name,
+            'attack_type' => $request->attack_type,
+            'duration' => $duration
+        ], 60); // valid for 60 seconds
+
+        return response()->json([
+            'ok' => true, 
+            'target_name' => $target->name,
+            'attack_type' => $request->attack_type
+        ]);
+    }
+
+    public function checkAttack(Quiz $quiz, Participant $participant)
+    {
+        $cacheKey = "attack_for_{$participant->id}";
+        $attack = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if ($attack) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            return response()->json([
+                'attacked' => true,
+                'attacker_name' => $attack['attacker_name'],
+                'attack_type' => $attack['attack_type'],
+                'duration' => $attack['duration'] ?? 5000
+            ]);
+        }
+
+        return response()->json(['attacked' => false]);
+    }
+
     /**
      * Show the results page.
      */
@@ -624,6 +755,9 @@ class QuizController extends Controller
 
         // If quiz is active, redirect to take immediately
         if ($quiz->status === 'active') {
+            if ($quiz->is_public) {
+                return redirect()->route('quiz.take-live', ['quiz' => $quiz->slug, 'participant' => $participantId]);
+            }
             return redirect()->route('quiz.take', ['quiz' => $quiz->slug, 'participant' => $participantId]);
         }
 

@@ -429,6 +429,10 @@
                class="nav-item {{ request()->routeIs('admin.quizzes.create','admin.quizzes.ai-create','admin.quizzes.import','admin.quizzes.show','admin.quizzes.edit') ? 'active' : '' }}">
                 <i class="fa-solid fa-clipboard-list"></i> Kuis
             </a>
+            <a href="{{ route('admin.quizz-live.index') }}"
+               class="nav-item {{ request()->routeIs('admin.quizz-live.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-gamepad"></i> Quizz Live
+            </a>
             <a href="{{ route('admin.reports.index') }}"
                class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-chart-bar"></i> Laporan

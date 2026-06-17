@@ -94,6 +94,14 @@ Route::prefix('quiz')->name('quiz.')->middleware('nocache')->group(function () {
     // Page to take the quiz
     Route::get('{quiz:slug}/participant/{participant}/take', [QuizController::class, 'takeQuiz'])->name('take');
 
+    // Page to take the quiz (Gamified Live Mode)
+    Route::get('{quiz:slug}/participant/{participant}/take-live', [QuizController::class, 'takeLiveQuiz'])->name('take-live');
+
+    // API for multiplayer features
+    Route::get('{quiz:slug}/participant/{participant}/active-targets', [QuizController::class, 'getActiveTargets'])->name('active-targets');
+    Route::post('{quiz:slug}/participant/{participant}/attack', [QuizController::class, 'triggerAttack'])->name('attack');
+    Route::get('{quiz:slug}/participant/{participant}/check-attack', [QuizController::class, 'checkAttack'])->name('check-attack');
+
     // Submit Answers & Auto-Scoring Route
     Route::post('{quiz:slug}/participant/{participant}/answers', [QuizController::class, 'storeAnswer'])
         ->name('storeAnswer');
@@ -140,6 +148,9 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'nocache'])->g
     Route::get('quizzes/{quiz:slug}/edit', [AdminController::class, 'edit'])->name('quizzes.edit');
     Route::patch('quizzes/{quiz:slug}', [AdminController::class, 'update'])->name('quizzes.update');
     Route::delete('quizzes/{quiz}', [AdminController::class, 'destroy'])->name('quizzes.destroy');
+
+    // Quizz Live (Gamified Quiz Mode)
+    Route::get('quizz-live', [AdminController::class, 'quizzLiveIndex'])->name('quizz-live.index');
 
     // Live Quiz Control
     Route::post('quizzes/{quiz:slug}/live-status', [\App\Http\Controllers\AdminQuizController::class, 'updateLiveStatus'])->name('quizzes.live-status');
