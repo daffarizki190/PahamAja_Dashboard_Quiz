@@ -195,8 +195,13 @@
                                         <span style="color:var(--text-muted); font-size:11px;">Aktif</span>
                                     @endif
                                 </td>
-                                <td style="text-align:right;">
-                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;"><i class="fa-solid fa-eye"></i></a>
+                                <td style="text-align:right; display:flex; gap:4px; justify-content:flex-end;">
+                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;" title="Lihat Jawaban"><i class="fa-solid fa-eye"></i></a>
+                                    <form action="{{ route('admin.participant.destroy', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" method="POST" onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Data', 'Apakah Anda yakin ingin menghapus data peserta ini secara permanen?', 'danger', () => this.submit())">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-ghost" style="padding:4px 8px; color:#EF4444;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                             @empty
@@ -231,8 +236,13 @@
                                         <span class="badge badge-purple">Pending</span>
                                     @endif
                                 </td>
-                                <td style="text-align:right;">
-                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;"><i class="fa-solid fa-eye"></i></a>
+                                <td style="text-align:right; display:flex; gap:4px; justify-content:flex-end;">
+                                    <a href="{{ route('admin.participant.answers', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" class="btn btn-ghost" style="padding:4px 8px;" title="Lihat Jawaban"><i class="fa-solid fa-eye"></i></a>
+                                    <form action="{{ route('admin.participant.destroy', ['quiz' => $quiz->slug, 'participant' => $p->id]) }}" method="POST" onsubmit="event.preventDefault(); PahamAja.confirm('Hapus Data', 'Apakah Anda yakin ingin menghapus data peserta ini secara permanen?', 'danger', () => this.submit())">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-ghost" style="padding:4px 8px; color:#EF4444;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                             @empty

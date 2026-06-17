@@ -81,6 +81,18 @@ class AdminController extends Controller
         return view('admin.quizzes.index', compact('quizzes', 'stats', 'topEmployees'));
     }
 
+    /**
+     * Quizz Live – Menampilkan daftar kuis yang bisa dimainkan dalam mode gamifikasi.
+     */
+    public function quizzLiveIndex()
+    {
+        $quizzes = Quiz::withCount('questions', 'participants')
+            ->latest()
+            ->get();
+
+        return view('admin.quizz-live.index', compact('quizzes'));
+    }
+
     public function employeeStore(Request $request)
     {
         $request->validate([
@@ -175,11 +187,12 @@ class AdminController extends Controller
             ->orderBy('updated_at', 'asc') // Faster duration as tie-breaker
             ->get();
         
-        // Group Internal by employee_id, Public by nim (Unique Participants)
-        $internalRaw = $allParticipants->whereNotNull('employee_id')->groupBy('employee_id')->map(fn($group) => $group->first());
-        $publicRaw = $allParticipants->whereNull('employee_id')->groupBy('nim')->map(fn($group) => $group->first());
+        // Do not group by employee_id or nim so that ALL attempts are visible in the table.
+        // This allows admins to see every live participant and manage every attempt.
+        $internalRaw = $allParticipants->whereNotNull('employee_id');
+        $publicRaw = $allParticipants->whereNull('employee_id');
         
-        $participants = $internalRaw->concat($publicRaw);
+        $participants = $allParticipants;
 
         // 3. Separate Public vs Internal (Basic Filter)
         $internalParticipants = $participants->filter(fn($p) => !is_null($p->employee_id));
